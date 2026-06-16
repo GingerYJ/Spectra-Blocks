@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MCM",
+    "GEG",
+    "MCM"
+  ],
+  "key": {
+    "M": {
+      "item": "minecraft:red_mushroom"
+    },
+    "C": {
+      "item": "minecraft:prismarine_crystals"
+    },
+    "G": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "E": {
+      "item": "minecraft:ender_eye"
+    }
+  },
+  "result": {
+    "item": "spectrablocks:bioluminescent_spores"
+  }
+}

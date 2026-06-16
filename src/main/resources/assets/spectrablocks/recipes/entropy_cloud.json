@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SQS",
+    "QEQ",
+    "SQS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:string"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "E": {
+      "item": "minecraft:ender_eye"
+    }
+  },
+  "result": {
+    "item": "spectrablocks:entropy_cloud"
+  }
+}

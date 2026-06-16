@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SFS",
+    "GEG",
+    "SFS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:wheat_seeds"
+    },
+    "F": {
+      "item": "minecraft:yellow_flower"
+    },
+    "G": {
+      "item": "minecraft:dye",
+      "data": 10
+    },
+    "E": {
+      "item": "minecraft:emerald"
+    }
+  },
+  "result": {
+    "item": "spectrablocks:pollen_breeze"
+  }
+}
