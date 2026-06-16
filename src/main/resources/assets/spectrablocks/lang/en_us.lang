@@ -1,0 +1,5 @@
+tile.spectrablocks.micro_singularity.name=Micro Singularity
+tile.spectrablocks.micro_white_hole.name=Micro White Hole
+tile.spectrablocks.micro_universe.name=Micro Universe
+tile.spectrablocks.micro_stellar_source.name=Micro Stellar Source
+itemGroup.spectrablocks=Spectra Blocks

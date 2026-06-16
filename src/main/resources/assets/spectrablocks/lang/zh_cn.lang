@@ -1,0 +1,5 @@
+tile.spectrablocks.micro_singularity.name=微型黑洞
+tile.spectrablocks.micro_white_hole.name=微型白洞
+tile.spectrablocks.micro_universe.name=微缩宇宙
+tile.spectrablocks.micro_stellar_source.name=微缩恒星源
+itemGroup.spectrablocks=光谱方块
