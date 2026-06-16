@@ -66,4 +66,17 @@ public final class ModConfig {
     public static double microStellarSourceScale() {
         return microStellarSourceScale;
     }
+
+    public static double clampRenderScale(double scale) {
+        if (Double.isNaN(scale) || Double.isInfinite(scale)) {
+            return DEFAULT_RENDER_SCALE;
+        }
+        if (scale < MIN_RENDER_SCALE) {
+            return MIN_RENDER_SCALE;
+        }
+        if (scale > MAX_RENDER_SCALE) {
+            return MAX_RENDER_SCALE;
+        }
+        return scale;
+    }
 }

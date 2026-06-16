@@ -36,7 +36,7 @@ public class RenderMicroSingularity extends RenderSingularityBase<TileMicroSingu
     }
 
     @Override
-    protected double renderScale() {
+    protected double defaultRenderScale() {
         return ModConfig.microSingularityScale();
     }
 }

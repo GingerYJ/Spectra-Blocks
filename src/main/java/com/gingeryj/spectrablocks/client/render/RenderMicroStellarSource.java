@@ -26,7 +26,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY, centerZ);
-        double renderScale = ModConfig.microStellarSourceScale();
+        double renderScale = te.renderScale(ModConfig.microStellarSourceScale());
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 

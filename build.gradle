@@ -178,7 +178,7 @@ if (!propertyBool('enable_shadow')) {
 }
 
 compileJava {
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 jar {
@@ -192,7 +192,6 @@ jar {
     doFirst {
         manifest {
             def attribute_map = [:]
-            attribute_map['ModType'] = "CRL"
             if (configurations.contain.size() > 0) {
                 attribute_map['ContainedDeps'] = configurations.contain.collect { it.name }.join(' ')
                 attribute_map['NonModDeps'] = true
@@ -229,7 +228,7 @@ tasks.named(remapTaskName).configure {
 }
 
 compileTestJava {
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 test {
@@ -246,6 +245,7 @@ test {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.release = 8
 }
 
 apply from: 'gradle/scripts/publishing.gradle'

@@ -3,10 +3,10 @@ package com.gingeryj.spectrablocks.client.render;
 import com.gingeryj.spectrablocks.config.ModConfig;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.tileentity.TileEntity;
+import com.gingeryj.spectrablocks.tile.TileScalableEffect;
 import org.lwjgl.opengl.GL11;
 
-public abstract class RenderSingularityBase<T extends TileEntity> extends TileEntitySpecialRenderer<T> {
+public abstract class RenderSingularityBase<T extends TileScalableEffect> extends TileEntitySpecialRenderer<T> {
 
     private static final double EVENT_HORIZON_RADIUS = 1.2D;
     private static final double INNER_HALO_BASE = 1.8D;
@@ -46,7 +46,7 @@ public abstract class RenderSingularityBase<T extends TileEntity> extends TileEn
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY, centerZ);
-        double renderScale = renderScale();
+        double renderScale = te.renderScale(defaultRenderScale());
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
@@ -127,7 +127,7 @@ public abstract class RenderSingularityBase<T extends TileEntity> extends TileEn
 
     protected abstract int outerGridColor();
 
-    protected abstract double renderScale();
+    protected abstract double defaultRenderScale();
 
     protected float innerAlphaBase() {
         return 0.15F;

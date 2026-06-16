@@ -581,3 +581,37 @@ itemGroup.spectrablocks=Spectra Blocks
 - 中文 lang 文件保持 UTF-8 无 BOM。
 - 方块注册名不要轻易改，改注册名会影响已有存档。
 - 这个项目当前不需要 Mixin；视觉特效方块可以只靠 Forge 注册、TileEntity 和 TESR 完成。
+
+## 13. 用 NBT 单独控制渲染大小
+
+四种视觉特效方块都支持在 TileEntity NBT 中写入 `RenderScale` 来单独控制渲染缩放：
+
+- `spectrablocks:micro_singularity`
+- `spectrablocks:micro_white_hole`
+- `spectrablocks:micro_universe`
+- `spectrablocks:micro_stellar_source`
+
+优先级：
+
+```text
+方块 TileEntity NBT / 物品 NBT 的 RenderScale > 对应配置文件缩放 > 默认 1.0
+```
+
+`RenderScale` 的有效范围是 `0.25` 到 `4.0`。`1.0` 表示默认大小，`0.5` 表示缩小到一半，`2.0` 表示放大两倍。超出范围的值会被自动限制到最近的边界。
+
+通过物品 NBT 放置时写入：
+
+```mcfunction
+/give @p spectrablocks:micro_singularity 1 0 {RenderScale:0.75d}
+/give @p spectrablocks:micro_white_hole 1 0 {RenderScale:1.5d}
+/give @p spectrablocks:micro_universe 1 0 {RenderScale:2.0d}
+/give @p spectrablocks:micro_stellar_source 1 0 {RenderScale:0.5d}
+```
+
+通过命令修改已经放置的方块：
+
+```mcfunction
+/blockdata <x> <y> <z> {RenderScale:2.0d}
+```
+
+实现上，四个方块的 TileEntity 都继承 `TileScalableEffect`。渲染器调用 `te.renderScale(...)` 取得最终缩放值，`getRenderBoundingBox()` 也使用同一个缩放值扩大可渲染范围，避免大尺寸效果被视锥裁剪。

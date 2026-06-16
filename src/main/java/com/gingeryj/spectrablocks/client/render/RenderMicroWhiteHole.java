@@ -56,7 +56,7 @@ public class RenderMicroWhiteHole extends RenderSingularityBase<TileMicroWhiteHo
     }
 
     @Override
-    protected double renderScale() {
+    protected double defaultRenderScale() {
         return ModConfig.microWhiteHoleScale();
     }
 }

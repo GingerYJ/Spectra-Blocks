@@ -38,7 +38,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY, centerZ);
-        double renderScale = ModConfig.microUniverseScale();
+        double renderScale = te.renderScale(ModConfig.microUniverseScale());
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 

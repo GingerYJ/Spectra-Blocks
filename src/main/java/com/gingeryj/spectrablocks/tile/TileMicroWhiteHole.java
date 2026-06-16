@@ -1,14 +1,13 @@
 package com.gingeryj.spectrablocks.tile;
 
 import com.gingeryj.spectrablocks.config.ModConfig;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-public class TileMicroWhiteHole extends TileEntity implements ITickable {
+public class TileMicroWhiteHole extends TileScalableEffect implements ITickable {
 
     private static final double RENDER_RADIUS = 3.25D;
 
@@ -33,6 +32,6 @@ public class TileMicroWhiteHole extends TileEntity implements ITickable {
     @Override
     @SideOnly(Side.CLIENT)
     public AxisAlignedBB getRenderBoundingBox() {
-        return RenderBounds.centered(pos, RENDER_RADIUS, ModConfig.microWhiteHoleScale());
+        return RenderBounds.centered(pos, RENDER_RADIUS, renderScale(ModConfig.microWhiteHoleScale()));
     }
 }

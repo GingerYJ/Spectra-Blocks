@@ -6,6 +6,8 @@ import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -67,5 +69,12 @@ public class BlockMicroUniverse extends Block {
     @Nullable
     public TileEntity createTileEntity(World world, IBlockState state) {
         return new TileMicroUniverse();
+    }
+
+    @Override
+    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state,
+                                EntityLivingBase placer, ItemStack stack) {
+        super.onBlockPlacedBy(world, pos, state, placer, stack);
+        EffectBlockHelper.applyRenderScaleFromStack(world, pos, stack);
     }
 }
