@@ -25,14 +25,7 @@ public class TileSpectralPrism extends TileScalableEffect implements ITickable {
         double centerY = pos.getY() + 0.5D;
         double centerZ = pos.getZ() + 0.5D;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + Math.cos(angle) * radius,
-                centerY + (world.rand.nextDouble() - 0.5D) * DUST_HEIGHT,
-                centerZ + Math.sin(angle) * radius,
-                0.45D + world.rand.nextDouble() * 0.35D,
-                0.20D + world.rand.nextDouble() * 0.45D,
-                0.75D + world.rand.nextDouble() * 0.25D);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

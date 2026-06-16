@@ -27,14 +27,7 @@ public class TileVoidLotus extends TileScalableEffect implements ITickable {
         double centerY = pos.getY() + 0.36D;
         double centerZ = pos.getZ() + 0.5D;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_WITCH,
-                centerX + particleX,
-                centerY + world.rand.nextDouble() * 0.42D,
-                centerZ + particleZ,
-                -particleX * PARTICLE_DRIFT,
-                0.010D + world.rand.nextDouble() * 0.018D,
-                -particleZ * PARTICLE_DRIFT);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

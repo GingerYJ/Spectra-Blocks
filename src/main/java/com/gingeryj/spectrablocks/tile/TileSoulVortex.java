@@ -28,14 +28,7 @@ public class TileSoulVortex extends TileScalableEffect implements ITickable {
         double centerY = pos.getY() + 0.12D;
         double centerZ = pos.getZ() + 0.5D;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_WITCH,
-                centerX + particleX,
-                centerY + height,
-                centerZ + particleZ,
-                -Math.sin(angle) * PARTICLE_SWIRL,
-                0.020D + world.rand.nextDouble() * 0.030D,
-                Math.cos(angle) * PARTICLE_SWIRL);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

@@ -20,14 +20,7 @@ public class TileMicroUniverse extends TileScalableEffect implements ITickable {
         double centerX = pos.getX() + 0.5D;
         double centerY = pos.getY() + 0.5D;
         double centerZ = pos.getZ() + 0.5D;
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + (world.rand.nextDouble() - 0.5D) * 4.4D,
-                centerY + (world.rand.nextDouble() - 0.5D) * 4.4D,
-                centerZ + (world.rand.nextDouble() - 0.5D) * 4.4D,
-                0.15D + world.rand.nextDouble() * 0.25D,
-                0.18D + world.rand.nextDouble() * 0.25D,
-                0.35D + world.rand.nextDouble() * 0.45D);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

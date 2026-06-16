@@ -21,14 +21,7 @@ public class TileGravitationalLens extends TileScalableEffect implements ITickab
         double centerX = pos.getX() + 0.5D;
         double centerY = pos.getY() + 0.5D;
         double centerZ = pos.getZ() + 0.5D;
-        world.spawnParticle(EnumParticleTypes.ENCHANTMENT_TABLE,
-                centerX + (world.rand.nextDouble() - 0.5D) * 1.65D * scale,
-                centerY + (world.rand.nextDouble() - 0.5D) * 1.10D * scale,
-                centerZ + (world.rand.nextDouble() - 0.5D) * 1.65D * scale,
-                (world.rand.nextDouble() - 0.5D) * 0.18D,
-                (world.rand.nextDouble() - 0.5D) * 0.10D,
-                (world.rand.nextDouble() - 0.5D) * 0.18D);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

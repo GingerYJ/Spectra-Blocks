@@ -28,14 +28,7 @@ public class TileCosmicBackgroundRadiationField extends TileScalableEffect imple
         double particleY = y * radius;
         double particleZ = Math.sin(yaw) * horizontal * radius;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + particleX,
-                centerY + particleY,
-                centerZ + particleZ,
-                0.45D + world.rand.nextDouble() * 0.10D,
-                0.55D + world.rand.nextDouble() * 0.10D,
-                0.70D + world.rand.nextDouble() * 0.15D);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

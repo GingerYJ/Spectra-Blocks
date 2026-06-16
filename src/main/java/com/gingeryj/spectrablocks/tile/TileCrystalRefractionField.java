@@ -25,14 +25,7 @@ public class TileCrystalRefractionField extends TileScalableEffect implements IT
         double centerY = pos.getY() + 0.5D;
         double centerZ = pos.getZ() + 0.5D;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + Math.cos(angle) * radius,
-                centerY + (world.rand.nextDouble() - 0.5D) * FIELD_HEIGHT,
-                centerZ + Math.sin(angle) * radius,
-                0.35D + world.rand.nextDouble() * 0.25D,
-                0.65D + world.rand.nextDouble() * 0.25D,
-                0.85D + world.rand.nextDouble() * 0.15D);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

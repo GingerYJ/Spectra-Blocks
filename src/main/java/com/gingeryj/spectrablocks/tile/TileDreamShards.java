@@ -37,14 +37,7 @@ public class TileDreamShards extends TileScalableEffect implements ITickable {
                     0.006D + world.rand.nextDouble() * 0.016D,
                     Math.cos(angle) * PARTICLE_ORBIT_SPEED);
         } else {
-            world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                    centerX + particleX,
-                    centerY + height,
-                    centerZ + particleZ,
-                    0.34D + world.rand.nextDouble() * 0.45D,
-                    0.26D + world.rand.nextDouble() * 0.55D,
-                    0.74D + world.rand.nextDouble() * 0.25D);
-        }
+                    }
     }
 
     @Override

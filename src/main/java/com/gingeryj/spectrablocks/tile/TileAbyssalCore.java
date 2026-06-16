@@ -28,14 +28,7 @@ public class TileAbyssalCore extends TileScalableEffect implements ITickable {
         double centerY = pos.getY() + 0.5D;
         double centerZ = pos.getZ() + 0.5D;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + Math.cos(yaw) * horizontal * radius,
-                centerY + yNorm * radius * 0.72D,
-                centerZ + Math.sin(yaw) * horizontal * radius,
-                0.12D + world.rand.nextDouble() * 0.12D,
-                0.68D + world.rand.nextDouble() * 0.22D,
-                0.72D + world.rand.nextDouble() * 0.20D);
-
+        
         if (world.rand.nextBoolean()) {
             double bubbleYaw = world.rand.nextDouble() * Math.PI * 2.0D;
             double bubbleRadius = BUBBLE_RADIUS * world.rand.nextDouble();

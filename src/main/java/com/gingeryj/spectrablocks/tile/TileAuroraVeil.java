@@ -29,14 +29,7 @@ public class TileAuroraVeil extends TileScalableEffect implements ITickable {
         double particleX = Math.cos(angle) * width;
         double particleZ = Math.sin(angle) * width;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + particleX,
-                centerY - 0.20D + rise,
-                centerZ + particleZ,
-                0.22D + world.rand.nextDouble() * 0.22D,
-                0.75D + world.rand.nextDouble() * 0.20D,
-                0.82D + world.rand.nextDouble() * 0.16D);
-        world.spawnParticle(EnumParticleTypes.END_ROD,
+                world.spawnParticle(EnumParticleTypes.END_ROD,
                 centerX + particleX * 0.72D,
                 centerY + rise * 0.72D,
                 centerZ + particleZ * 0.72D,

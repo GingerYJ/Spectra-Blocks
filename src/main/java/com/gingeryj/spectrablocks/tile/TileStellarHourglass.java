@@ -26,14 +26,7 @@ public class TileStellarHourglass extends TileScalableEffect implements ITickabl
         double centerY = pos.getY() + 0.5D;
         double centerZ = pos.getZ() + 0.5D;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + Math.cos(angle) * radius * 0.55D,
-                centerY + ySign * (0.45D + world.rand.nextDouble() * NEBULA_HEIGHT * 0.35D),
-                centerZ + Math.sin(angle) * radius * 0.55D,
-                0.35D + world.rand.nextDouble() * 0.35D,
-                0.32D + world.rand.nextDouble() * 0.30D,
-                0.75D + world.rand.nextDouble() * 0.25D);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)

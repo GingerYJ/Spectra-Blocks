@@ -28,14 +28,7 @@ public class TileNebulaCore extends TileScalableEffect implements ITickable {
         double particleY = y * radius;
         double particleZ = Math.sin(yaw) * horizontal * radius;
 
-        world.spawnParticle(EnumParticleTypes.SPELL_MOB,
-                centerX + particleX,
-                centerY + particleY,
-                centerZ + particleZ,
-                0.20D + world.rand.nextDouble() * 0.35D,
-                0.35D + world.rand.nextDouble() * 0.25D,
-                0.55D + world.rand.nextDouble() * 0.35D);
-    }
+            }
 
     @Override
     @SideOnly(Side.CLIENT)
