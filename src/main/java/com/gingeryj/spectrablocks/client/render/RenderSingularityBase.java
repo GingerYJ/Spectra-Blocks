@@ -20,6 +20,10 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
     private static final float BASE_ANIMATION_SPEED = 1.5F;
     private static final float INNER_ANIMATION_SPEED = 0.7F;
     private static final float OUTER_ANIMATION_SPEED = 0.35F;
+    private static final float INNER_EXPAND_BASE = 0.82F;
+    private static final float INNER_EXPAND_RANGE = 0.36F;
+    private static final float OUTER_EXPAND_BASE = 0.88F;
+    private static final float OUTER_EXPAND_RANGE = 0.24F;
 
     @Override
     public void render(T te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
@@ -28,19 +32,19 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         double centerZ = z + 0.5D;
 
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
-        float coreTime = ticks * BASE_ANIMATION_SPEED;
-        float innerTime = ticks * INNER_ANIMATION_SPEED;
-        float outerTime = ticks * OUTER_ANIMATION_SPEED;
+        float coreTime = ticks * baseAnimationSpeed();
+        float innerTime = ticks * innerAnimationSpeed();
+        float outerTime = ticks * outerAnimationSpeed();
 
-        float innerExpand = wave(innerTime * 0.8F);
-        float innerBrightness = nestedWave(innerTime * 0.6F);
-        float innerGridEnergy = wave(innerTime * 1.25F);
-        float outerExpand = wave(outerTime * 0.45F);
-        float outerBrightness = nestedWave(outerTime * 0.35F);
-        float outerGridEnergy = wave(outerTime * 0.7F);
+        float innerExpand = smoothWave(innerTime * innerExpandFrequency());
+        float innerBrightness = nestedWave(innerTime * innerBrightnessFrequency());
+        float innerGridEnergy = smoothWave(innerTime * innerGridFrequency());
+        float outerExpand = smoothWave(outerTime * outerExpandFrequency());
+        float outerBrightness = nestedWave(outerTime * outerBrightnessFrequency());
+        float outerGridEnergy = smoothWave(outerTime * outerGridFrequency());
 
-        double innerRadius = INNER_HALO_BASE * (0.82D + 0.36D * innerExpand);
-        double outerRadius = OUTER_HALO_BASE * (0.88D + 0.24D * outerExpand);
+        double innerRadius = INNER_HALO_BASE * (innerExpandBase() + innerExpandRange() * innerExpand);
+        double outerRadius = OUTER_HALO_BASE * (outerExpandBase() + outerExpandRange() * outerExpand);
         float innerAlpha = innerAlphaBase() + innerAlphaRange() * innerBrightness;
         float outerAlpha = outerAlphaBase() + outerAlphaRange() * outerBrightness;
 
@@ -52,6 +56,10 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
 
         boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
         boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean alphaWasEnabled = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
+        boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean lightingWasEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean depthMaskWasEnabled = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
         GlStateManager.depthMask(false);
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(
@@ -60,16 +68,23 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         );
         GlStateManager.disableLighting();
         GlStateManager.disableTexture2D();
+        GlStateManager.disableAlpha();
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
         GL11.glNormal3f(0.0F, 1.0F, 0.0F);
         GlStateManager.disableCull();
 
         try {
-            RenderHelper.drawSphere(EVENT_HORIZON_RADIUS, coreColor(), coreAlpha(),
+            GlStateManager.pushMatrix();
+            GlStateManager.rotate(-outerTime * outerRotationSpeed(), 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(12.0F, 0.5F, 0.0F, 1.0F);
+            RenderHelper.drawSphere(outerRadius, outerHaloColor(), outerAlpha,
                     LATITUDE_SEGMENTS, LONGITUDE_SEGMENTS);
+            RenderHelper.drawWireframeSphere(outerRadius, outerGridColor(),
+                    outerGridAlpha() * (0.5F + 0.5F * outerGridEnergy), GRID_LAT, GRID_LON);
+            GlStateManager.popMatrix();
 
             GlStateManager.pushMatrix();
-            GlStateManager.rotate(coreTime * 0.45F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(coreTime * innerRotationSpeed(), 0.0F, 1.0F, 0.0F);
             GlStateManager.rotate(18.0F, 1.0F, 0.0F, 0.3F);
             RenderHelper.drawSphere(innerRadius, innerHaloColor(), innerAlpha,
                     LATITUDE_SEGMENTS, LONGITUDE_SEGMENTS);
@@ -77,14 +92,8 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
                     innerGridAlpha() * (0.5F + 0.5F * innerGridEnergy), GRID_LAT, GRID_LON);
             GlStateManager.popMatrix();
 
-            GlStateManager.pushMatrix();
-            GlStateManager.rotate(-outerTime * 0.35F, 0.0F, 1.0F, 0.0F);
-            GlStateManager.rotate(12.0F, 0.5F, 0.0F, 1.0F);
-            RenderHelper.drawSphere(outerRadius, outerHaloColor(), outerAlpha,
+            RenderHelper.drawSphere(EVENT_HORIZON_RADIUS, coreColor(), coreAlpha(),
                     LATITUDE_SEGMENTS, LONGITUDE_SEGMENTS);
-            RenderHelper.drawWireframeSphere(outerRadius, outerGridColor(),
-                    outerGridAlpha() * (0.5F + 0.5F * outerGridEnergy), GRID_LAT, GRID_LON);
-            GlStateManager.popMatrix();
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -92,9 +101,22 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
                 GlStateManager.disableCull();
             }
             GlStateManager.shadeModel(GL11.GL_FLAT);
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableLighting();
-            GlStateManager.depthMask(true);
+            if (alphaWasEnabled) {
+                GlStateManager.enableAlpha();
+            } else {
+                GlStateManager.disableAlpha();
+            }
+            if (textureWasEnabled) {
+                GlStateManager.enableTexture2D();
+            } else {
+                GlStateManager.disableTexture2D();
+            }
+            if (lightingWasEnabled) {
+                GlStateManager.enableLighting();
+            } else {
+                GlStateManager.disableLighting();
+            }
+            GlStateManager.depthMask(depthMaskWasEnabled);
             if (!blendWasEnabled) {
                 GlStateManager.disableBlend();
             }
@@ -107,12 +129,17 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         }
     }
 
+    private static float smoothWave(float time) {
+        float phase = wave(time);
+        return phase * phase * (3.0F - 2.0F * phase);
+    }
+
     private static float wave(float time) {
         return 0.5F + 0.5F * (float) Math.sin(time);
     }
 
     private static float nestedWave(float time) {
-        return 0.5F + 0.5F * wave(time);
+        return 0.5F + 0.5F * smoothWave(time);
     }
 
     protected abstract int coreColor();
@@ -128,6 +155,66 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
     protected abstract int outerGridColor();
 
     protected abstract double defaultRenderScale();
+
+    protected float baseAnimationSpeed() {
+        return BASE_ANIMATION_SPEED;
+    }
+
+    protected float innerAnimationSpeed() {
+        return INNER_ANIMATION_SPEED;
+    }
+
+    protected float outerAnimationSpeed() {
+        return OUTER_ANIMATION_SPEED;
+    }
+
+    protected float innerExpandFrequency() {
+        return 0.8F;
+    }
+
+    protected float innerBrightnessFrequency() {
+        return 0.6F;
+    }
+
+    protected float innerGridFrequency() {
+        return 1.25F;
+    }
+
+    protected float outerExpandFrequency() {
+        return 0.45F;
+    }
+
+    protected float outerBrightnessFrequency() {
+        return 0.35F;
+    }
+
+    protected float outerGridFrequency() {
+        return 0.7F;
+    }
+
+    protected float innerRotationSpeed() {
+        return 0.45F;
+    }
+
+    protected float outerRotationSpeed() {
+        return 0.35F;
+    }
+
+    protected float innerExpandBase() {
+        return INNER_EXPAND_BASE;
+    }
+
+    protected float innerExpandRange() {
+        return INNER_EXPAND_RANGE;
+    }
+
+    protected float outerExpandBase() {
+        return OUTER_EXPAND_BASE;
+    }
+
+    protected float outerExpandRange() {
+        return OUTER_EXPAND_RANGE;
+    }
 
     protected float innerAlphaBase() {
         return 0.15F;

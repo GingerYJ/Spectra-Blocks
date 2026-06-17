@@ -20,8 +20,10 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     private static final int SHELL_LON_SEGMENTS = 36;
     private static final int SHADER_SHELL_LAT_SEGMENTS = 48;
     private static final int SHADER_SHELL_LON_SEGMENTS = 48;
-    private static final int ORBIT_SEGMENTS = 128;
-    private static final double ORBIT_SPEED_SCALE = 0.28D;
+    private static final int ORBIT_SEGMENTS = 96;
+    private static final double ORBIT_SPEED_SCALE = 0.18D;
+    private static final float METEOR_CYCLE_TICKS = 340.0F;
+    private static final float METEOR_ACTIVE_TICKS = 86.0F;
     private static final int STAR_COUNT = 64;
     private static final RenderHelper.BillboardPoint[] STARS =
             RenderHelper.createBillboardPoints(STAR_COUNT);
@@ -101,9 +103,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.07F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(16.0F, 1.0F, 0.0F, 0.2F);
-        RenderHelper.drawSphere(SHELL_RADIUS, 0x01020A, 0.50F + 0.08F * pulse,
+        drawCulledShellSphere(SHELL_RADIUS, 0x01020A, 0.48F + 0.06F * pulse,
                 SHELL_LAT_SEGMENTS, SHELL_LON_SEGMENTS);
-        RenderHelper.drawWireframeSphere(SHELL_RADIUS * 1.012D, 0x20305E, 0.08F + 0.06F * pulse, 10, 16);
+        RenderHelper.drawWireframeSphere(SHELL_RADIUS * 1.012D, 0x20305E, 0.06F + 0.04F * pulse, 9, 14);
         GlStateManager.popMatrix();
 
         drawStars(ticks);
@@ -122,6 +124,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.018F);
         boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
         boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
         boolean matrixPushed = false;
         try {
             GlStateManager.pushMatrix();
@@ -129,20 +132,22 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             GlStateManager.rotate(ticks * 0.07F, 0.0F, 1.0F, 0.0F);
             GlStateManager.rotate(16.0F, 1.0F, 0.0F, 0.2F);
             GlStateManager.disableTexture2D();
-            GlStateManager.disableCull();
+            GlStateManager.enableCull();
+            GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
 
             if (!shader.begin()) {
                 return false;
             }
             shader.setUniform1f("uTime", ticks);
             shader.setUniform1f("uPulse", pulse);
-            shader.setUniform3f("uShellColor", 0.004F, 0.008F, 0.035F);
-            shader.setUniform3f("uNebulaColor", 0.07F, 0.13F, 0.35F);
+            shader.setUniform3f("uShellColor", 0.003F, 0.006F, 0.026F);
+            shader.setUniform3f("uNebulaColor", 0.055F, 0.115F, 0.31F);
             shader.setUniform3f("uStarColor", 0.82F, 0.90F, 1.0F);
             drawShaderShellSphere(SHELL_RADIUS, SHADER_SHELL_LAT_SEGMENTS, SHADER_SHELL_LON_SEGMENTS);
+            shader.end();
 
             GlStateManager.glLineWidth(1.0F);
-            RenderHelper.drawWireframeSphere(SHELL_RADIUS * 1.012D, 0x20305E, 0.06F + 0.05F * pulse, 10, 16);
+            RenderHelper.drawWireframeSphere(SHELL_RADIUS * 1.012D, 0x20305E, 0.045F + 0.035F * pulse, 9, 14);
             RenderHelper.resetLineWidth();
             return true;
         } catch (RuntimeException ex) {
@@ -153,16 +158,35 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             if (matrixPushed) {
                 GlStateManager.popMatrix();
             }
-            if (cullWasEnabled) {
-                GlStateManager.enableCull();
-            } else {
-                GlStateManager.disableCull();
-            }
+            restoreCullState(cullWasEnabled, previousCullFace);
             if (textureWasEnabled) {
                 GlStateManager.enableTexture2D();
             } else {
                 GlStateManager.disableTexture2D();
             }
+        }
+    }
+
+    private static void drawCulledShellSphere(double radius, int color, float alpha, int latSegs, int lonSegs) {
+        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
+        GlStateManager.enableCull();
+        GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
+        try {
+            RenderHelper.drawSphere(radius, color, alpha, latSegs, lonSegs);
+        } finally {
+            restoreCullState(cullWasEnabled, previousCullFace);
+        }
+    }
+
+    private static void restoreCullState(boolean cullWasEnabled, int previousCullFace) {
+        GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
+                ? GlStateManager.CullFace.FRONT
+                : GlStateManager.CullFace.BACK);
+        if (cullWasEnabled) {
+            GlStateManager.enableCull();
+        } else {
+            GlStateManager.disableCull();
         }
     }
 
@@ -266,22 +290,26 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     }
 
     private void drawGlowingOrbit(Planet planet) {
-        GlStateManager.glLineWidth(3.0F);
-        RenderHelper.drawCircle(planet.orbitRadius, planet.orbitGlowColor, 0.060F, ORBIT_SEGMENTS);
-        GlStateManager.glLineWidth(2.0F);
-        RenderHelper.drawCircle(planet.orbitRadius, planet.orbitGlowColor, 0.110F, ORBIT_SEGMENTS);
+        GlStateManager.glLineWidth(2.2F);
+        RenderHelper.drawCircle(planet.orbitRadius, planet.orbitGlowColor, 0.080F, ORBIT_SEGMENTS);
         GlStateManager.glLineWidth(1.0F);
-        RenderHelper.drawCircle(planet.orbitRadius, 0xE2ECFF, 0.185F, ORBIT_SEGMENTS);
+        RenderHelper.drawCircle(planet.orbitRadius, 0xE2ECFF, 0.155F, ORBIT_SEGMENTS);
         RenderHelper.resetLineWidth();
     }
 
     private void drawMeteors(float ticks) {
-        int cycle = Math.floorMod((int) ticks, 260);
-        if (cycle > 64) {
+        float cycle = ticks % METEOR_CYCLE_TICKS;
+        if (cycle < 0.0F) {
+            cycle += METEOR_CYCLE_TICKS;
+        }
+        if (cycle > METEOR_ACTIVE_TICKS) {
             return;
         }
 
-        float progress = cycle / 64.0F;
+        float progress = cycle / METEOR_ACTIVE_TICKS;
+        float easedProgress = smoothstep(progress);
+        float tailProgress = Math.max(0.0F, progress - 0.16F);
+        float easedTailProgress = smoothstep(tailProgress);
         float fade = (float) Math.sin(Math.PI * progress);
         double startX = -SHELL_RADIUS * 0.78D;
         double startY = SHELL_RADIUS * 0.52D;
@@ -289,27 +317,41 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         double endX = SHELL_RADIUS * 0.68D;
         double endY = -SHELL_RADIUS * 0.18D;
         double endZ = SHELL_RADIUS * 0.42D;
-        double headX = lerp(startX, endX, progress);
-        double headY = lerp(startY, endY, progress);
-        double headZ = lerp(startZ, endZ, progress);
-        double tailX = lerp(startX, endX, Math.max(0.0F, progress - 0.18F));
-        double tailY = lerp(startY, endY, Math.max(0.0F, progress - 0.18F));
-        double tailZ = lerp(startZ, endZ, Math.max(0.0F, progress - 0.18F));
+        double headArc = Math.sin(Math.PI * progress);
+        double tailArc = Math.sin(Math.PI * tailProgress);
+        double headX = lerp(startX, endX, easedProgress);
+        double headY = lerp(startY, endY, easedProgress) + headArc * 0.28D;
+        double headZ = lerp(startZ, endZ, easedProgress) - headArc * 0.18D;
+        double tailX = lerp(startX, endX, easedTailProgress);
+        double tailY = lerp(startY, endY, easedTailProgress) + tailArc * 0.28D;
+        double tailZ = lerp(startZ, endZ, easedTailProgress) - tailArc * 0.18D;
 
         GlStateManager.pushMatrix();
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
         GlStateManager.glLineWidth(4.0F);
-        RenderHelper.drawLine(headX, headY, headZ, tailX, tailY, tailZ, 0x9CCBFF, 0.12F * fade);
+        RenderHelper.drawLine(headX, headY, headZ, tailX, tailY, tailZ, 0x9CCBFF, 0.085F * fade);
         GlStateManager.glLineWidth(2.0F);
-        RenderHelper.drawLine(headX, headY, headZ, tailX, tailY, tailZ, 0xDDEBFF, 0.34F * fade);
+        RenderHelper.drawLine(headX, headY, headZ, tailX, tailY, tailZ, 0xDDEBFF, 0.28F * fade);
         RenderHelper.resetLineWidth();
         GlStateManager.translate(headX, headY, headZ);
-        RenderHelper.drawSphere(0.070D, 0xFFFFFF, 0.80F * fade, 8, 8);
-        RenderHelper.drawSphere(0.130D, 0x75B8FF, 0.22F * fade, 8, 8);
+        RenderHelper.drawSphere(0.064D, 0xFFFFFF, 0.72F * fade, 8, 8);
+        RenderHelper.drawSphere(0.120D, 0x75B8FF, 0.18F * fade, 8, 8);
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
         GlStateManager.popMatrix();
     }
 
     private static double lerp(double start, double end, double progress) {
         return start + (end - start) * progress;
+    }
+
+    private static float smoothstep(float progress) {
+        return progress * progress * (3.0F - 2.0F * progress);
     }
 
     private static final class Planet {

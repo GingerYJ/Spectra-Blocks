@@ -8,7 +8,6 @@ uniform vec3 uStarColor;
 
 varying vec3 vNormal;
 varying vec3 vView;
-varying vec2 vUv;
 
 float hash(vec3 p) {
     return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
@@ -50,22 +49,23 @@ float fbm(vec3 p) {
 
 void main() {
     vec3 dir = normalize(vNormal);
-    vec3 drift = vec3(uTime * 0.010, -uTime * 0.004, uTime * 0.007);
-    float cloud = fbm(dir * 3.4 + drift);
-    float filament = fbm(dir * 9.0 - drift.zxy + cloud);
-    float nebula = smoothstep(0.43, 0.86, cloud * 0.72 + filament * 0.34);
+    vec3 drift = vec3(uTime * 0.0045, -uTime * 0.0018, uTime * 0.0030);
+    float cloud = fbm(dir * 3.2 + drift);
+    float filament = fbm(dir * 7.6 - drift.zxy + cloud * 0.62);
+    float nebula = smoothstep(0.48, 0.88, cloud * 0.76 + filament * 0.26);
 
-    vec2 cell = floor(vUv * vec2(96.0, 48.0));
-    float starSeed = hash(vec3(cell, floor(dir.y * 19.0)));
-    float star = step(0.986, starSeed);
-    float twinkle = 0.72 + 0.28 * sin(uTime * 0.11 + starSeed * 48.0);
+    vec3 starCell = floor((dir * 0.5 + 0.5) * 34.0);
+    float starSeed = hash(starCell);
+    float starShape = 1.0 - smoothstep(0.18, 0.42, length(fract((dir * 0.5 + 0.5) * 34.0) - 0.5));
+    float star = step(0.9865, starSeed) * starShape;
+    float twinkle = 0.82 + 0.18 * sin(uTime * 0.045 + starSeed * 48.0);
 
     vec3 viewDir = normalize(-vView);
     float rim = pow(1.0 - max(dot(normalize(vNormal), viewDir), 0.0), 2.2);
     vec3 color = mix(uShellColor, uNebulaColor, nebula);
-    color += uStarColor * star * twinkle * 1.45;
-    color += vec3(0.12, 0.20, 0.42) * rim * (0.25 + uPulse * 0.18);
+    color += uStarColor * star * twinkle * 1.25;
+    color += vec3(0.10, 0.18, 0.38) * rim * (0.22 + uPulse * 0.14);
 
-    float alpha = clamp(0.44 + nebula * 0.14 + star * 0.32 + rim * 0.08, 0.0, 0.92);
+    float alpha = clamp(0.40 + nebula * 0.12 + star * 0.24 + rim * 0.07, 0.0, 0.82);
     gl_FragColor = vec4(color, alpha);
 }

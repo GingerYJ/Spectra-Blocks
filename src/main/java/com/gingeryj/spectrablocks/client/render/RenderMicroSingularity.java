@@ -36,6 +36,61 @@ public class RenderMicroSingularity extends RenderSingularityBase<TileMicroSingu
     }
 
     @Override
+    protected float innerAnimationSpeed() {
+        return 0.62F;
+    }
+
+    @Override
+    protected float outerAnimationSpeed() {
+        return 0.24F;
+    }
+
+    @Override
+    protected float outerExpandRange() {
+        return 0.16F;
+    }
+
+    @Override
+    protected float innerAlphaBase() {
+        return 0.12F;
+    }
+
+    @Override
+    protected float innerAlphaRange() {
+        return 0.28F;
+    }
+
+    @Override
+    protected float outerAlphaBase() {
+        return 0.07F;
+    }
+
+    @Override
+    protected float outerAlphaRange() {
+        return 0.11F;
+    }
+
+    @Override
+    protected float innerGridAlpha() {
+        return 0.34F;
+    }
+
+    @Override
+    protected float outerGridAlpha() {
+        return 0.16F;
+    }
+
+    @Override
+    protected float innerRotationSpeed() {
+        return 0.38F;
+    }
+
+    @Override
+    protected float outerRotationSpeed() {
+        return 0.28F;
+    }
+
+    @Override
     protected double defaultRenderScale() {
         return ModConfig.microSingularityScale();
     }
