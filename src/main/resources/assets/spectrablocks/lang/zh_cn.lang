@@ -57,3 +57,6 @@ gui.spectrablocks.effect_configurator.range=允许范围：0.01 - 50.00
 tile.spectrablocks.phantom_eye.name=幻影之眼
 tile.spectrablocks.radiant_sigil_field.name=辉光符印场
 tile.spectrablocks.liquid_starlight_pool.name=流光星池
+tile.spectrablocks.nova_bloom.name=新星绽放
+tile.spectrablocks.ether_reactor_core.name=以太反应堆核心
+tile.spectrablocks.event_horizon_mirror.name=事件视界镜

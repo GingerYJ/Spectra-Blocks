@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GFG",
+    "SNS",
+    "GFG"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "F": {
+      "item": "minecraft:fire_charge"
+    },
+    "S": {
+      "item": "minecraft:blaze_powder"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    }
+  },
+  "result": {
+    "item": "spectrablocks:nova_bloom"
+  }
+}

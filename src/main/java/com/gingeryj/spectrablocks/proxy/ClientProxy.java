@@ -19,6 +19,8 @@ import com.gingeryj.spectrablocks.client.render.RenderEchoingVoidBell;
 import com.gingeryj.spectrablocks.client.render.RenderEmberBloom;
 import com.gingeryj.spectrablocks.client.render.RenderEnergyNexus;
 import com.gingeryj.spectrablocks.client.render.RenderEntropyCloud;
+import com.gingeryj.spectrablocks.client.render.RenderEtherReactorCore;
+import com.gingeryj.spectrablocks.client.render.RenderEventHorizonMirror;
 import com.gingeryj.spectrablocks.client.render.RenderFrostCrystalMist;
 import com.gingeryj.spectrablocks.client.render.RenderGravitationalLens;
 import com.gingeryj.spectrablocks.client.render.RenderGravityWell;
@@ -35,6 +37,7 @@ import com.gingeryj.spectrablocks.client.render.RenderMiniatureGalaxy;
 import com.gingeryj.spectrablocks.client.render.RenderMirrorShardField;
 import com.gingeryj.spectrablocks.client.render.RenderNebulaCore;
 import com.gingeryj.spectrablocks.client.render.RenderNeonCircuitCore;
+import com.gingeryj.spectrablocks.client.render.RenderNovaBloom;
 import com.gingeryj.spectrablocks.client.render.RenderPhantomEye;
 import com.gingeryj.spectrablocks.client.render.RenderPlasmaStorm;
 import com.gingeryj.spectrablocks.client.render.RenderPrismaticRainfall;
@@ -71,6 +74,8 @@ import com.gingeryj.spectrablocks.tile.TileEchoingVoidBell;
 import com.gingeryj.spectrablocks.tile.TileEmberBloom;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
+import com.gingeryj.spectrablocks.tile.TileEtherReactorCore;
+import com.gingeryj.spectrablocks.tile.TileEventHorizonMirror;
 import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
@@ -87,6 +92,7 @@ import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
 import com.gingeryj.spectrablocks.tile.TileMirrorShardField;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
+import com.gingeryj.spectrablocks.tile.TileNovaBloom;
 import com.gingeryj.spectrablocks.tile.TilePhantomEye;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
@@ -177,6 +183,9 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TilePhantomEye.class, new RenderPhantomEye());
         ClientRegistry.bindTileEntitySpecialRenderer(TileRadiantSigilField.class, new RenderRadiantSigilField());
         ClientRegistry.bindTileEntitySpecialRenderer(TileLiquidStarlightPool.class, new RenderLiquidStarlightPool());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileNovaBloom.class, new RenderNovaBloom());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEtherReactorCore.class, new RenderEtherReactorCore());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEventHorizonMirror.class, new RenderEventHorizonMirror());
     }
 
     @Override
@@ -237,6 +246,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.PHANTOM_EYE);
         registerBlockItemModel(ModContent.RADIANT_SIGIL_FIELD);
         registerBlockItemModel(ModContent.LIQUID_STARLIGHT_POOL);
+        registerBlockItemModel(ModContent.NOVA_BLOOM);
+        registerBlockItemModel(ModContent.ETHER_REACTOR_CORE);
+        registerBlockItemModel(ModContent.EVENT_HORIZON_MIRROR);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

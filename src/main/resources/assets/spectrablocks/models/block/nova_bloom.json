@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "all":  "spectrablocks:blocks/nova_bloom"
+                 },
+    "parent":  "block/cube_all"
+}

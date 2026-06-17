@@ -18,6 +18,8 @@ import com.gingeryj.spectrablocks.block.BlockEchoingVoidBell;
 import com.gingeryj.spectrablocks.block.BlockEmberBloom;
 import com.gingeryj.spectrablocks.block.BlockEnergyNexus;
 import com.gingeryj.spectrablocks.block.BlockEntropyCloud;
+import com.gingeryj.spectrablocks.block.BlockEtherReactorCore;
+import com.gingeryj.spectrablocks.block.BlockEventHorizonMirror;
 import com.gingeryj.spectrablocks.block.BlockFrostCrystalMist;
 import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
 import com.gingeryj.spectrablocks.block.BlockGravityWell;
@@ -34,6 +36,7 @@ import com.gingeryj.spectrablocks.block.BlockMiniatureGalaxy;
 import com.gingeryj.spectrablocks.block.BlockMirrorShardField;
 import com.gingeryj.spectrablocks.block.BlockNebulaCore;
 import com.gingeryj.spectrablocks.block.BlockNeonCircuitCore;
+import com.gingeryj.spectrablocks.block.BlockNovaBloom;
 import com.gingeryj.spectrablocks.block.BlockPhantomEye;
 import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
 import com.gingeryj.spectrablocks.block.BlockPrismaticRainfall;
@@ -70,6 +73,8 @@ import com.gingeryj.spectrablocks.tile.TileEchoingVoidBell;
 import com.gingeryj.spectrablocks.tile.TileEmberBloom;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
+import com.gingeryj.spectrablocks.tile.TileEtherReactorCore;
+import com.gingeryj.spectrablocks.tile.TileEventHorizonMirror;
 import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
@@ -86,6 +91,7 @@ import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
 import com.gingeryj.spectrablocks.tile.TileMirrorShardField;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
+import com.gingeryj.spectrablocks.tile.TileNovaBloom;
 import com.gingeryj.spectrablocks.tile.TilePhantomEye;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
@@ -170,6 +176,9 @@ public final class ModContent {
     public static final BlockPhantomEye PHANTOM_EYE = new BlockPhantomEye();
     public static final BlockRadiantSigilField RADIANT_SIGIL_FIELD = new BlockRadiantSigilField();
     public static final BlockLiquidStarlightPool LIQUID_STARLIGHT_POOL = new BlockLiquidStarlightPool();
+    public static final BlockNovaBloom NOVA_BLOOM = new BlockNovaBloom();
+    public static final BlockEtherReactorCore ETHER_REACTOR_CORE = new BlockEtherReactorCore();
+    public static final BlockEventHorizonMirror EVENT_HORIZON_MIRROR = new BlockEventHorizonMirror();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -228,7 +237,10 @@ public final class ModContent {
                 CRYSTAL_HARMONIC_RESONATOR,
                 PHANTOM_EYE,
                 RADIANT_SIGIL_FIELD,
-                LIQUID_STARLIGHT_POOL
+                LIQUID_STARLIGHT_POOL,
+                NOVA_BLOOM,
+                ETHER_REACTOR_CORE,
+                EVENT_HORIZON_MIRROR
         );
     }
 
@@ -286,6 +298,9 @@ public final class ModContent {
                 itemBlock(PHANTOM_EYE),
                 itemBlock(RADIANT_SIGIL_FIELD),
                 itemBlock(LIQUID_STARLIGHT_POOL),
+                itemBlock(NOVA_BLOOM),
+                itemBlock(ETHER_REACTOR_CORE),
+                itemBlock(EVENT_HORIZON_MIRROR),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -342,6 +357,9 @@ public final class ModContent {
         registerTileEntity(TilePhantomEye.class, "phantom_eye");
         registerTileEntity(TileRadiantSigilField.class, "radiant_sigil_field");
         registerTileEntity(TileLiquidStarlightPool.class, "liquid_starlight_pool");
+        registerTileEntity(TileNovaBloom.class, "nova_bloom");
+        registerTileEntity(TileEtherReactorCore.class, "ether_reactor_core");
+        registerTileEntity(TileEventHorizonMirror.class, "event_horizon_mirror");
     }
 
     private static ItemBlock itemBlock(Block block) {
