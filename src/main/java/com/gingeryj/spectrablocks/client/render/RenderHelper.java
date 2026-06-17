@@ -41,6 +41,11 @@ public final class RenderHelper {
             return;
         }
 
+        if (RenderQuality.low() && radius <= 0.075D) {
+            drawPoint(0.0D, 0.0D, 0.0D, radius <= 0.028D ? 1.0F : 2.0F, color, alpha * 1.12F);
+            return;
+        }
+
         latSegs = RenderQuality.scaleSegments(latSegs, 4, MAX_SPHERE_SEGMENTS);
         lonSegs = RenderQuality.scaleSegments(lonSegs, 4, MAX_SPHERE_SEGMENTS);
         alpha *= RenderQuality.alphaMultiplier();
@@ -198,6 +203,16 @@ public final class RenderHelper {
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_POINTS, DefaultVertexFormats.POSITION_COLOR);
         return new PointBatch(tessellator, buffer, RenderQuality.alphaMultiplier());
+    }
+
+    public static void drawPoint(double x, double y, double z, float pointSize, int color, float alpha) {
+        if (alpha <= 0.01F) {
+            return;
+        }
+
+        PointBatch points = beginPointBatch(pointSize);
+        points.add(x, y, z, color, alpha);
+        points.draw();
     }
 
     public static void resetLineWidth() {
