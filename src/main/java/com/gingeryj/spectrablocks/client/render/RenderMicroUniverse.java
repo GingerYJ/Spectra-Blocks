@@ -15,6 +15,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     private static final int SHELL_LON_SEGMENTS = 36;
     private static final int ORBIT_SEGMENTS = 192;
     private static final double ORBIT_SPEED_SCALE = 0.28D;
+    private static final int STAR_COUNT = 64;
+    private static final RenderHelper.BillboardPoint[] STARS =
+            RenderHelper.createBillboardPoints(STAR_COUNT);
     private static final ResourceLocation SUN_TEXTURE =
             new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/sun.png");
 
@@ -96,20 +99,21 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     }
 
     private void drawStars(float ticks) {
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i < STAR_COUNT; i++) {
             double yaw = i * 2.399963229728653D + ticks * 0.002D;
             double y = -0.92D + (i % 23) * 0.083D;
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));
             double radius = SHELL_RADIUS * 0.88D;
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(
+            STARS[i].set(
                     Math.cos(yaw) * horizontal * radius,
                     y * radius,
-                    Math.sin(yaw) * horizontal * radius
+                    Math.sin(yaw) * horizontal * radius,
+                    0.050D + (i % 4) * 0.014D,
+                    0xDDE7FF,
+                    0.62F
             );
-            RenderHelper.drawSphere(0.024D + (i % 4) * 0.007D, 0xDDE7FF, 0.65F, 7, 7);
-            GlStateManager.popMatrix();
         }
+        RenderHelper.drawBillboardGlowPoints(STARS, STAR_COUNT);
         RenderHelper.resetLineWidth();
     }
 

@@ -2,6 +2,8 @@ package com.gingeryj.spectrablocks.client.render;
 
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
@@ -152,6 +154,45 @@ public final class RenderHelper {
         tessellator.draw();
     }
 
+    public static BillboardPoint[] createBillboardPoints(int count) {
+        BillboardPoint[] points = new BillboardPoint[count];
+        for (int i = 0; i < count; i++) {
+            points[i] = new BillboardPoint();
+        }
+        return points;
+    }
+
+    public static void drawBillboardGlowPoints(BillboardPoint[] points, int count) {
+        if (count <= 0) {
+            return;
+        }
+
+        RenderManager renderManager = Minecraft.getMinecraft().getRenderManager();
+        double yaw = Math.toRadians(renderManager.playerViewY);
+        double pitch = Math.toRadians(renderManager.playerViewX);
+        if (Minecraft.getMinecraft().gameSettings.thirdPersonView == 2) {
+            pitch = -pitch;
+        }
+
+        double rightX = Math.cos(yaw);
+        double rightZ = -Math.sin(yaw);
+        double upX = Math.sin(yaw) * Math.sin(pitch);
+        double upY = Math.cos(pitch);
+        double upZ = Math.cos(yaw) * Math.sin(pitch);
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+        for (int i = 0; i < count; i++) {
+            BillboardPoint point = points[i];
+            if (point.alpha <= 0.01F || point.size <= 0.0D) {
+                continue;
+            }
+            addBillboardGlowPoint(buffer, point, rightX, rightZ, upX, upY, upZ);
+        }
+        tessellator.draw();
+    }
+
     private static double[] sphereVertex(double radius, double theta, double phi) {
         return new double[]{
                 radius * Math.sin(theta) * Math.cos(phi),
@@ -177,7 +218,65 @@ public final class RenderHelper {
         buffer.pos(c[0], c[1], c[2]).tex(cu, cv).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
     }
 
+    private static void addBillboardGlowPoint(BufferBuilder buffer, BillboardPoint point,
+                                              double rightX, double rightZ,
+                                              double upX, double upY, double upZ) {
+        float red = ((point.color >> 16) & 0xFF) / 255.0F;
+        float green = ((point.color >> 8) & 0xFF) / 255.0F;
+        float blue = (point.color & 0xFF) / 255.0F;
+        double size = point.size;
+
+        double leftX = point.x - rightX * size;
+        double leftY = point.y;
+        double leftZ = point.z - rightZ * size;
+        double rightPointX = point.x + rightX * size;
+        double rightPointY = point.y;
+        double rightPointZ = point.z + rightZ * size;
+        double upPointX = point.x + upX * size;
+        double upPointY = point.y + upY * size;
+        double upPointZ = point.z + upZ * size;
+        double downPointX = point.x - upX * size;
+        double downPointY = point.y - upY * size;
+        double downPointZ = point.z - upZ * size;
+
+        addGlowTriangle(buffer, point, leftX, leftY, leftZ, upPointX, upPointY, upPointZ,
+                red, green, blue);
+        addGlowTriangle(buffer, point, upPointX, upPointY, upPointZ, rightPointX, rightPointY, rightPointZ,
+                red, green, blue);
+        addGlowTriangle(buffer, point, rightPointX, rightPointY, rightPointZ, downPointX, downPointY, downPointZ,
+                red, green, blue);
+        addGlowTriangle(buffer, point, downPointX, downPointY, downPointZ, leftX, leftY, leftZ,
+                red, green, blue);
+    }
+
+    private static void addGlowTriangle(BufferBuilder buffer, BillboardPoint point,
+                                        double ax, double ay, double az,
+                                        double bx, double by, double bz,
+                                        float red, float green, float blue) {
+        buffer.pos(point.x, point.y, point.z).color(red, green, blue, point.alpha).endVertex();
+        buffer.pos(ax, ay, az).color(red, green, blue, 0.0F).endVertex();
+        buffer.pos(bx, by, bz).color(red, green, blue, 0.0F).endVertex();
+    }
+
     public static void resetLineWidth() {
         GlStateManager.glLineWidth(1.0F);
+    }
+
+    public static final class BillboardPoint {
+        private double x;
+        private double y;
+        private double z;
+        private double size;
+        private int color;
+        private float alpha;
+
+        public void set(double x, double y, double z, double size, int color, float alpha) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.size = size;
+            this.color = color;
+            this.alpha = alpha;
+        }
     }
 }

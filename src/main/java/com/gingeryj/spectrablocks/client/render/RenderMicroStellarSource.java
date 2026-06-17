@@ -13,6 +13,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
     private static final double SHELL_RADIUS = 5.45D;
     private static final double OUTER_HALO_RADIUS = 5.88D;
     private static final int PARTICLE_COUNT = 180;
+    private static final RenderHelper.BillboardPoint[] PARTICLES =
+            RenderHelper.createBillboardPoints(PARTICLE_COUNT);
     private static final ResourceLocation STELLAR_TEXTURE =
             new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/micro_stellar_source.png");
 
@@ -140,11 +142,10 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             float alpha = (float) (0.18D + flutter * 0.24D + surge * 0.45D);
             int color = surge > 0.62D ? 0xFFFFFF : (i % 3 == 0 ? 0xDDFEFF : 0x3DE5FF);
 
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(particleX, particleY, particleZ);
-            RenderHelper.drawSphere(size, color, alpha, 8, 8);
-            GlStateManager.popMatrix();
+            PARTICLES[i].set(particleX, particleY, particleZ, size * 2.15D, color, alpha);
         }
+
+        RenderHelper.drawBillboardGlowPoints(PARTICLES, PARTICLE_COUNT);
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
