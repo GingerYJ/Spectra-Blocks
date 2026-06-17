@@ -13,7 +13,7 @@ public final class ModConfig {
     private static final int DEFAULT_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 32;
     private static final int MIN_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 1;
     private static final int MAX_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 256;
-    private static final boolean DEFAULT_ENABLE_SHADER_EFFECTS = false;
+    private static final boolean DEFAULT_ENABLE_SHADER_EFFECTS = true;
 
     private static double microSingularityScale = DEFAULT_RENDER_SCALE;
     private static double microWhiteHoleScale = DEFAULT_RENDER_SCALE;
@@ -51,7 +51,7 @@ public final class ModConfig {
                     "enableShaderEffects",
                     CATEGORY_RENDERING,
                     DEFAULT_ENABLE_SHADER_EFFECTS,
-                    "\u542f\u7528\u5b9e\u9a8c\u6027 shader \u7279\u6548\u6e32\u67d3\u3002\u9ed8\u8ba4\u5173\u95ed\uff1b\u82e5 shader \u7f16\u8bd1\u6216\u94fe\u63a5\u5931\u8d25\uff0c\u5ba2\u6237\u7aef\u4f1a\u81ea\u52a8\u56de\u9000\u5230\u539f\u6709 Tessellator \u6e32\u67d3\u3002 / Enables experimental shader effect rendering. Disabled by default; if shader compile or link fails, the client falls back to the existing Tessellator renderers."
+                    "\u542f\u7528 shader \u89c6\u89c9\u7279\u6548\u6e32\u67d3\u3002\u9ed8\u8ba4\u5f00\u542f\uff1b\u5173\u95ed\u540e shader \u7279\u6548\u65b9\u5757\u5c06\u4e0d\u6e32\u67d3\uff0c\u4e0d\u518d\u4f7f\u7528\u56fa\u5b9a\u7ba1\u7ebf\u56de\u9000\u6e32\u67d3\u3002 / Enables shader visual effect rendering. Enabled by default; when disabled, shader effect blocks are not rendered and no fixed-pipeline fallback is used."
             );
         } finally {
             if (config.hasChanged()) {
