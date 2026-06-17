@@ -56,7 +56,7 @@ void main() {
 
     float pulse = 0.86 + 0.14 * sin(uTime * 2.8);
     float energy = (0.35 + cells * 0.58 + filaments * 0.45 + rim * 0.80) * uPulseAmount * pulse;
-    float alpha = clamp(0.72 + rim * 0.22 + filaments * 0.10, 0.0, 1.0);
+    float alpha = 1.0;
 
     gl_FragColor = vec4(plasma * energy, alpha);
 }

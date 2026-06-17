@@ -117,7 +117,9 @@ public final class RenderHelper {
         }
 
         boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
         GlStateManager.enableCull();
+        GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
         net.minecraft.client.Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
         SphereMesh mesh = sphereMesh(latSegs, lonSegs);
         Tessellator tessellator = Tessellator.getInstance();
@@ -130,6 +132,9 @@ public final class RenderHelper {
                     .endVertex();
         }
         tessellator.draw();
+        GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
+                ? GlStateManager.CullFace.FRONT
+                : GlStateManager.CullFace.BACK);
         if (!cullWasEnabled) {
             GlStateManager.disableCull();
         }

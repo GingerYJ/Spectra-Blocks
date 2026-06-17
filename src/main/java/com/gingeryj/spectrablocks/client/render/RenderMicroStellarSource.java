@@ -117,7 +117,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         GlStateManager.rotate(ticks * 0.34F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(9.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.enableCull();
-        GlStateManager.depthMask(true);
+        GlStateManager.cullFace(GlStateManager.CullFace.BACK);
+        GlStateManager.depthMask(false);
         GlStateManager.enableTexture2D();
         if (!drawShaderShell(ticks, pulse)) {
             RenderHelper.drawTexturedSphere(SHELL_RADIUS, STELLAR_TEXTURE, 1.0F, 56, 56);
@@ -168,11 +169,11 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
                 double phi0 = 2.0D * Math.PI * lon / lonSegs;
                 double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
                 addShaderSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addShaderSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
                 addShaderSphereVertex(buffer, radius, theta1, phi0, lon / (double) lonSegs, (lat + 1.0D) / latSegs);
+                addShaderSphereVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
                 addShaderSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
                 addShaderSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
-                addShaderSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
-                addShaderSphereVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
             }
         }
         tessellator.draw();
