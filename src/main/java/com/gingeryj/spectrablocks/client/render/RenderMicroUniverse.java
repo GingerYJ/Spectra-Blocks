@@ -60,7 +60,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         try {
             drawUniverseShell(ticks);
             drawSolarSystem(ticks);
-            drawMeteors(ticks);
+            if (!RenderQuality.low()) {
+                drawMeteors(ticks);
+            }
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -97,7 +99,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     }
 
     private void drawStars(float ticks) {
-        for (int i = 0; i < 36; i++) {
+        int starCount = RenderQuality.detailCount(36, 12);
+        for (int i = 0; i < starCount; i++) {
             double yaw = i * 2.399963229728653D + ticks * 0.002D;
             double y = -0.92D + (i % 23) * 0.083D;
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));
@@ -121,7 +124,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         drawSun(ticks);
 
-        for (Planet planet : PLANETS) {
+        int planetLimit = RenderQuality.low() ? 5 : PLANETS.length;
+        for (int i = 0; i < planetLimit; i++) {
+            Planet planet = PLANETS[i];
             drawGlowingOrbit(planet);
             double angle = ticks * planet.speed + planet.phase;
             double planetX = Math.cos(angle) * planet.orbitRadius;

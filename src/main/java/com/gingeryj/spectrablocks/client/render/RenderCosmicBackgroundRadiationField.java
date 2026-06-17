@@ -43,8 +43,9 @@ public class RenderCosmicBackgroundRadiationField
 
     private void drawContours(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < CONTOUR_COUNT; i++) {
-            double band = -0.82D + i * (1.64D / (CONTOUR_COUNT - 1));
+        int contourCount = RenderQuality.detailCount(CONTOUR_COUNT, 5);
+        for (int i = 0; i < contourCount; i++) {
+            double band = -0.82D + i * (1.64D / (contourCount - 1));
             double y = band * FIELD_RADIUS;
             int color = i % 3 == 0 ? 0xFFD6AC : (i % 3 == 1 ? 0xD9FFE9 : 0xBFD8FF);
             float alpha = 0.045F + 0.026F * wave(ticks * 0.010D + i * 0.61D);
@@ -55,7 +56,8 @@ public class RenderCosmicBackgroundRadiationField
             RenderHelper.resetLineWidth();
         }
 
-        for (int i = 0; i < 8; i++) {
+        int arcCount = RenderQuality.detailCount(8, 3);
+        for (int i = 0; i < arcCount; i++) {
             double startYaw = i * Math.PI * 0.31D + ticks * 0.0015D;
             double basePitch = -0.58D + i * 0.165D;
             int color = i % 2 == 0 ? 0xF3E9FF : 0xBEE9FF;
@@ -71,7 +73,8 @@ public class RenderCosmicBackgroundRadiationField
 
     private void drawNoise(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < NOISE_POINT_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < NOISE_POINT_COUNT; i += stride) {
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0009D + (i % 7) * 0.00008D);
             double yNorm = -0.98D + (i % 53) * (1.96D / 52.0D);
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - yNorm * yNorm));

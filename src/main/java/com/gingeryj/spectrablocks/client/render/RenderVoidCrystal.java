@@ -56,7 +56,9 @@ public class RenderVoidCrystal extends TileEntitySpecialRenderer<TileVoidCrystal
             drawCrystal(ticks);
             drawRuneRing(ticks);
             drawInwardParticles(ticks);
-            drawShortArcs(ticks);
+            if (!RenderQuality.low()) {
+                drawShortArcs(ticks);
+            }
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -144,7 +146,8 @@ public class RenderVoidCrystal extends TileEntitySpecialRenderer<TileVoidCrystal
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        for (int i = 0; i < INWARD_PARTICLE_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < INWARD_PARTICLE_COUNT; i += stride) {
             double progress = (ticks * PARTICLE_PULL_SPEED + i * 0.061D) % 1.0D;
             double radius = 2.35D * (1.0D - progress) + 0.20D;
             double angle = i * 2.399963229728653D + ticks * (0.012D + (i % 5) * 0.002D);
@@ -173,7 +176,8 @@ public class RenderVoidCrystal extends TileEntitySpecialRenderer<TileVoidCrystal
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        for (int i = 0; i < ARC_COUNT; i++) {
+        int arcCount = RenderQuality.detailCount(ARC_COUNT, 2);
+        for (int i = 0; i < arcCount; i++) {
             double phase = ticks * ARC_ROTATION_SPEED + i * 1.2566370614359172D;
             double arcPhase = (ticks * 0.013D + i * 0.21D) % 1.0D;
             float arcAlpha = (float) Math.sin(Math.PI * arcPhase) * 0.46F;

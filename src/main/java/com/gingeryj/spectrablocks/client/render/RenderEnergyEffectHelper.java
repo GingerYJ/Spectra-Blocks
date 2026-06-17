@@ -18,6 +18,8 @@ final class RenderEnergyEffectHelper {
             return;
         }
 
+        facets = RenderQuality.scaleSegments(facets, 6, 24);
+        alpha *= RenderQuality.alphaMultiplier();
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
@@ -51,6 +53,8 @@ final class RenderEnergyEffectHelper {
             return;
         }
 
+        facets = RenderQuality.scaleSegments(facets, 6, 24);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = RenderHelper.unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -82,6 +86,8 @@ final class RenderEnergyEffectHelper {
             return;
         }
 
+        segments = RenderQuality.scaleSegments(segments, 8, 96);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = RenderHelper.unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -101,6 +107,8 @@ final class RenderEnergyEffectHelper {
             return;
         }
 
+        count = RenderQuality.detailCount(count, 4);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = RenderHelper.unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -133,6 +141,8 @@ final class RenderEnergyEffectHelper {
             return;
         }
 
+        rayCount = RenderQuality.detailCount(rayCount, 4);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = RenderHelper.unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -157,6 +167,8 @@ final class RenderEnergyEffectHelper {
             return;
         }
 
+        segments = RenderQuality.scaleSegments(segments, 5, 80);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = RenderHelper.unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -181,6 +193,7 @@ final class RenderEnergyEffectHelper {
             return;
         }
 
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = RenderHelper.unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();

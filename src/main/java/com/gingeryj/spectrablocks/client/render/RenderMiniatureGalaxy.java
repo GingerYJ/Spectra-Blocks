@@ -57,7 +57,8 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
 
     private void drawStars(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < STAR_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < STAR_COUNT; i += stride) {
             double band = (i + 0.5D) / STAR_COUNT;
             double radius = 0.58D + Math.pow(band, 0.64D) * (GALAXY_RADIUS - 0.68D);
             double angle = i * GOLDEN_ANGLE + ticks * (0.0038D / (0.45D + radius));
@@ -84,7 +85,8 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
 
     private void drawTrailingClusters(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < TRAIL_COUNT; i++) {
+        int trailCount = RenderQuality.detailCount(TRAIL_COUNT, 4);
+        for (int i = 0; i < trailCount; i++) {
             double radius = 1.25D + i * 0.205D;
             double angle = i * GOLDEN_ANGLE + ticks * (0.0048D / radius);
             double trailAngle = angle - 0.34D;

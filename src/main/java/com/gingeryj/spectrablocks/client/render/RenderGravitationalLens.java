@@ -60,7 +60,9 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
             drawHalos(ticks);
             drawCaustics(ticks);
             drawOrbitParticles(ticks);
-            drawFocusFlash(ticks);
+            if (!RenderQuality.low()) {
+                drawFocusFlash(ticks);
+            }
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -106,7 +108,9 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
         GlStateManager.glLineWidth(1.5F);
         drawHaloCircle(HALO_RADIUS, 90.0F, 0.0F, HALO_COLOR, HALO_ALPHA * 0.48F);
         drawHaloCircle(HALO_RADIUS * 0.82D, 62.0F, 32.0F, CAUSTIC_COLOR, HALO_ALPHA * 0.42F);
-        drawHaloCircle(HALO_RADIUS * 1.08D, -54.0F, -24.0F, CAUSTIC_COLOR, HALO_ALPHA * 0.28F);
+        if (!RenderQuality.low()) {
+            drawHaloCircle(HALO_RADIUS * 1.08D, -54.0F, -24.0F, CAUSTIC_COLOR, HALO_ALPHA * 0.28F);
+        }
         RenderHelper.resetLineWidth();
     }
 
@@ -121,7 +125,8 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
     private void drawCaustics(float ticks) {
         useAdditiveBlend();
         GlStateManager.glLineWidth(1.5F);
-        for (int i = 0; i < ARC_COUNT; i++) {
+        int arcCount = RenderQuality.detailCount(ARC_COUNT, 3);
+        for (int i = 0; i < arcCount; i++) {
             double radius = 0.38D + i * 0.125D;
             double start = ticks * 0.010D + i * 0.73D;
             double span = Math.PI * (0.72D + (i % 3) * 0.18D);
@@ -132,7 +137,9 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
             GlStateManager.rotate(34.0F + i * 7.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(i * 29.0F - ticks * 0.018F, 0.0F, 1.0F, 0.0F);
             drawArc(radius, start, span, i % 2 == 0 ? CAUSTIC_COLOR : HALO_COLOR, alpha);
-            drawArc(radius * 1.08D, start + Math.PI, span * 0.62D, CAUSTIC_COLOR, alpha * 0.45F);
+            if (!RenderQuality.low()) {
+                drawArc(radius * 1.08D, start + Math.PI, span * 0.62D, CAUSTIC_COLOR, alpha * 0.45F);
+            }
             GlStateManager.popMatrix();
         }
         RenderHelper.resetLineWidth();
@@ -147,8 +154,9 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i <= ARC_SEGMENTS; i++) {
-            double progress = (double) i / ARC_SEGMENTS;
+        int segments = RenderQuality.scaleSegments(ARC_SEGMENTS, 10, ARC_SEGMENTS);
+        for (int i = 0; i <= segments; i++) {
+            double progress = (double) i / segments;
             double angle = startAngle + span * progress;
             double shimmer = Math.sin(progress * Math.PI * 3.0D + startAngle) * 0.025D;
             float fade = alpha * (float) Math.sin(progress * Math.PI);
@@ -162,7 +170,8 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
 
     private void drawOrbitParticles(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < ORBIT_PARTICLE_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < ORBIT_PARTICLE_COUNT; i += stride) {
             int orbit = i % 3;
             double angle = ticks * (ORBIT_SPEED + orbit * 0.006F) + i * Math.PI * 2.0D / ORBIT_PARTICLE_COUNT;
             double longRadius = 1.48D + orbit * 0.11D;
@@ -183,7 +192,8 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
         }
 
         GlStateManager.glLineWidth(1.0F);
-        for (int orbit = 0; orbit < 3; orbit++) {
+        int orbitCount = RenderQuality.low() ? 2 : 3;
+        for (int orbit = 0; orbit < orbitCount; orbit++) {
             GlStateManager.pushMatrix();
             GlStateManager.rotate(orbit * 39.0F - 22.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(orbit * 54.0F + 18.0F, 0.0F, 1.0F, 0.0F);
@@ -199,8 +209,9 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < CIRCLE_SEGMENTS; i++) {
-            double angle = Math.PI * 2.0D * i / CIRCLE_SEGMENTS;
+        int segments = RenderQuality.scaleSegments(CIRCLE_SEGMENTS, 16, CIRCLE_SEGMENTS);
+        for (int i = 0; i < segments; i++) {
+            double angle = Math.PI * 2.0D * i / segments;
             buffer.pos(Math.cos(angle) * longRadius, 0.0D, Math.sin(angle) * shortRadius)
                     .color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
         }

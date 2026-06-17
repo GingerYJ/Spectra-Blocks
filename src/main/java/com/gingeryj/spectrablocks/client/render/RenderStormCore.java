@@ -48,7 +48,8 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
 
     private void drawCloudMass(float ticks) {
         useAlphaBlend();
-        for (int i = 0; i < CLOUD_BLOB_COUNT; i++) {
+        int stride = RenderQuality.mediumOrLow() ? 2 : 1;
+        for (int i = 0; i < CLOUD_BLOB_COUNT; i += stride) {
             double progress = (i + 0.5D) / CLOUD_BLOB_COUNT;
             double angle = i * 2.399963229728653D + ticks * (CLOUD_ROTATION_SPEED + (i % 4) * 0.002F);
             double yNorm = -0.70D + (i % 17) * (1.40D / 16.0D);
@@ -75,7 +76,8 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
 
     private void drawWindBands(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < WIND_BAND_COUNT; i++) {
+        int bandCount = RenderQuality.detailCount(WIND_BAND_COUNT, 3);
+        for (int i = 0; i < bandCount; i++) {
             double radius = 1.30D + i * 0.36D;
             double startAngle = ticks * (WIND_ROTATION_SPEED + i * 0.007F) + i * 0.83D;
             double sweep = Math.PI * (1.20D + (i % 3) * 0.20D);
@@ -96,7 +98,9 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
         GlStateManager.rotate(78.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(ticks * -0.17F, 0.0F, 1.0F, 0.0F);
         RenderHelper.drawCircle(OUTER_WIND_RADIUS * 0.68D, 0xBFD7E3, 0.12F, RING_SEGMENTS);
-        RenderHelper.drawCircle(OUTER_WIND_RADIUS * 0.86D, 0xE8F6FF, 0.075F, RING_SEGMENTS);
+        if (!RenderQuality.low()) {
+            RenderHelper.drawCircle(OUTER_WIND_RADIUS * 0.86D, 0xE8F6FF, 0.075F, RING_SEGMENTS);
+        }
         GlStateManager.popMatrix();
         RenderHelper.resetLineWidth();
         useAlphaBlend();
@@ -104,7 +108,8 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
 
     private void drawLightning(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < ARC_COUNT; i++) {
+        int arcCount = RenderQuality.detailCount(ARC_COUNT, 3);
+        for (int i = 0; i < arcCount; i++) {
             double flashPhase = fract(ticks * LIGHTNING_CYCLE_SPEED + i * 0.173D);
             float flash = (float) Math.max(0.0D, Math.sin(Math.PI * flashPhase));
             double radius = 1.62D + (i % 4) * 0.38D;
@@ -121,7 +126,7 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
                     0.065D, 7, i % 2 == 0 ? 0xFFFFFF : 0xB7F0FF,
                     flash * 0.48F, ticks, 811 + i * 41);
 
-            if ((i & 1) == 0) {
+            if (!RenderQuality.mediumOrLow() && (i & 1) == 0) {
                 drawBranch(ticks, i, angle + length * 0.52D, radius, y + lift * 0.40D, flash);
             }
         }

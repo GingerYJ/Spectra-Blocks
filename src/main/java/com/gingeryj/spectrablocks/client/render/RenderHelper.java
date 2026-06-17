@@ -179,6 +179,7 @@ public final class RenderHelper {
             return;
         }
 
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();

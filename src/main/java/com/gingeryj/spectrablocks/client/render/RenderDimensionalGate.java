@@ -64,7 +64,9 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
 
         try {
             drawGatePlane(ticks, 0.0F);
-            drawGatePlane(ticks + 9.0F, 90.0F);
+            if (!RenderQuality.low()) {
+                drawGatePlane(ticks + 9.0F, 90.0F);
+            }
             drawEdgeRings(ticks);
             drawRuneRing(ticks);
         } finally {
@@ -98,8 +100,9 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
     }
 
     private void drawPortalCore(float ticks, double seed) {
-        for (int ring = CORE_RINGS; ring >= 1; ring--) {
-            double progress = (double) ring / CORE_RINGS;
+        int rings = RenderQuality.low() ? 5 : CORE_RINGS;
+        for (int ring = rings; ring >= 1; ring--) {
+            double progress = (double) ring / rings;
             double width = PORTAL_HALF_WIDTH * progress;
             double height = PORTAL_HALF_HEIGHT * progress;
             int color = ring < 4 ? CORE_INNER_COLOR : CORE_OUTER_COLOR;
@@ -121,8 +124,9 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
         buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
         buffer.pos(0.0D, 0.0D, depth)
                 .color(rgb[0], rgb[1], rgb[2], alpha * 0.92F).endVertex();
-        for (int i = 0; i <= ELLIPSE_SEGMENTS; i++) {
-            double angle = TWO_PI * i / ELLIPSE_SEGMENTS;
+        int segments = RenderQuality.scaleSegments(ELLIPSE_SEGMENTS, 18, ELLIPSE_SEGMENTS);
+        for (int i = 0; i <= segments; i++) {
+            double angle = TWO_PI * i / segments;
             double swirl = 1.0D
                     + Math.sin(angle * 4.0D + ticks * 0.036D + seed) * 0.040D
                     + Math.cos(angle * 7.0D - ticks * 0.025D + seed) * 0.020D;
@@ -136,7 +140,8 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
     }
 
     private void drawStarfield(float ticks, double seed) {
-        for (int i = 0; i < STAR_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < STAR_COUNT; i += stride) {
             double age = fract(ticks * STAR_FLOW_SPEED * (0.70D + (i % 5) * 0.08D) + i * 0.131D + seed);
             double radius = Math.sqrt(age);
             double angle = i * 2.399963229728653D + ticks * 0.012D + age * 1.6D;
@@ -162,8 +167,10 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
         GlStateManager.glLineWidth(2.0F);
         drawEllipseLine(PORTAL_HALF_WIDTH, PORTAL_HALF_HEIGHT,
                 EDGE_COLOR, RING_ALPHA, ticks, 1.7D);
-        drawEllipseLine(PORTAL_HALF_WIDTH * 0.83D, PORTAL_HALF_HEIGHT * 0.86D,
-                VIOLET_COLOR, RING_ALPHA * 0.36F, -ticks * 0.6F, 2.9D);
+        if (!RenderQuality.low()) {
+            drawEllipseLine(PORTAL_HALF_WIDTH * 0.83D, PORTAL_HALF_HEIGHT * 0.86D,
+                    VIOLET_COLOR, RING_ALPHA * 0.36F, -ticks * 0.6F, 2.9D);
+        }
         RenderHelper.resetLineWidth();
     }
 
@@ -176,8 +183,9 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < ELLIPSE_SEGMENTS; i++) {
-            double angle = TWO_PI * i / ELLIPSE_SEGMENTS;
+        int segments = RenderQuality.scaleSegments(ELLIPSE_SEGMENTS, 18, ELLIPSE_SEGMENTS);
+        for (int i = 0; i < segments; i++) {
+            double angle = TWO_PI * i / segments;
             double wave = 1.0D
                     + Math.sin(angle * 6.0D + ticks * 0.032D + seed) * 0.026D
                     + Math.cos(angle * 11.0D - ticks * 0.018D + seed) * 0.014D;
@@ -199,13 +207,15 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
         RenderHelper.resetLineWidth();
         GlStateManager.popMatrix();
 
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(-ticks * RING_ROTATION_SPEED * 0.62F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.glLineWidth(1.0F);
-        drawRunes(PORTAL_HALF_WIDTH + 0.31D, PORTAL_HALF_HEIGHT + 0.31D,
-                EDGE_COLOR, RUNE_ALPHA * 0.48F, RUNE_COUNT / 2, ticks + 17.0F);
-        RenderHelper.resetLineWidth();
-        GlStateManager.popMatrix();
+        if (!RenderQuality.low()) {
+            GlStateManager.pushMatrix();
+            GlStateManager.rotate(-ticks * RING_ROTATION_SPEED * 0.62F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.glLineWidth(1.0F);
+            drawRunes(PORTAL_HALF_WIDTH + 0.31D, PORTAL_HALF_HEIGHT + 0.31D,
+                    EDGE_COLOR, RUNE_ALPHA * 0.48F, RUNE_COUNT / 2, ticks + 17.0F);
+            RenderHelper.resetLineWidth();
+            GlStateManager.popMatrix();
+        }
     }
 
     private void drawRunes(double width, double height, int color, float alpha, int count, float ticks) {
@@ -217,6 +227,7 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+        count = RenderQuality.detailCount(count, 8);
         for (int i = 0; i < count; i++) {
             double angle = TWO_PI * i / count;
             double pulse = 0.70D + 0.30D * Math.sin(ticks * 0.080D + i);

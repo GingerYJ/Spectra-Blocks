@@ -36,7 +36,8 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * MATRIX_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        for (int i = 0; i < GRID_RING_COUNT; i++) {
+        int ringCount = RenderQuality.detailCount(GRID_RING_COUNT, 2);
+        for (int i = 0; i < ringCount; i++) {
             double radius = 0.72D + i * 0.54D;
             float alpha = 0.070F + 0.030F * wave(ticks * 0.041D + i);
             GlStateManager.glLineWidth(1.0F + i * 0.16F);
@@ -52,8 +53,10 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * MATRIX_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
-        for (int i = 0; i < COLUMN_COUNT; i++) {
-            double band = (i + 0.5D) / COLUMN_COUNT;
+        int columnCount = RenderQuality.detailCount(COLUMN_COUNT, 9);
+        int glyphCount = RenderQuality.mediumOrLow() ? 5 : GLYPHS_PER_COLUMN;
+        for (int i = 0; i < columnCount; i++) {
+            double band = (i + 0.5D) / columnCount;
             double angle = i * GOLDEN_ANGLE;
             double radius = 0.55D + Math.pow(band, 0.52D) * COLUMN_RADIUS;
             double x = Math.cos(angle) * radius;
@@ -62,8 +65,8 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
             int color = i % 3 == 0 ? SECONDARY_COLOR : PRIMARY_COLOR;
 
             drawColumnGuide(x, z, color, 0.045F + 0.025F * wave(ticks * 0.030D + i));
-            for (int j = 0; j < GLYPHS_PER_COLUMN; j++) {
-                double local = fract(drift + (double) j / GLYPHS_PER_COLUMN);
+            for (int j = 0; j < glyphCount; j++) {
+                double local = fract(drift + (double) j / glyphCount);
                 double y = COLUMN_HEIGHT * 0.5D - local * COLUMN_HEIGHT;
                 float fade = (float) Math.sin(Math.PI * local);
                 float alpha = (0.10F + 0.36F * fade) * (j == 0 ? 1.15F : 1.0F);
@@ -82,7 +85,8 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
 
     private void drawScanRings(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < 3; i++) {
+        int ringCount = RenderQuality.low() ? 1 : 3;
+        for (int i = 0; i < ringCount; i++) {
             double progress = fract(ticks * 0.010D + i * 0.333D);
             double y = 1.82D - progress * 3.64D;
             float fade = (float) Math.sin(Math.PI * progress);

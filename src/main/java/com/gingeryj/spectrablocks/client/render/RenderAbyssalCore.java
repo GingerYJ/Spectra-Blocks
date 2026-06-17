@@ -59,8 +59,9 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
 
     private void drawWaveRings(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < WAVE_RING_COUNT; i++) {
-            double progress = (i + 1.0D) / WAVE_RING_COUNT;
+        int ringCount = RenderQuality.detailCount(WAVE_RING_COUNT, 3);
+        for (int i = 0; i < ringCount; i++) {
+            double progress = (i + 1.0D) / ringCount;
             double y = -1.16D + i * 0.46D + Math.sin(ticks * 0.026D + i) * 0.055D;
             double baseRadius = 0.68D + progress * 2.10D;
             float pulse = wave(ticks * (0.028D + i * 0.003D) + i * 0.81D);
@@ -83,7 +84,8 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
 
     private void drawPlankton(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < PLANKTON_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < PLANKTON_COUNT; i += stride) {
             double band = (i + 0.5D) / PLANKTON_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (CURRENT_SPEED + (i % 5) * 0.0007D);
             double yNorm = -0.88D + (i % 41) * (1.76D / 40.0D);
@@ -110,7 +112,8 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
 
     private void drawRisingBubbles(float ticks) {
         useAlphaBlend();
-        for (int i = 0; i < 22; i++) {
+        int bubbleCount = RenderQuality.detailCount(22, 7);
+        for (int i = 0; i < bubbleCount; i++) {
             double progress = fract(i * 0.137D + ticks * 0.0036D);
             double yaw = i * GOLDEN_ANGLE + Math.sin(ticks * 0.010D + i) * 0.20D;
             double radius = 0.26D + (i % 6) * 0.19D;

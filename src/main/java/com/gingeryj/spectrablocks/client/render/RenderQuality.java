@@ -6,8 +6,8 @@ import net.minecraft.entity.Entity;
 final class RenderQuality {
 
     private static final ThreadLocal<Integer> QUALITY_LEVEL = ThreadLocal.withInitial(() -> 0);
-    private static final double MEDIUM_DISTANCE_SQUARED = 4096.0D;
-    private static final double LOW_DISTANCE_SQUARED = 16384.0D;
+    private static final double MEDIUM_DISTANCE_SQUARED = 576.0D;
+    private static final double LOW_DISTANCE_SQUARED = 2304.0D;
 
     private RenderQuality() {
     }
@@ -40,25 +40,51 @@ final class RenderQuality {
         return level() >= 2;
     }
 
+    static boolean mediumOrLow() {
+        return level() >= 1;
+    }
+
     static int scaleSegments(int value, int min, int max) {
         int clamped = Math.max(min, Math.min(value, max));
         int level = level();
         if (level == 1) {
-            return Math.max(min, (int) Math.ceil(clamped * 0.72D));
+            return Math.max(min, (int) Math.ceil(clamped * 0.58D));
         }
         if (level >= 2) {
-            return Math.max(min, (int) Math.ceil(clamped * 0.48D));
+            return Math.max(min, (int) Math.ceil(clamped * 0.32D));
         }
         return clamped;
+    }
+
+    static int detailCount(int value, int min) {
+        int level = level();
+        if (level == 1) {
+            return Math.max(min, (int) Math.ceil(value * 0.62D));
+        }
+        if (level >= 2) {
+            return Math.max(min, (int) Math.ceil(value * 0.34D));
+        }
+        return value;
+    }
+
+    static int detailStride() {
+        int level = level();
+        if (level == 1) {
+            return 2;
+        }
+        if (level >= 2) {
+            return 3;
+        }
+        return 1;
     }
 
     static float alphaMultiplier() {
         int level = level();
         if (level == 1) {
-            return 0.82F;
+            return 0.76F;
         }
         if (level >= 2) {
-            return 0.62F;
+            return 0.50F;
         }
         return 1.0F;
     }

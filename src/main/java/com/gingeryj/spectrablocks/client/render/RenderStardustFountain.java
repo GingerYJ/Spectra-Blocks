@@ -44,7 +44,8 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
 
     private void drawRisingStream(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < STREAM_PARTICLE_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < STREAM_PARTICLE_COUNT; i += stride) {
             double progress = fract(ticks * STREAM_RISE_SPEED + i * 0.031D);
             double angle = i * 2.399963229728653D + ticks * 0.032D;
             double radius = 0.10D + Math.sin(progress * Math.PI) * 0.22D + (i % 4) * 0.010D;
@@ -66,7 +67,8 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
 
     private void drawFallingStardust(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < FALLING_PARTICLE_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < FALLING_PARTICLE_COUNT; i += stride) {
             double progress = fract(ticks * FALL_CYCLE_SPEED + i * 0.019D);
             double angle = i * 2.399963229728653D + ticks * (0.011D + (i % 5) * 0.001D);
             double arc = Math.sin(progress * Math.PI);

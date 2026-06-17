@@ -69,14 +69,15 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * BEAM_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
-        for (int i = 0; i < BEAM_COUNT; i++) {
-            double angle = TWO_PI * i / BEAM_COUNT;
+        int beamCount = RenderQuality.detailCount(BEAM_COUNT, 4);
+        for (int i = 0; i < beamCount; i++) {
+            double angle = TWO_PI * i / beamCount;
             double tilt = Math.sin(ticks * 0.018D + i * 0.74D) * 0.28D;
             int color = SPECTRUM_COLORS[i % SPECTRUM_COLORS.length];
             float alpha = 0.12F + 0.06F * wave(ticks * 0.040D + i);
 
             drawBeam(angle, tilt, BEAM_INNER_RADIUS, BEAM_OUTER_RADIUS, BEAM_WIDTH, color, alpha);
-            if ((i & 1) == 0) {
+            if (!RenderQuality.low() && (i & 1) == 0) {
                 drawBeam(angle + 0.055D, -tilt * 0.72D, 0.48D, BEAM_OUTER_RADIUS * 0.82D,
                         BEAM_WIDTH * 0.56D, 0xFFFFFF, alpha * 0.42F);
             }
@@ -87,7 +88,8 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
 
     private void drawDust(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < DUST_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < DUST_COUNT; i += stride) {
             double band = (i + 0.5D) / DUST_COUNT;
             double angle = i * GOLDEN_ANGLE + ticks * (0.006D + (i % 4) * 0.0005D);
             double radius = 1.20D + Math.pow(band, 0.62D) * DUST_RADIUS;

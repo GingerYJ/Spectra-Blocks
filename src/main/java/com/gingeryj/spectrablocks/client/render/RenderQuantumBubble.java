@@ -65,7 +65,9 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
         try {
             drawShell(ticks);
             drawJumpingGrid(ticks);
-            drawOrbitArcs(ticks);
+            if (!RenderQuality.low()) {
+                drawOrbitArcs(ticks);
+            }
             drawFlashPoints(ticks);
         } finally {
             if (cullWasEnabled) {
@@ -113,15 +115,17 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
     }
 
     private void drawGrid(float ticks, int color, float alpha, double jitter) {
-        for (int lat = 1; lat < GRID_LAT_LINES; lat++) {
-            double theta = Math.PI * lat / GRID_LAT_LINES;
+        int latLines = RenderQuality.low() ? 4 : GRID_LAT_LINES;
+        int lonLines = RenderQuality.low() ? 7 : GRID_LON_LINES;
+        for (int lat = 1; lat < latLines; lat++) {
+            double theta = Math.PI * lat / latLines;
             double y = BUBBLE_RADIUS * Math.cos(theta);
             double radius = BUBBLE_RADIUS * Math.sin(theta);
             drawLatitude(radius, y, color, alpha, ticks, lat * 1.3D, jitter);
         }
 
-        for (int lon = 0; lon < GRID_LON_LINES; lon++) {
-            double phi = TWO_PI * lon / GRID_LON_LINES;
+        for (int lon = 0; lon < lonLines; lon++) {
+            double phi = TWO_PI * lon / lonLines;
             drawLongitude(phi, color, alpha * (lon % 3 == 0 ? 1.0F : 0.62F), ticks, lon * 0.91D, jitter);
         }
     }
@@ -136,8 +140,9 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < GRID_SEGMENTS; i++) {
-            double angle = TWO_PI * i / GRID_SEGMENTS;
+        int segments = RenderQuality.scaleSegments(GRID_SEGMENTS, 16, 96);
+        for (int i = 0; i < segments; i++) {
+            double angle = TWO_PI * i / segments;
             double hop = Math.sin(angle * 8.0D + ticks * 0.080D + seed) * jitter;
             double localRadius = radius + hop;
             double localY = y + Math.cos(angle * 5.0D - ticks * 0.060D + seed) * jitter * 0.45D;
@@ -157,8 +162,9 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i <= GRID_SEGMENTS; i++) {
-            double theta = Math.PI * i / GRID_SEGMENTS;
+        int segments = RenderQuality.scaleSegments(GRID_SEGMENTS, 16, 96);
+        for (int i = 0; i <= segments; i++) {
+            double theta = Math.PI * i / segments;
             double pulse = Math.sin(theta * 9.0D - ticks * 0.090D + seed) * jitter;
             double radius = BUBBLE_RADIUS + pulse;
             double horizontal = Math.sin(theta) * radius;
@@ -173,7 +179,8 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
 
     private void drawOrbitArcs(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < ORBIT_ARC_COUNT; i++) {
+        int arcCount = RenderQuality.detailCount(ORBIT_ARC_COUNT, 2);
+        for (int i = 0; i < arcCount; i++) {
             GlStateManager.pushMatrix();
             GlStateManager.rotate(36.0F + i * 28.0F + ticks * (0.22F + i * 0.04F), 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(i * 61.0F - ticks * 0.31F, 0.0F, 1.0F, 0.0F);
@@ -198,8 +205,9 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
         BufferBuilder buffer = tessellator.getBuffer();
         double start = ticks * 0.018D + seed;
         buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i <= ORBIT_SEGMENTS; i++) {
-            double progress = (double) i / ORBIT_SEGMENTS;
+        int segments = RenderQuality.scaleSegments(ORBIT_SEGMENTS, 12, 84);
+        for (int i = 0; i <= segments; i++) {
+            double progress = (double) i / segments;
             double angle = start + progress * sweep;
             float fade = (float) Math.sin(progress * Math.PI);
             buffer.pos(Math.cos(angle) * radius,
@@ -212,7 +220,8 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
 
     private void drawFlashPoints(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < FLASH_POINT_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < FLASH_POINT_COUNT; i += stride) {
             double yaw = i * 2.399963229728653D + Math.sin(i * 1.7D) * 0.24D;
             double pitch = Math.asin(-0.92D + 1.84D * fract(i * 0.61803398875D));
             double pulse = Math.max(0.0D, Math.sin(ticks * (0.10D + (i % 5) * 0.018D) + i * 1.33D));

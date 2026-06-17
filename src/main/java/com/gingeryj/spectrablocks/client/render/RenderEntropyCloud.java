@@ -21,7 +21,8 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
 
     private void drawCloudBody(float ticks) {
         useAlphaBlend();
-        for (int i = 0; i < CLOUD_LAYER_COUNT; i++) {
+        int layers = RenderQuality.low() ? Math.max(3, CLOUD_LAYER_COUNT - 2) : CLOUD_LAYER_COUNT;
+        for (int i = 0; i < layers; i++) {
             float pulse = wave(ticks * (0.021D + i * 0.004D) + i * 0.91D);
             double radius = 1.44D + i * 0.33D + pulse * 0.16D;
             int color = i % 3 == 0 ? 0xF4F5F0 : (i % 3 == 1 ? 0xB9BCBB : 0x777B80);
@@ -43,7 +44,8 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
 
     private void drawNoiseNodes(float ticks) {
         useAlphaBlend();
-        for (int i = 0; i < CLOUD_NODE_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < CLOUD_NODE_COUNT; i += stride) {
             double band = (i + 0.5D) / CLOUD_NODE_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0035D + (i % 5) * 0.0007D);
             double yNorm = -0.94D + (i % 41) * (1.88D / 40.0D);
@@ -65,7 +67,8 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
 
     private void drawBlackCracks(float ticks) {
         useAlphaBlend();
-        for (int i = 0; i < CRACK_COUNT; i++) {
+        int crackCount = RenderQuality.detailCount(CRACK_COUNT, 3);
+        for (int i = 0; i < crackCount; i++) {
             double cycle = fract(ticks * (0.010D + i * 0.0012D) + i * 0.173D);
             float flash = (float) Math.max(0.0D, Math.sin(Math.PI * cycle));
             flash = flash * flash * flash;

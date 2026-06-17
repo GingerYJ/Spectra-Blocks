@@ -47,7 +47,9 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         try {
             drawCore(ticks);
             drawOuterRadiance(ticks);
-            drawActiveParticles(ticks);
+            if (!RenderQuality.low()) {
+                drawActiveParticles(ticks);
+            }
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -123,7 +125,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        for (int i = 0; i < PARTICLE_COUNT; i++) {
+        int stride = RenderQuality.mediumOrLow() ? 2 : 1;
+        for (int i = 0; i < PARTICLE_COUNT; i += stride) {
             double baseYaw = i * 2.399963229728653D;
             double y = -0.96D + (i % 32) * (1.92D / 31.0D);
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));

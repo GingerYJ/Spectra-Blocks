@@ -54,7 +54,8 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
 
     private void drawProminences(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < PROMINENCE_COUNT; i++) {
+        int prominenceCount = RenderQuality.detailCount(PROMINENCE_COUNT, 4);
+        for (int i = 0; i < prominenceCount; i++) {
             double cycle = fract(ticks * (0.018D + (i % 4) * 0.002D) + i * 0.137D);
             float surge = (float) Math.sin(Math.PI * cycle);
             surge = surge * surge;
@@ -90,7 +91,8 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
 
     private void drawExpelledSparks(float ticks) {
         useAdditiveBlend();
-        for (int i = 0; i < SPARK_COUNT; i++) {
+        int stride = RenderQuality.detailStride();
+        for (int i = 0; i < SPARK_COUNT; i += stride) {
             double progress = fract(ticks * (0.006D + (i % 5) * 0.0009D) + i * 0.061D);
             double yaw = i * GOLDEN_ANGLE + ticks * (0.004D + (i % 3) * 0.001D);
             double yNorm = -0.88D + (i % 31) * (1.76D / 30.0D);
