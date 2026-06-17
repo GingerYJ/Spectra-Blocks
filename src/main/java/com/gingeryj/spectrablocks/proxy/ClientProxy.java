@@ -14,6 +14,7 @@ import com.gingeryj.spectrablocks.client.render.RenderCrystalRefractionField;
 import com.gingeryj.spectrablocks.client.render.RenderDataStreamMatrix;
 import com.gingeryj.spectrablocks.client.render.RenderDimensionalGate;
 import com.gingeryj.spectrablocks.client.render.RenderDreamShards;
+import com.gingeryj.spectrablocks.client.render.RenderEchoingVoidBell;
 import com.gingeryj.spectrablocks.client.render.RenderEmberBloom;
 import com.gingeryj.spectrablocks.client.render.RenderEnergyNexus;
 import com.gingeryj.spectrablocks.client.render.RenderEntropyCloud;
@@ -22,6 +23,7 @@ import com.gingeryj.spectrablocks.client.render.RenderGravitationalLens;
 import com.gingeryj.spectrablocks.client.render.RenderGravityWell;
 import com.gingeryj.spectrablocks.client.render.RenderHologramField;
 import com.gingeryj.spectrablocks.client.render.RenderImaginaryCube;
+import com.gingeryj.spectrablocks.client.render.RenderMagneticFluxCage;
 import com.gingeryj.spectrablocks.client.render.RenderMicroSingularity;
 import com.gingeryj.spectrablocks.client.render.RenderMicroStellarSource;
 import com.gingeryj.spectrablocks.client.render.RenderMicroUniverse;
@@ -31,6 +33,7 @@ import com.gingeryj.spectrablocks.client.render.RenderMirrorShardField;
 import com.gingeryj.spectrablocks.client.render.RenderNebulaCore;
 import com.gingeryj.spectrablocks.client.render.RenderNeonCircuitCore;
 import com.gingeryj.spectrablocks.client.render.RenderPlasmaStorm;
+import com.gingeryj.spectrablocks.client.render.RenderPrismaticRainfall;
 import com.gingeryj.spectrablocks.client.render.RenderQuantumBubble;
 import com.gingeryj.spectrablocks.client.render.RenderRuneObelisk;
 import com.gingeryj.spectrablocks.client.render.RenderSolarCoronaBurst;
@@ -57,6 +60,7 @@ import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import com.gingeryj.spectrablocks.tile.TileDataStreamMatrix;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
+import com.gingeryj.spectrablocks.tile.TileEchoingVoidBell;
 import com.gingeryj.spectrablocks.tile.TileEmberBloom;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
@@ -65,6 +69,7 @@ import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
+import com.gingeryj.spectrablocks.tile.TileMagneticFluxCage;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
 import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
@@ -74,6 +79,7 @@ import com.gingeryj.spectrablocks.tile.TileMirrorShardField;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
+import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
@@ -149,6 +155,9 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileMirrorShardField.class, new RenderMirrorShardField());
         ClientRegistry.bindTileEntitySpecialRenderer(TileEmberBloom.class, new RenderEmberBloom());
         ClientRegistry.bindTileEntitySpecialRenderer(TileGravityWell.class, new RenderGravityWell());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEchoingVoidBell.class, new RenderEchoingVoidBell());
+        ClientRegistry.bindTileEntitySpecialRenderer(TilePrismaticRainfall.class, new RenderPrismaticRainfall());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileMagneticFluxCage.class, new RenderMagneticFluxCage());
     }
 
     @Override
@@ -200,6 +209,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.MIRROR_SHARD_FIELD);
         registerBlockItemModel(ModContent.EMBER_BLOOM);
         registerBlockItemModel(ModContent.GRAVITY_WELL);
+        registerBlockItemModel(ModContent.ECHOING_VOID_BELL);
+        registerBlockItemModel(ModContent.PRISMATIC_RAINFALL);
+        registerBlockItemModel(ModContent.MAGNETIC_FLUX_CAGE);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

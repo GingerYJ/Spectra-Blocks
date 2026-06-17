@@ -13,6 +13,7 @@ import com.gingeryj.spectrablocks.block.BlockCrystalRefractionField;
 import com.gingeryj.spectrablocks.block.BlockDataStreamMatrix;
 import com.gingeryj.spectrablocks.block.BlockDimensionalGate;
 import com.gingeryj.spectrablocks.block.BlockDreamShards;
+import com.gingeryj.spectrablocks.block.BlockEchoingVoidBell;
 import com.gingeryj.spectrablocks.block.BlockEmberBloom;
 import com.gingeryj.spectrablocks.block.BlockEnergyNexus;
 import com.gingeryj.spectrablocks.block.BlockEntropyCloud;
@@ -21,6 +22,7 @@ import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
 import com.gingeryj.spectrablocks.block.BlockGravityWell;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
+import com.gingeryj.spectrablocks.block.BlockMagneticFluxCage;
 import com.gingeryj.spectrablocks.block.BlockMicroSingularity;
 import com.gingeryj.spectrablocks.block.BlockMicroStellarSource;
 import com.gingeryj.spectrablocks.block.BlockMicroUniverse;
@@ -30,6 +32,7 @@ import com.gingeryj.spectrablocks.block.BlockMirrorShardField;
 import com.gingeryj.spectrablocks.block.BlockNebulaCore;
 import com.gingeryj.spectrablocks.block.BlockNeonCircuitCore;
 import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
+import com.gingeryj.spectrablocks.block.BlockPrismaticRainfall;
 import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
 import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
@@ -56,6 +59,7 @@ import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import com.gingeryj.spectrablocks.tile.TileDataStreamMatrix;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
+import com.gingeryj.spectrablocks.tile.TileEchoingVoidBell;
 import com.gingeryj.spectrablocks.tile.TileEmberBloom;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
@@ -64,6 +68,7 @@ import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
+import com.gingeryj.spectrablocks.tile.TileMagneticFluxCage;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
 import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
@@ -73,6 +78,7 @@ import com.gingeryj.spectrablocks.tile.TileMirrorShardField;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
+import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
@@ -142,6 +148,9 @@ public final class ModContent {
     public static final BlockMirrorShardField MIRROR_SHARD_FIELD = new BlockMirrorShardField();
     public static final BlockEmberBloom EMBER_BLOOM = new BlockEmberBloom();
     public static final BlockGravityWell GRAVITY_WELL = new BlockGravityWell();
+    public static final BlockEchoingVoidBell ECHOING_VOID_BELL = new BlockEchoingVoidBell();
+    public static final BlockPrismaticRainfall PRISMATIC_RAINFALL = new BlockPrismaticRainfall();
+    public static final BlockMagneticFluxCage MAGNETIC_FLUX_CAGE = new BlockMagneticFluxCage();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -191,7 +200,10 @@ public final class ModContent {
                 NEON_CIRCUIT_CORE,
                 MIRROR_SHARD_FIELD,
                 EMBER_BLOOM,
-                GRAVITY_WELL
+                GRAVITY_WELL,
+                ECHOING_VOID_BELL,
+                PRISMATIC_RAINFALL,
+                MAGNETIC_FLUX_CAGE
         );
     }
 
@@ -240,6 +252,9 @@ public final class ModContent {
                 itemBlock(MIRROR_SHARD_FIELD),
                 itemBlock(EMBER_BLOOM),
                 itemBlock(GRAVITY_WELL),
+                itemBlock(ECHOING_VOID_BELL),
+                itemBlock(PRISMATIC_RAINFALL),
+                itemBlock(MAGNETIC_FLUX_CAGE),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -287,6 +302,9 @@ public final class ModContent {
         registerTileEntity(TileMirrorShardField.class, "mirror_shard_field");
         registerTileEntity(TileEmberBloom.class, "ember_bloom");
         registerTileEntity(TileGravityWell.class, "gravity_well");
+        registerTileEntity(TileEchoingVoidBell.class, "echoing_void_bell");
+        registerTileEntity(TilePrismaticRainfall.class, "prismatic_rainfall");
+        registerTileEntity(TileMagneticFluxCage.class, "magnetic_flux_cage");
     }
 
     private static ItemBlock itemBlock(Block block) {
