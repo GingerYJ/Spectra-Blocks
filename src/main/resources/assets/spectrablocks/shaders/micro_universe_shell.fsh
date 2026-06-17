@@ -63,14 +63,14 @@ void main() {
     float filament = fbm(dir * 7.6 - drift.zxy + cloud * 0.62);
     float nebula = smoothstep(0.62, 0.98, cloud * 0.62 + filament * 0.18);
 
-    vec3 slowDrift = vec3(sin(uTime * 0.0025), cos(uTime * 0.0018), sin(uTime * 0.0022 + 1.7)) * 0.008;
-    vec3 fastDrift = vec3(cos(uTime * 0.0040 + 0.6), sin(uTime * 0.0032), cos(uTime * 0.0030 + 2.1)) * 0.012;
+    vec3 slowDrift = vec3(sin(uTime * 0.0014), cos(uTime * 0.0010), sin(uTime * 0.0012 + 1.7)) * 0.006;
+    vec3 fastDrift = vec3(cos(uTime * 0.0022 + 0.6), sin(uTime * 0.0018), cos(uTime * 0.0016 + 2.1)) * 0.009;
     float starSeed;
     float fineSeed;
     float star = starLayer(dir, 84.0, 0.955, slowDrift, starSeed);
     float fineStar = starLayer(dir, 132.0, 0.972, fastDrift + vec3(0.13, 0.07, 0.19), fineSeed);
-    float twinkleWave = 0.5 + 0.5 * sin(uTime * (0.070 + starSeed * 0.105) + starSeed * 91.0);
-    float fineTwinkle = 0.5 + 0.5 * sin(uTime * (0.095 + fineSeed * 0.125) + fineSeed * 127.0);
+    float twinkleWave = 0.5 + 0.5 * sin(uTime * (0.022 + starSeed * 0.035) + starSeed * 91.0);
+    float fineTwinkle = 0.5 + 0.5 * sin(uTime * (0.030 + fineSeed * 0.045) + fineSeed * 127.0);
     float twinkle = smoothstep(0.18, 1.0, twinkleWave);
     float fineFlash = smoothstep(0.42, 1.0, fineTwinkle);
     float brightStar = star * step(0.992, starSeed) * (0.45 + twinkle * 0.95);
