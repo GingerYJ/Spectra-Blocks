@@ -23,6 +23,7 @@ import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
 import com.gingeryj.spectrablocks.block.BlockGravityWell;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
+import com.gingeryj.spectrablocks.block.BlockLiquidStarlightPool;
 import com.gingeryj.spectrablocks.block.BlockLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.block.BlockMagneticFluxCage;
 import com.gingeryj.spectrablocks.block.BlockMicroSingularity;
@@ -33,9 +34,11 @@ import com.gingeryj.spectrablocks.block.BlockMiniatureGalaxy;
 import com.gingeryj.spectrablocks.block.BlockMirrorShardField;
 import com.gingeryj.spectrablocks.block.BlockNebulaCore;
 import com.gingeryj.spectrablocks.block.BlockNeonCircuitCore;
+import com.gingeryj.spectrablocks.block.BlockPhantomEye;
 import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
 import com.gingeryj.spectrablocks.block.BlockPrismaticRainfall;
 import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
+import com.gingeryj.spectrablocks.block.BlockRadiantSigilField;
 import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
 import com.gingeryj.spectrablocks.block.BlockShadowFlameLantern;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
@@ -72,6 +75,7 @@ import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
+import com.gingeryj.spectrablocks.tile.TileLiquidStarlightPool;
 import com.gingeryj.spectrablocks.tile.TileLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.tile.TileMagneticFluxCage;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
@@ -82,9 +86,11 @@ import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
 import com.gingeryj.spectrablocks.tile.TileMirrorShardField;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
+import com.gingeryj.spectrablocks.tile.TilePhantomEye;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
+import com.gingeryj.spectrablocks.tile.TileRadiantSigilField;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
@@ -161,6 +167,9 @@ public final class ModContent {
     public static final BlockLunarPhaseOrrery LUNAR_PHASE_ORRERY = new BlockLunarPhaseOrrery();
     public static final BlockCrystalHarmonicResonator CRYSTAL_HARMONIC_RESONATOR =
             new BlockCrystalHarmonicResonator();
+    public static final BlockPhantomEye PHANTOM_EYE = new BlockPhantomEye();
+    public static final BlockRadiantSigilField RADIANT_SIGIL_FIELD = new BlockRadiantSigilField();
+    public static final BlockLiquidStarlightPool LIQUID_STARLIGHT_POOL = new BlockLiquidStarlightPool();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -216,7 +225,10 @@ public final class ModContent {
                 MAGNETIC_FLUX_CAGE,
                 SHADOW_FLAME_LANTERN,
                 LUNAR_PHASE_ORRERY,
-                CRYSTAL_HARMONIC_RESONATOR
+                CRYSTAL_HARMONIC_RESONATOR,
+                PHANTOM_EYE,
+                RADIANT_SIGIL_FIELD,
+                LIQUID_STARLIGHT_POOL
         );
     }
 
@@ -271,6 +283,9 @@ public final class ModContent {
                 itemBlock(SHADOW_FLAME_LANTERN),
                 itemBlock(LUNAR_PHASE_ORRERY),
                 itemBlock(CRYSTAL_HARMONIC_RESONATOR),
+                itemBlock(PHANTOM_EYE),
+                itemBlock(RADIANT_SIGIL_FIELD),
+                itemBlock(LIQUID_STARLIGHT_POOL),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -324,6 +339,9 @@ public final class ModContent {
         registerTileEntity(TileShadowFlameLantern.class, "shadow_flame_lantern");
         registerTileEntity(TileLunarPhaseOrrery.class, "lunar_phase_orrery");
         registerTileEntity(TileCrystalHarmonicResonator.class, "crystal_harmonic_resonator");
+        registerTileEntity(TilePhantomEye.class, "phantom_eye");
+        registerTileEntity(TileRadiantSigilField.class, "radiant_sigil_field");
+        registerTileEntity(TileLiquidStarlightPool.class, "liquid_starlight_pool");
     }
 
     private static ItemBlock itemBlock(Block block) {

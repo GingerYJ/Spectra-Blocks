@@ -1,4 +1,4 @@
-tile.spectrablocks.micro_singularity.name=微型黑洞
+﻿tile.spectrablocks.micro_singularity.name=微型黑洞
 tile.spectrablocks.micro_white_hole.name=微型白洞
 tile.spectrablocks.micro_universe.name=微缩宇宙
 tile.spectrablocks.micro_stellar_source.name=微缩恒星源
@@ -54,3 +54,6 @@ gui.spectrablocks.effect_configurator.title=光谱特效调节器
 gui.spectrablocks.effect_configurator.apply=应用
 gui.spectrablocks.effect_configurator.reset=重置 1.0
 gui.spectrablocks.effect_configurator.range=允许范围：0.01 - 50.00
+tile.spectrablocks.phantom_eye.name=幻影之眼
+tile.spectrablocks.radiant_sigil_field.name=辉光符印场
+tile.spectrablocks.liquid_starlight_pool.name=流光星池
