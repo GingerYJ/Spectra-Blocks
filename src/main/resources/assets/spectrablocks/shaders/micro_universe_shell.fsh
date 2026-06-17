@@ -47,32 +47,43 @@ float fbm(vec3 p) {
     return value;
 }
 
+float starLayer(vec3 dir, float density, float threshold, vec3 offset, out float seed) {
+    vec3 coord = dir * 0.5 + 0.5 + offset;
+    vec3 cell = floor(coord * density);
+    vec3 local = fract(coord * density) - 0.5;
+    seed = hash(cell);
+    float shape = 1.0 - smoothstep(0.10, 0.34, length(local));
+    return step(threshold, seed) * shape;
+}
+
 void main() {
     vec3 dir = normalize(vNormal);
     vec3 drift = vec3(uTime * 0.0045, -uTime * 0.0018, uTime * 0.0030);
     float cloud = fbm(dir * 3.2 + drift);
     float filament = fbm(dir * 7.6 - drift.zxy + cloud * 0.62);
-    float nebula = smoothstep(0.55, 0.94, cloud * 0.70 + filament * 0.22);
+    float nebula = smoothstep(0.62, 0.98, cloud * 0.62 + filament * 0.18);
 
-    vec3 starCell = floor((dir * 0.5 + 0.5) * 72.0);
-    float starSeed = hash(starCell);
-    float starShape = 1.0 - smoothstep(0.12, 0.35, length(fract((dir * 0.5 + 0.5) * 72.0) - 0.5));
-    float star = step(0.962, starSeed) * starShape;
-    float twinkleWave = 0.5 + 0.5 * sin(uTime * 0.085 + starSeed * 72.0);
-    float twinkle = 0.56 + 0.62 * twinkleWave * twinkleWave;
-    float brightStar = step(0.995, starSeed) * starShape;
-    float fineSeed = hash(floor((dir * 0.5 + 0.5) * 112.0) + vec3(17.0, 3.0, 29.0));
-    float fineStar = step(0.976, fineSeed) *
-            (1.0 - smoothstep(0.10, 0.32, length(fract((dir * 0.5 + 0.5) * 112.0) - 0.5)));
+    vec3 slowDrift = vec3(sin(uTime * 0.006), cos(uTime * 0.004), sin(uTime * 0.005 + 1.7)) * 0.010;
+    vec3 fastDrift = vec3(cos(uTime * 0.010 + 0.6), sin(uTime * 0.008), cos(uTime * 0.007 + 2.1)) * 0.016;
+    float starSeed;
+    float fineSeed;
+    float star = starLayer(dir, 84.0, 0.955, slowDrift, starSeed);
+    float fineStar = starLayer(dir, 132.0, 0.972, fastDrift + vec3(0.13, 0.07, 0.19), fineSeed);
+    float twinkleWave = 0.5 + 0.5 * sin(uTime * (0.24 + starSeed * 0.35) + starSeed * 91.0);
+    float fineTwinkle = 0.5 + 0.5 * sin(uTime * (0.32 + fineSeed * 0.42) + fineSeed * 127.0);
+    float twinkle = smoothstep(0.18, 1.0, twinkleWave);
+    float fineFlash = smoothstep(0.42, 1.0, fineTwinkle);
+    float brightStar = star * step(0.992, starSeed) * (0.45 + twinkle * 0.95);
 
     vec3 viewDir = normalize(-vView);
     float rim = pow(1.0 - max(dot(normalize(vNormal), viewDir), 0.0), 2.2);
-    vec3 color = mix(uShellColor, uNebulaColor, nebula * 0.58);
-    color += uStarColor * star * twinkle * 1.85;
-    color += uStarColor * fineStar * (0.55 + twinkleWave * 0.35);
-    color += vec3(0.74, 0.86, 1.0) * brightStar * (0.75 + twinkleWave * 0.80);
-    color += vec3(0.035, 0.070, 0.17) * rim * (0.12 + uPulse * 0.08);
+    vec3 color = mix(uShellColor, uNebulaColor, nebula * 0.35);
+    color += uStarColor * star * (0.18 + twinkle * 1.95);
+    color += uStarColor * fineStar * (0.08 + fineFlash * 1.10);
+    color += vec3(0.74, 0.86, 1.0) * brightStar * (0.90 + twinkle * 0.90);
+    color += vec3(0.018, 0.036, 0.090) * rim * (0.08 + uPulse * 0.05);
 
-    float alpha = clamp(0.73 + nebula * 0.10 + star * 0.24 + fineStar * 0.16 + brightStar * 0.30 + rim * 0.06, 0.0, 0.96);
+    float alpha = clamp(0.80 + nebula * 0.06 + star * (0.05 + twinkle * 0.24)
+            + fineStar * (0.02 + fineFlash * 0.13) + brightStar * 0.30 + rim * 0.04, 0.0, 0.97);
     gl_FragColor = vec4(color, alpha);
 }

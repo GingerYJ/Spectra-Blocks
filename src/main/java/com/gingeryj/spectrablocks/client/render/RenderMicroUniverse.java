@@ -112,8 +112,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
             shellShader.setUniform1f("uTime", ticks);
             shellShader.setUniform1f("uPulse", pulse);
-            shellShader.setUniform3f("uShellColor", 0.000F, 0.001F, 0.006F);
-            shellShader.setUniform3f("uNebulaColor", 0.018F, 0.040F, 0.125F);
+            shellShader.setUniform3f("uShellColor", 0.0F, 0.0F, 0.002F);
+            shellShader.setUniform3f("uNebulaColor", 0.008F, 0.018F, 0.060F);
             shellShader.setUniform3f("uStarColor", 0.92F, 0.96F, 1.0F);
             drawShaderShellSphere(SHELL_RADIUS, SHADER_SHELL_LAT_SEGMENTS, SHADER_SHELL_LON_SEGMENTS);
 
