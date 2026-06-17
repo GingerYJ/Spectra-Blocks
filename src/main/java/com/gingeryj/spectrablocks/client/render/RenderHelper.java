@@ -9,6 +9,11 @@ import org.lwjgl.opengl.GL11;
 
 public final class RenderHelper {
 
+    private static final int MAX_SPHERE_SEGMENTS = 24;
+    private static final int MAX_TEXTURED_SPHERE_SEGMENTS = 28;
+    private static final int MAX_CIRCLE_SEGMENTS = 96;
+    private static final int MAX_WIREFRAME_SEGMENTS = 16;
+
     private RenderHelper() {
     }
 
@@ -25,6 +30,9 @@ public final class RenderHelper {
             return;
         }
 
+        latSegs = RenderQuality.scaleSegments(latSegs, 4, MAX_SPHERE_SEGMENTS);
+        lonSegs = RenderQuality.scaleSegments(lonSegs, 4, MAX_SPHERE_SEGMENTS);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -32,15 +40,25 @@ public final class RenderHelper {
         for (int lat = 0; lat < latSegs; lat++) {
             double theta0 = Math.PI * lat / latSegs;
             double theta1 = Math.PI * (lat + 1) / latSegs;
+            double y0 = radius * Math.cos(theta0);
+            double y1 = radius * Math.cos(theta1);
+            double h0 = radius * Math.sin(theta0);
+            double h1 = radius * Math.sin(theta1);
             for (int lon = 0; lon < lonSegs; lon++) {
                 double phi0 = 2.0D * Math.PI * lon / lonSegs;
                 double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
-                double[] v00 = sphereVertex(radius, theta0, phi0);
-                double[] v01 = sphereVertex(radius, theta0, phi1);
-                double[] v10 = sphereVertex(radius, theta1, phi0);
-                double[] v11 = sphereVertex(radius, theta1, phi1);
-                addTriangle(buffer, v00, v10, v01, rgb[0], rgb[1], rgb[2], alpha);
-                addTriangle(buffer, v01, v10, v11, rgb[0], rgb[1], rgb[2], alpha);
+                double cos0 = Math.cos(phi0);
+                double sin0 = Math.sin(phi0);
+                double cos1 = Math.cos(phi1);
+                double sin1 = Math.sin(phi1);
+
+                buffer.pos(h0 * cos0, y0, h0 * sin0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+                buffer.pos(h1 * cos0, y1, h1 * sin0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+                buffer.pos(h0 * cos1, y0, h0 * sin1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+
+                buffer.pos(h0 * cos1, y0, h0 * sin1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+                buffer.pos(h1 * cos0, y1, h1 * sin0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+                buffer.pos(h1 * cos1, y1, h1 * sin1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
             }
         }
         tessellator.draw();
@@ -51,6 +69,9 @@ public final class RenderHelper {
             return;
         }
 
+        gridLat = RenderQuality.scaleSegments(gridLat, 4, MAX_WIREFRAME_SEGMENTS);
+        gridLon = RenderQuality.scaleSegments(gridLon, 6, MAX_WIREFRAME_SEGMENTS);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -89,6 +110,8 @@ public final class RenderHelper {
             return;
         }
 
+        segments = RenderQuality.scaleSegments(segments, 8, MAX_CIRCLE_SEGMENTS);
+        alpha *= RenderQuality.alphaMultiplier();
         float[] rgb = unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -107,6 +130,9 @@ public final class RenderHelper {
             return;
         }
 
+        latSegs = RenderQuality.scaleSegments(latSegs, 8, MAX_TEXTURED_SPHERE_SEGMENTS);
+        lonSegs = RenderQuality.scaleSegments(lonSegs, 8, MAX_TEXTURED_SPHERE_SEGMENTS);
+        alpha *= RenderQuality.alphaMultiplier();
         boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
         GlStateManager.enableCull();
         net.minecraft.client.Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
@@ -116,6 +142,10 @@ public final class RenderHelper {
         for (int lat = 0; lat < latSegs; lat++) {
             double theta0 = Math.PI * lat / latSegs;
             double theta1 = Math.PI * (lat + 1) / latSegs;
+            double y0 = radius * Math.cos(theta0);
+            double y1 = radius * Math.cos(theta1);
+            double h0 = radius * Math.sin(theta0);
+            double h1 = radius * Math.sin(theta1);
             double v0 = (double) lat / latSegs;
             double v1 = (double) (lat + 1) / latSegs;
             for (int lon = 0; lon < lonSegs; lon++) {
@@ -123,12 +153,18 @@ public final class RenderHelper {
                 double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
                 double u0 = (double) lon / lonSegs;
                 double u1 = (double) (lon + 1) / lonSegs;
-                double[] v00 = sphereVertex(radius, theta0, phi0);
-                double[] v01 = sphereVertex(radius, theta0, phi1);
-                double[] v10 = sphereVertex(radius, theta1, phi0);
-                double[] v11 = sphereVertex(radius, theta1, phi1);
-                addTexturedTriangle(buffer, v00, u0, v0, v01, u1, v0, v10, u0, v1, alpha);
-                addTexturedTriangle(buffer, v01, u1, v0, v11, u1, v1, v10, u0, v1, alpha);
+                double cos0 = Math.cos(phi0);
+                double sin0 = Math.sin(phi0);
+                double cos1 = Math.cos(phi1);
+                double sin1 = Math.sin(phi1);
+
+                buffer.pos(h0 * cos0, y0, h0 * sin0).tex(u0, v0).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
+                buffer.pos(h0 * cos1, y0, h0 * sin1).tex(u1, v0).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
+                buffer.pos(h1 * cos0, y1, h1 * sin0).tex(u0, v1).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
+
+                buffer.pos(h0 * cos1, y0, h0 * sin1).tex(u1, v0).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
+                buffer.pos(h1 * cos1, y1, h1 * sin1).tex(u1, v1).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
+                buffer.pos(h1 * cos0, y1, h1 * sin0).tex(u0, v1).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
             }
         }
         tessellator.draw();
@@ -150,31 +186,6 @@ public final class RenderHelper {
         buffer.pos(x1, y1, z1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
         buffer.pos(x2, y2, z2).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
         tessellator.draw();
-    }
-
-    private static double[] sphereVertex(double radius, double theta, double phi) {
-        return new double[]{
-                radius * Math.sin(theta) * Math.cos(phi),
-                radius * Math.cos(theta),
-                radius * Math.sin(theta) * Math.sin(phi)
-        };
-    }
-
-    private static void addTriangle(BufferBuilder buffer, double[] a, double[] b, double[] c,
-                                    float red, float green, float blue, float alpha) {
-        buffer.pos(a[0], a[1], a[2]).color(red, green, blue, alpha).endVertex();
-        buffer.pos(b[0], b[1], b[2]).color(red, green, blue, alpha).endVertex();
-        buffer.pos(c[0], c[1], c[2]).color(red, green, blue, alpha).endVertex();
-    }
-
-    private static void addTexturedTriangle(BufferBuilder buffer,
-                                            double[] a, double au, double av,
-                                            double[] b, double bu, double bv,
-                                            double[] c, double cu, double cv,
-                                            float alpha) {
-        buffer.pos(a[0], a[1], a[2]).tex(au, av).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-        buffer.pos(b[0], b[1], b[2]).tex(bu, bv).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-        buffer.pos(c[0], c[1], c[2]).tex(cu, cv).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
     }
 
     public static void resetLineWidth() {

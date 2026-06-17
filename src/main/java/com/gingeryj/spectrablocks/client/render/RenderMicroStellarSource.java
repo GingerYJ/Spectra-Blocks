@@ -12,7 +12,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
 
     private static final double SHELL_RADIUS = 5.45D;
     private static final double OUTER_HALO_RADIUS = 5.88D;
-    private static final int PARTICLE_COUNT = 180;
+    private static final int PARTICLE_COUNT = 96;
     private static final ResourceLocation STELLAR_TEXTURE =
             new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/micro_stellar_source.png");
 
@@ -22,6 +22,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
+        RenderQuality.update(centerX, centerY, centerZ);
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
@@ -78,8 +79,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         );
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.08D * pulse, 0xDDFEFF, 0.180F + 0.060F * pulse, 36, 36);
-        RenderHelper.drawWireframeSphere(OUTER_HALO_RADIUS + 0.02D * pulse, 0xFFFFFF, 0.130F + 0.050F * pulse, 12, 24);
+        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.08D * pulse, 0xDDFEFF, 0.180F + 0.060F * pulse, 24, 24);
+        RenderHelper.drawWireframeSphere(OUTER_HALO_RADIUS + 0.02D * pulse, 0xFFFFFF, 0.130F + 0.050F * pulse, 8, 16);
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         GlStateManager.disableCull();
 
@@ -96,8 +97,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
-        RenderHelper.drawSphere(1.18D + 0.08D * pulse, 0x9DEEFF, 0.32F, 30, 30);
-        RenderHelper.drawSphere(0.78D + 0.04D * pulse, 0xF3FFFF, 0.28F, 26, 26);
+        RenderHelper.drawSphere(1.18D + 0.08D * pulse, 0x9DEEFF, 0.32F, 22, 22);
+        RenderHelper.drawSphere(0.78D + 0.04D * pulse, 0xF3FFFF, 0.28F, 20, 20);
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
@@ -109,7 +110,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         GlStateManager.enableCull();
         GlStateManager.depthMask(true);
         GlStateManager.enableTexture2D();
-        RenderHelper.drawTexturedSphere(SHELL_RADIUS, STELLAR_TEXTURE, 1.0F, 56, 56);
+        RenderHelper.drawTexturedSphere(SHELL_RADIUS, STELLAR_TEXTURE, 1.0F, 28, 28);
         GlStateManager.disableTexture2D();
         GlStateManager.depthMask(false);
         GlStateManager.disableCull();
@@ -124,7 +125,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
 
         for (int i = 0; i < PARTICLE_COUNT; i++) {
             double baseYaw = i * 2.399963229728653D;
-            double y = -0.96D + (i % 45) * (1.92D / 44.0D);
+            double y = -0.96D + (i % 32) * (1.92D / 31.0D);
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));
             double flutter = 0.5D + 0.5D * Math.sin(ticks * (0.090D + (i % 9) * 0.011D) + i * 1.731D);
             double surge = Math.max(0.0D, Math.sin(ticks * (0.052D + (i % 6) * 0.006D) + i * 0.91D));
@@ -142,7 +143,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
 
             GlStateManager.pushMatrix();
             GlStateManager.translate(particleX, particleY, particleZ);
-            RenderHelper.drawSphere(size, color, alpha, 8, 8);
+            RenderHelper.drawSphere(size, color, alpha, 5, 5);
             GlStateManager.popMatrix();
         }
 

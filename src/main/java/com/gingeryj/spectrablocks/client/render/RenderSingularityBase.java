@@ -26,6 +26,7 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
+        RenderQuality.update(centerX, centerY, centerZ);
 
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
         float coreTime = ticks * BASE_ANIMATION_SPEED;

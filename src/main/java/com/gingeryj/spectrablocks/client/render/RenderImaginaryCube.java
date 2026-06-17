@@ -39,6 +39,7 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
+        RenderQuality.update(centerX, centerY, centerZ);
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
