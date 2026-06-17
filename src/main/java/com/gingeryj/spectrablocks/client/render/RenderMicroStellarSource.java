@@ -1,9 +1,14 @@
 package com.gingeryj.spectrablocks.client.render;
 
 import com.gingeryj.spectrablocks.Reference;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.config.ModConfig;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
@@ -18,6 +23,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             RenderHelper.createBillboardPoints(PARTICLE_COUNT + FLARE_COUNT);
     private static final ResourceLocation STELLAR_TEXTURE =
             new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/micro_stellar_source.png");
+    private static final int SHADER_SPHERE_LAT_SEGS = 56;
+    private static final int SHADER_SPHERE_LON_SEGS = 56;
 
     @Override
     public void render(TileMicroStellarSource te, double x, double y, double z,
@@ -112,11 +119,73 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         GlStateManager.enableCull();
         GlStateManager.depthMask(true);
         GlStateManager.enableTexture2D();
-        RenderHelper.drawTexturedSphere(SHELL_RADIUS, STELLAR_TEXTURE, 1.0F, 56, 56);
+        if (!drawShaderShell(ticks, pulse)) {
+            RenderHelper.drawTexturedSphere(SHELL_RADIUS, STELLAR_TEXTURE, 1.0F, 56, 56);
+        }
         GlStateManager.disableTexture2D();
         GlStateManager.depthMask(false);
         GlStateManager.disableCull();
         GlStateManager.popMatrix();
+    }
+
+    private boolean drawShaderShell(float ticks, float pulse) {
+        ShaderProgram program = ShaderManager.getProgram("stellar_source");
+        if (program == null || !program.begin()) {
+            return false;
+        }
+
+        boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        try {
+            GlStateManager.disableTexture2D();
+            program.setUniform1f("uTime", ticks * 0.045F);
+            program.setUniform3f("uBaseColor", 0.18F, 0.82F, 1.0F);
+            program.setUniform1f("uRimIntensity", 1.35F);
+            program.setUniform1f("uPulseAmount", 0.75F + pulse * 0.35F);
+            program.setUniform1f("uNoiseSpeed", 0.62F);
+            drawShaderSphere(SHELL_RADIUS + 0.035D * pulse, SHADER_SPHERE_LAT_SEGS, SHADER_SPHERE_LON_SEGS);
+            return true;
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("stellar_source render failed: " + ex.getMessage());
+            return false;
+        } finally {
+            program.end();
+            if (textureWasEnabled) {
+                GlStateManager.enableTexture2D();
+            } else {
+                GlStateManager.disableTexture2D();
+            }
+        }
+    }
+
+    private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int lat = 0; lat < latSegs; lat++) {
+            double theta0 = Math.PI * lat / latSegs;
+            double theta1 = Math.PI * (lat + 1) / latSegs;
+            for (int lon = 0; lon < lonSegs; lon++) {
+                double phi0 = 2.0D * Math.PI * lon / lonSegs;
+                double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
+                addShaderSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addShaderSphereVertex(buffer, radius, theta1, phi0, lon / (double) lonSegs, (lat + 1.0D) / latSegs);
+                addShaderSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addShaderSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addShaderSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addShaderSphereVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
+            }
+        }
+        tessellator.draw();
+    }
+
+    private static void addShaderSphereVertex(BufferBuilder buffer, double radius, double theta, double phi, double u, double v) {
+        float normalX = (float) (Math.sin(theta) * Math.cos(phi));
+        float normalY = (float) Math.cos(theta);
+        float normalZ = (float) (Math.sin(theta) * Math.sin(phi));
+        buffer.pos(normalX * radius, normalY * radius, normalZ * radius)
+                .tex(u, v)
+                .normal(normalX, normalY, normalZ)
+                .endVertex();
     }
 
     private void drawActiveParticles(float ticks) {
