@@ -18,8 +18,6 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     private static final int STAR_COUNT = 64;
     private static final RenderHelper.BillboardPoint[] STARS =
             RenderHelper.createBillboardPoints(STAR_COUNT);
-    private static final RenderHelper.BillboardPoint[] PLANET_GLOWS =
-            RenderHelper.createBillboardPoints(7);
     private static final ResourceLocation SUN_TEXTURE =
             new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/sun.png");
 
@@ -126,20 +124,11 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         drawSun(ticks);
 
-        int glowCount = 0;
         for (Planet planet : PLANETS) {
             drawGlowingOrbit(planet);
             double angle = ticks * planet.speed + planet.phase;
             double planetX = Math.cos(angle) * planet.orbitRadius;
             double planetZ = Math.sin(angle) * planet.orbitRadius;
-            PLANET_GLOWS[glowCount++].set(
-                    planetX,
-                    planet.verticalOffset,
-                    planetZ,
-                    planet.radius * 1.55D,
-                    planet.orbitGlowColor,
-                    0.16F
-            );
             GlStateManager.pushMatrix();
             GlStateManager.translate(planetX, planet.verticalOffset, planetZ);
             GlStateManager.pushMatrix();
@@ -151,7 +140,6 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             GlStateManager.popMatrix();
             GlStateManager.popMatrix();
         }
-        RenderHelper.drawBillboardGlowPoints(PLANET_GLOWS, glowCount);
 
         GlStateManager.popMatrix();
     }
@@ -161,12 +149,6 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
-        RenderHelper.drawSphere(0.76D + 0.045D * pulse, 0xFFE8B5, 0.390F, 32, 32);
-
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
         GlStateManager.enableTexture2D();

@@ -9,10 +9,14 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public final class RenderHelper {
 
     private static final double[] GLOW_POINT_COS = new double[8];
     private static final double[] GLOW_POINT_SIN = new double[8];
+    private static final Map<Long, SphereMesh> SPHERE_MESH_CACHE = new HashMap<>();
 
     static {
         for (int i = 0; i < GLOW_POINT_COS.length; i++) {
@@ -39,22 +43,14 @@ public final class RenderHelper {
         }
 
         float[] rgb = unpackRGB(color);
+        SphereMesh mesh = sphereMesh(latSegs, lonSegs);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-        for (int lat = 0; lat < latSegs; lat++) {
-            double theta0 = Math.PI * lat / latSegs;
-            double theta1 = Math.PI * (lat + 1) / latSegs;
-            for (int lon = 0; lon < lonSegs; lon++) {
-                double phi0 = 2.0D * Math.PI * lon / lonSegs;
-                double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
-                double[] v00 = sphereVertex(radius, theta0, phi0);
-                double[] v01 = sphereVertex(radius, theta0, phi1);
-                double[] v10 = sphereVertex(radius, theta1, phi0);
-                double[] v11 = sphereVertex(radius, theta1, phi1);
-                addTriangle(buffer, v00, v10, v01, rgb[0], rgb[1], rgb[2], alpha);
-                addTriangle(buffer, v01, v10, v11, rgb[0], rgb[1], rgb[2], alpha);
-            }
+        for (int i = 0; i < mesh.vertexCount; i++) {
+            buffer.pos(mesh.x[i] * radius, mesh.y[i] * radius, mesh.z[i] * radius)
+                    .color(rgb[0], rgb[1], rgb[2], alpha)
+                    .endVertex();
         }
         tessellator.draw();
     }
@@ -123,26 +119,15 @@ public final class RenderHelper {
         boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
         GlStateManager.enableCull();
         net.minecraft.client.Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
+        SphereMesh mesh = sphereMesh(latSegs, lonSegs);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_COLOR);
-        for (int lat = 0; lat < latSegs; lat++) {
-            double theta0 = Math.PI * lat / latSegs;
-            double theta1 = Math.PI * (lat + 1) / latSegs;
-            double v0 = (double) lat / latSegs;
-            double v1 = (double) (lat + 1) / latSegs;
-            for (int lon = 0; lon < lonSegs; lon++) {
-                double phi0 = 2.0D * Math.PI * lon / lonSegs;
-                double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
-                double u0 = (double) lon / lonSegs;
-                double u1 = (double) (lon + 1) / lonSegs;
-                double[] v00 = sphereVertex(radius, theta0, phi0);
-                double[] v01 = sphereVertex(radius, theta0, phi1);
-                double[] v10 = sphereVertex(radius, theta1, phi0);
-                double[] v11 = sphereVertex(radius, theta1, phi1);
-                addTexturedTriangle(buffer, v00, u0, v0, v01, u1, v0, v10, u0, v1, alpha);
-                addTexturedTriangle(buffer, v01, u1, v0, v11, u1, v1, v10, u0, v1, alpha);
-            }
+        for (int i = 0; i < mesh.vertexCount; i++) {
+            buffer.pos(mesh.x[i] * radius, mesh.y[i] * radius, mesh.z[i] * radius)
+                    .tex(mesh.u[i], mesh.v[i])
+                    .color(1.0F, 1.0F, 1.0F, alpha)
+                    .endVertex();
         }
         tessellator.draw();
         if (!cullWasEnabled) {
@@ -204,31 +189,6 @@ public final class RenderHelper {
         tessellator.draw();
     }
 
-    private static double[] sphereVertex(double radius, double theta, double phi) {
-        return new double[]{
-                radius * Math.sin(theta) * Math.cos(phi),
-                radius * Math.cos(theta),
-                radius * Math.sin(theta) * Math.sin(phi)
-        };
-    }
-
-    private static void addTriangle(BufferBuilder buffer, double[] a, double[] b, double[] c,
-                                    float red, float green, float blue, float alpha) {
-        buffer.pos(a[0], a[1], a[2]).color(red, green, blue, alpha).endVertex();
-        buffer.pos(b[0], b[1], b[2]).color(red, green, blue, alpha).endVertex();
-        buffer.pos(c[0], c[1], c[2]).color(red, green, blue, alpha).endVertex();
-    }
-
-    private static void addTexturedTriangle(BufferBuilder buffer,
-                                            double[] a, double au, double av,
-                                            double[] b, double bu, double bv,
-                                            double[] c, double cu, double cv,
-                                            float alpha) {
-        buffer.pos(a[0], a[1], a[2]).tex(au, av).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-        buffer.pos(b[0], b[1], b[2]).tex(bu, bv).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-        buffer.pos(c[0], c[1], c[2]).tex(cu, cv).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-    }
-
     private static void addBillboardGlowPoint(BufferBuilder buffer, BillboardPoint point,
                                               double rightX, double rightZ,
                                               double upX, double upY, double upZ) {
@@ -263,6 +223,16 @@ public final class RenderHelper {
         GlStateManager.glLineWidth(1.0F);
     }
 
+    private static SphereMesh sphereMesh(int latSegs, int lonSegs) {
+        long key = (((long) latSegs) << 32) ^ (lonSegs & 0xFFFFFFFFL);
+        SphereMesh mesh = SPHERE_MESH_CACHE.get(key);
+        if (mesh == null) {
+            mesh = new SphereMesh(latSegs, lonSegs);
+            SPHERE_MESH_CACHE.put(key, mesh);
+        }
+        return mesh;
+    }
+
     public static final class BillboardPoint {
         private double x;
         private double y;
@@ -278,6 +248,54 @@ public final class RenderHelper {
             this.size = size;
             this.color = color;
             this.alpha = alpha;
+        }
+    }
+
+    private static final class SphereMesh {
+        private final int vertexCount;
+        private final double[] x;
+        private final double[] y;
+        private final double[] z;
+        private final double[] u;
+        private final double[] v;
+
+        private SphereMesh(int latSegs, int lonSegs) {
+            this.vertexCount = latSegs * lonSegs * 6;
+            this.x = new double[vertexCount];
+            this.y = new double[vertexCount];
+            this.z = new double[vertexCount];
+            this.u = new double[vertexCount];
+            this.v = new double[vertexCount];
+            int index = 0;
+            for (int lat = 0; lat < latSegs; lat++) {
+                double theta0 = Math.PI * lat / latSegs;
+                double theta1 = Math.PI * (lat + 1) / latSegs;
+                double v0 = (double) lat / latSegs;
+                double v1 = (double) (lat + 1) / latSegs;
+                for (int lon = 0; lon < lonSegs; lon++) {
+                    double phi0 = 2.0D * Math.PI * lon / lonSegs;
+                    double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
+                    double u0 = (double) lon / lonSegs;
+                    double u1 = (double) (lon + 1) / lonSegs;
+
+                    index = addSphereVertex(index, theta0, phi0, u0, v0);
+                    index = addSphereVertex(index, theta1, phi0, u0, v1);
+                    index = addSphereVertex(index, theta0, phi1, u1, v0);
+                    index = addSphereVertex(index, theta0, phi1, u1, v0);
+                    index = addSphereVertex(index, theta1, phi0, u0, v1);
+                    index = addSphereVertex(index, theta1, phi1, u1, v1);
+                }
+            }
+        }
+
+        private int addSphereVertex(int index, double theta, double phi, double u, double v) {
+            double sinTheta = Math.sin(theta);
+            this.x[index] = sinTheta * Math.cos(phi);
+            this.y[index] = Math.cos(theta);
+            this.z[index] = sinTheta * Math.sin(phi);
+            this.u[index] = u;
+            this.v[index] = v;
+            return index + 1;
         }
     }
 }
