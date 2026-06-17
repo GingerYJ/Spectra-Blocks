@@ -13,12 +13,14 @@ public final class ModConfig {
     private static final int DEFAULT_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 32;
     private static final int MIN_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 1;
     private static final int MAX_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 256;
+    private static final boolean DEFAULT_ENABLE_SHADER_EFFECTS = false;
 
     private static double microSingularityScale = DEFAULT_RENDER_SCALE;
     private static double microWhiteHoleScale = DEFAULT_RENDER_SCALE;
     private static double microUniverseScale = DEFAULT_RENDER_SCALE;
     private static double microStellarSourceScale = DEFAULT_RENDER_SCALE;
     private static int visualTileEntityRenderDistance = DEFAULT_VISUAL_TILE_ENTITY_RENDER_DISTANCE;
+    private static boolean enableShaderEffects = DEFAULT_ENABLE_SHADER_EFFECTS;
 
     private ModConfig() {
     }
@@ -45,6 +47,12 @@ public final class ModConfig {
                     "\u5fae\u7f29\u5b87\u5b99\u6e32\u67d3\u7f29\u653e\u3002 / Scale for Micro Universe rendering.");
             microStellarSourceScale = readScale(config, "microStellarSourceScale",
                     "\u5fae\u7f29\u6052\u661f\u6e90\u6e32\u67d3\u7f29\u653e\u3002 / Scale for Micro Stellar Source rendering.");
+            enableShaderEffects = config.getBoolean(
+                    "enableShaderEffects",
+                    CATEGORY_RENDERING,
+                    DEFAULT_ENABLE_SHADER_EFFECTS,
+                    "\u542f\u7528\u5b9e\u9a8c\u6027 shader \u7279\u6548\u6e32\u67d3\u3002\u9ed8\u8ba4\u5173\u95ed\uff1b\u82e5 shader \u7f16\u8bd1\u6216\u94fe\u63a5\u5931\u8d25\uff0c\u5ba2\u6237\u7aef\u4f1a\u81ea\u52a8\u56de\u9000\u5230\u539f\u6709 Tessellator \u6e32\u67d3\u3002 / Enables experimental shader effect rendering. Disabled by default; if shader compile or link fails, the client falls back to the existing Tessellator renderers."
+            );
         } finally {
             if (config.hasChanged()) {
                 config.save();
@@ -81,6 +89,10 @@ public final class ModConfig {
 
     public static double visualTileEntityRenderDistanceSquared() {
         return visualTileEntityRenderDistance * visualTileEntityRenderDistance;
+    }
+
+    public static boolean enableShaderEffects() {
+        return enableShaderEffects;
     }
 
     public static double clampRenderScale(double scale) {
