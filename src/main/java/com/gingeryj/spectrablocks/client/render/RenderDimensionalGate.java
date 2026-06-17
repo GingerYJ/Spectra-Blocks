@@ -42,7 +42,9 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
-        RenderQuality.update(centerX, centerY, centerZ);
+        if (!RenderQuality.shouldRender(centerX, centerY, centerZ)) {
+            return;
+        }
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
