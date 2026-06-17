@@ -13,10 +13,12 @@ import com.gingeryj.spectrablocks.block.BlockCrystalRefractionField;
 import com.gingeryj.spectrablocks.block.BlockDataStreamMatrix;
 import com.gingeryj.spectrablocks.block.BlockDimensionalGate;
 import com.gingeryj.spectrablocks.block.BlockDreamShards;
+import com.gingeryj.spectrablocks.block.BlockEmberBloom;
 import com.gingeryj.spectrablocks.block.BlockEnergyNexus;
 import com.gingeryj.spectrablocks.block.BlockEntropyCloud;
 import com.gingeryj.spectrablocks.block.BlockFrostCrystalMist;
 import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
+import com.gingeryj.spectrablocks.block.BlockGravityWell;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
 import com.gingeryj.spectrablocks.block.BlockMicroSingularity;
@@ -24,6 +26,7 @@ import com.gingeryj.spectrablocks.block.BlockMicroStellarSource;
 import com.gingeryj.spectrablocks.block.BlockMicroUniverse;
 import com.gingeryj.spectrablocks.block.BlockMicroWhiteHole;
 import com.gingeryj.spectrablocks.block.BlockMiniatureGalaxy;
+import com.gingeryj.spectrablocks.block.BlockMirrorShardField;
 import com.gingeryj.spectrablocks.block.BlockNebulaCore;
 import com.gingeryj.spectrablocks.block.BlockNeonCircuitCore;
 import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
@@ -53,10 +56,12 @@ import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import com.gingeryj.spectrablocks.tile.TileDataStreamMatrix;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
+import com.gingeryj.spectrablocks.tile.TileEmberBloom;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
 import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
+import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
@@ -64,6 +69,7 @@ import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
 import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
 import com.gingeryj.spectrablocks.tile.TileMicroWhiteHole;
 import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
+import com.gingeryj.spectrablocks.tile.TileMirrorShardField;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
@@ -133,6 +139,9 @@ public final class ModContent {
     public static final BlockChronoAnchor CHRONO_ANCHOR = new BlockChronoAnchor();
     public static final BlockFrostCrystalMist FROST_CRYSTAL_MIST = new BlockFrostCrystalMist();
     public static final BlockNeonCircuitCore NEON_CIRCUIT_CORE = new BlockNeonCircuitCore();
+    public static final BlockMirrorShardField MIRROR_SHARD_FIELD = new BlockMirrorShardField();
+    public static final BlockEmberBloom EMBER_BLOOM = new BlockEmberBloom();
+    public static final BlockGravityWell GRAVITY_WELL = new BlockGravityWell();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -179,7 +188,10 @@ public final class ModContent {
                 BIOLUMINESCENT_SPORES,
                 CHRONO_ANCHOR,
                 FROST_CRYSTAL_MIST,
-                NEON_CIRCUIT_CORE
+                NEON_CIRCUIT_CORE,
+                MIRROR_SHARD_FIELD,
+                EMBER_BLOOM,
+                GRAVITY_WELL
         );
     }
 
@@ -225,6 +237,9 @@ public final class ModContent {
                 itemBlock(CHRONO_ANCHOR),
                 itemBlock(FROST_CRYSTAL_MIST),
                 itemBlock(NEON_CIRCUIT_CORE),
+                itemBlock(MIRROR_SHARD_FIELD),
+                itemBlock(EMBER_BLOOM),
+                itemBlock(GRAVITY_WELL),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -269,6 +284,9 @@ public final class ModContent {
         registerTileEntity(TileChronoAnchor.class, "chrono_anchor");
         registerTileEntity(TileFrostCrystalMist.class, "frost_crystal_mist");
         registerTileEntity(TileNeonCircuitCore.class, "neon_circuit_core");
+        registerTileEntity(TileMirrorShardField.class, "mirror_shard_field");
+        registerTileEntity(TileEmberBloom.class, "ember_bloom");
+        registerTileEntity(TileGravityWell.class, "gravity_well");
     }
 
     private static ItemBlock itemBlock(Block block) {

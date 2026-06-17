@@ -14,10 +14,12 @@ import com.gingeryj.spectrablocks.client.render.RenderCrystalRefractionField;
 import com.gingeryj.spectrablocks.client.render.RenderDataStreamMatrix;
 import com.gingeryj.spectrablocks.client.render.RenderDimensionalGate;
 import com.gingeryj.spectrablocks.client.render.RenderDreamShards;
+import com.gingeryj.spectrablocks.client.render.RenderEmberBloom;
 import com.gingeryj.spectrablocks.client.render.RenderEnergyNexus;
 import com.gingeryj.spectrablocks.client.render.RenderEntropyCloud;
 import com.gingeryj.spectrablocks.client.render.RenderFrostCrystalMist;
 import com.gingeryj.spectrablocks.client.render.RenderGravitationalLens;
+import com.gingeryj.spectrablocks.client.render.RenderGravityWell;
 import com.gingeryj.spectrablocks.client.render.RenderHologramField;
 import com.gingeryj.spectrablocks.client.render.RenderImaginaryCube;
 import com.gingeryj.spectrablocks.client.render.RenderMicroSingularity;
@@ -25,6 +27,7 @@ import com.gingeryj.spectrablocks.client.render.RenderMicroStellarSource;
 import com.gingeryj.spectrablocks.client.render.RenderMicroUniverse;
 import com.gingeryj.spectrablocks.client.render.RenderMicroWhiteHole;
 import com.gingeryj.spectrablocks.client.render.RenderMiniatureGalaxy;
+import com.gingeryj.spectrablocks.client.render.RenderMirrorShardField;
 import com.gingeryj.spectrablocks.client.render.RenderNebulaCore;
 import com.gingeryj.spectrablocks.client.render.RenderNeonCircuitCore;
 import com.gingeryj.spectrablocks.client.render.RenderPlasmaStorm;
@@ -54,10 +57,12 @@ import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import com.gingeryj.spectrablocks.tile.TileDataStreamMatrix;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
+import com.gingeryj.spectrablocks.tile.TileEmberBloom;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
 import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
+import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
@@ -65,6 +70,7 @@ import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
 import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
 import com.gingeryj.spectrablocks.tile.TileMicroWhiteHole;
 import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
+import com.gingeryj.spectrablocks.tile.TileMirrorShardField;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
@@ -140,6 +146,9 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileChronoAnchor.class, new RenderChronoAnchor());
         ClientRegistry.bindTileEntitySpecialRenderer(TileFrostCrystalMist.class, new RenderFrostCrystalMist());
         ClientRegistry.bindTileEntitySpecialRenderer(TileNeonCircuitCore.class, new RenderNeonCircuitCore());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileMirrorShardField.class, new RenderMirrorShardField());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEmberBloom.class, new RenderEmberBloom());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileGravityWell.class, new RenderGravityWell());
     }
 
     @Override
@@ -188,6 +197,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.CHRONO_ANCHOR);
         registerBlockItemModel(ModContent.FROST_CRYSTAL_MIST);
         registerBlockItemModel(ModContent.NEON_CIRCUIT_CORE);
+        registerBlockItemModel(ModContent.MIRROR_SHARD_FIELD);
+        registerBlockItemModel(ModContent.EMBER_BLOOM);
+        registerBlockItemModel(ModContent.GRAVITY_WELL);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 
