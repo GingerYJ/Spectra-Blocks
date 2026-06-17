@@ -39,23 +39,38 @@ float fbm(vec2 p) {
 void main() {
     vec3 normal = normalize(vNormal);
     vec3 viewDir = normalize(-vWorld);
-    float rim = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.4) * uRimIntensity;
+    float facing = max(dot(normal, viewDir), 0.0);
+    float rim = pow(1.0 - facing, 2.0) * uRimIntensity;
 
     vec2 flowUv = vUv;
-    flowUv.x += uTime * uNoiseSpeed * 0.11;
-    flowUv.y += sin(vUv.x * 18.0 + uTime * 0.7) * 0.025;
-    float cells = fbm(flowUv * 8.0 + vec2(uTime * 0.37, -uTime * 0.21));
-    float filaments = smoothstep(0.42, 0.92, fbm(flowUv * 18.0 + cells * 2.6));
-    float bands = 0.5 + 0.5 * sin((vUv.y + cells * 0.22) * 38.0 + uTime * 2.0);
+    flowUv.x += uTime * uNoiseSpeed * 0.090;
+    flowUv.y += sin(vUv.x * 20.0 + uTime * 0.65) * 0.030;
+    vec2 swirlUv = vec2(
+        flowUv.x + sin(flowUv.y * 18.0 + uTime * 0.9) * 0.045,
+        flowUv.y + cos(flowUv.x * 16.0 - uTime * 0.7) * 0.038
+    );
+    float cells = fbm(swirlUv * 9.5 + vec2(uTime * 0.31, -uTime * 0.18));
+    float fineCells = fbm(swirlUv * 26.0 + cells * 3.7 + vec2(-uTime * 0.22, uTime * 0.27));
+    float filaments = smoothstep(0.42, 0.88, fineCells);
+    float hotSpots = smoothstep(0.70, 0.97, fbm(swirlUv * 15.0 + cells * 4.5 + uTime * 0.38));
+    float darkVeins = smoothstep(0.50, 0.83, fbm(swirlUv * 34.0 - cells * 2.0 - uTime * 0.16));
+    float bands = 0.5 + 0.5 * sin((vUv.y + cells * 0.24) * 42.0 + uTime * 2.3);
 
     vec3 cyan = uBaseColor;
-    vec3 whiteHot = vec3(1.0, 0.98, 0.86);
-    vec3 flare = vec3(1.0, 0.72, 0.26);
-    vec3 plasma = mix(cyan, whiteHot, smoothstep(0.30, 0.95, cells));
-    plasma = mix(plasma, flare, filaments * (0.18 + bands * 0.30));
+    vec3 deepCyan = vec3(0.015, 0.48, 0.64);
+    vec3 whiteHot = vec3(1.0, 0.98, 0.82);
+    vec3 flare = vec3(1.0, 0.67, 0.20);
+    vec3 plasma = mix(deepCyan, cyan, smoothstep(0.20, 0.82, cells));
+    plasma = mix(plasma, whiteHot, smoothstep(0.48, 0.96, fineCells) * 0.72);
+    plasma = mix(plasma, flare, filaments * (0.16 + bands * 0.34));
+    plasma = mix(plasma, vec3(1.0, 1.0, 0.94), hotSpots * 0.78);
+    plasma *= 1.0 - darkVeins * 0.18 * (1.0 - hotSpots);
 
-    float pulse = 0.86 + 0.14 * sin(uTime * 2.8);
-    float energy = (0.35 + cells * 0.58 + filaments * 0.45 + rim * 0.80) * uPulseAmount * pulse;
+    float pulse = 0.88 + 0.12 * sin(uTime * 2.4);
+    float limb = 0.70 + pow(facing, 0.45) * 0.42;
+    float corona = rim * (0.75 + filaments * 0.55 + hotSpots * 0.35);
+    float energy = (0.58 + cells * 0.42 + fineCells * 0.36 + filaments * 0.58 + hotSpots * 0.78 + corona)
+            * uPulseAmount * pulse * limb;
     float alpha = 1.0;
 
     gl_FragColor = vec4(plasma * energy, alpha);

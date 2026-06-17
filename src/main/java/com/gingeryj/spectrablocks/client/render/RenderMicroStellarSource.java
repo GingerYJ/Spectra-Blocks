@@ -1,6 +1,5 @@
 package com.gingeryj.spectrablocks.client.render;
 
-import com.gingeryj.spectrablocks.Reference;
 import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
 import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.config.ModConfig;
@@ -10,19 +9,20 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicroStellarSource> {
 
     private static final double SHELL_RADIUS = 5.45D;
     private static final double OUTER_HALO_RADIUS = 5.88D;
-    private static final int PARTICLE_COUNT = 180;
-    private static final int FLARE_COUNT = 24;
+    private static final int PARTICLE_COUNT = 220;
+    private static final int FLARE_COUNT = 48;
+    private static final int PROMINENCE_COUNT = 12;
+    private static final int PROMINENCE_POINTS_PER_ARC = 10;
     private static final RenderHelper.BillboardPoint[] PARTICLES =
             RenderHelper.createBillboardPoints(PARTICLE_COUNT + FLARE_COUNT);
-    private static final ResourceLocation STELLAR_TEXTURE =
-            new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/micro_stellar_source.png");
+    private static final RenderHelper.BillboardPoint[] PROMINENCE_POINTS =
+            RenderHelper.createBillboardPoints(PROMINENCE_COUNT * PROMINENCE_POINTS_PER_ARC);
     private static final int SHADER_SPHERE_LAT_SEGS = 56;
     private static final int SHADER_SPHERE_LON_SEGS = 56;
 
@@ -56,6 +56,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         try {
             drawCore(ticks);
             drawOuterRadiance(ticks);
+            drawProminences(ticks);
             drawActiveParticles(ticks);
         } finally {
             if (cullWasEnabled) {
@@ -88,8 +89,9 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         );
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.08D * pulse, 0xDDFEFF, 0.180F + 0.060F * pulse, 36, 36);
-        RenderHelper.drawWireframeSphere(OUTER_HALO_RADIUS + 0.02D * pulse, 0xFFFFFF, 0.130F + 0.050F * pulse, 12, 24);
+        RenderHelper.drawSphere(SHELL_RADIUS * 1.018D + 0.030D * pulse, 0xFFFFFF, 0.085F + 0.035F * pulse, 30, 30);
+        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.120D * pulse, 0xDDFEFF, 0.145F + 0.055F * pulse, 34, 34);
+        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.38D + 0.160D * pulse, 0x62EFFF, 0.055F + 0.035F * pulse, 28, 28);
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         GlStateManager.disableCull();
 
@@ -103,13 +105,6 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.05F);
 
         GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
-        RenderHelper.drawSphere(1.18D + 0.08D * pulse, 0x9DEEFF, 0.32F, 30, 30);
-        RenderHelper.drawSphere(0.78D + 0.04D * pulse, 0xF3FFFF, 0.28F, 26, 26);
-
-        GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
@@ -119,20 +114,17 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         GlStateManager.depthMask(false);
-        GlStateManager.enableTexture2D();
-        if (!drawShaderShell(ticks, pulse)) {
-            RenderHelper.drawTexturedSphere(SHELL_RADIUS, STELLAR_TEXTURE, 1.0F, 56, 56);
-        }
         GlStateManager.disableTexture2D();
+        drawShaderShell(ticks, pulse);
         GlStateManager.depthMask(false);
         GlStateManager.disableCull();
         GlStateManager.popMatrix();
     }
 
-    private boolean drawShaderShell(float ticks, float pulse) {
+    private void drawShaderShell(float ticks, float pulse) {
         ShaderProgram program = ShaderManager.getProgram("stellar_source");
         if (program == null || !program.begin()) {
-            return false;
+            return;
         }
 
         boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
@@ -144,10 +136,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             program.setUniform1f("uPulseAmount", 0.75F + pulse * 0.35F);
             program.setUniform1f("uNoiseSpeed", 0.62F);
             drawShaderSphere(SHELL_RADIUS + 0.035D * pulse, SHADER_SPHERE_LAT_SEGS, SHADER_SPHERE_LON_SEGS);
-            return true;
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("stellar_source render failed: " + ex.getMessage());
-            return false;
         } finally {
             program.end();
             if (textureWasEnabled) {
@@ -187,6 +177,53 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
                 .tex(u, v)
                 .normal(normalX, normalY, normalZ)
                 .endVertex();
+    }
+
+    private void drawProminences(float ticks) {
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
+
+        int pointCount = 0;
+        for (int i = 0; i < PROMINENCE_COUNT; i++) {
+            double phase = ticks * (0.018D + (i % 4) * 0.003D) + i * 1.771D;
+            double surge = Math.max(0.0D, Math.sin(phase * 1.7D + Math.sin(phase * 0.63D) * 0.9D));
+            surge = surge * surge;
+            if (surge < 0.12D) {
+                continue;
+            }
+
+            double baseYaw = i * 2.399963229728653D + ticks * (0.009D + (i % 3) * 0.002D);
+            double basePitch = -0.72D + (i % 7) * 0.24D + Math.sin(phase) * 0.08D;
+            double arcLift = 0.24D + surge * (0.55D + (i % 3) * 0.12D);
+            double sideSweep = (0.18D + surge * 0.20D) * (i % 2 == 0 ? 1.0D : -1.0D);
+
+            for (int step = 0; step < PROMINENCE_POINTS_PER_ARC; step++) {
+                double progress = step / (double) (PROMINENCE_POINTS_PER_ARC - 1);
+                double crest = Math.sin(Math.PI * progress);
+                double yaw = baseYaw + sideSweep * (progress - 0.5D)
+                        + Math.sin(phase + progress * 5.3D) * 0.025D;
+                double pitch = basePitch + crest * arcLift;
+                double horizontal = Math.cos(pitch);
+                double radius = SHELL_RADIUS * (1.012D + crest * (0.075D + surge * 0.070D));
+                double x = Math.cos(yaw) * horizontal * radius;
+                double y = Math.sin(pitch) * radius;
+                double z = Math.sin(yaw) * horizontal * radius;
+                double size = 0.045D + crest * (0.070D + surge * 0.060D);
+                float alpha = (float) ((0.10D + crest * 0.34D + surge * 0.20D) * surge);
+                int color = step % 3 == 0 ? 0xFFFFFF : (i % 2 == 0 ? 0xFFF0A8 : 0xAFFFFF);
+
+                PROMINENCE_POINTS[pointCount++].set(x, y, z, size, color, alpha);
+            }
+        }
+
+        RenderHelper.drawBillboardGlowPoints(PROMINENCE_POINTS, pointCount);
+
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
     }
 
     private void drawActiveParticles(float ticks) {
