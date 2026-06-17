@@ -6,6 +6,7 @@ import com.gingeryj.spectrablocks.client.render.RenderAbyssalCore;
 import com.gingeryj.spectrablocks.client.render.RenderArcaneStarRing;
 import com.gingeryj.spectrablocks.client.render.RenderAstralAltarCore;
 import com.gingeryj.spectrablocks.client.render.RenderAuroraVeil;
+import com.gingeryj.spectrablocks.client.render.RenderBioluminescentSpores;
 import com.gingeryj.spectrablocks.client.render.RenderCollapsingStar;
 import com.gingeryj.spectrablocks.client.render.RenderCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.client.render.RenderCrystalRefractionField;
@@ -15,6 +16,7 @@ import com.gingeryj.spectrablocks.client.render.RenderDreamShards;
 import com.gingeryj.spectrablocks.client.render.RenderEnergyNexus;
 import com.gingeryj.spectrablocks.client.render.RenderEntropyCloud;
 import com.gingeryj.spectrablocks.client.render.RenderGravitationalLens;
+import com.gingeryj.spectrablocks.client.render.RenderHologramField;
 import com.gingeryj.spectrablocks.client.render.RenderImaginaryCube;
 import com.gingeryj.spectrablocks.client.render.RenderMicroSingularity;
 import com.gingeryj.spectrablocks.client.render.RenderMicroStellarSource;
@@ -24,6 +26,7 @@ import com.gingeryj.spectrablocks.client.render.RenderMiniatureGalaxy;
 import com.gingeryj.spectrablocks.client.render.RenderNebulaCore;
 import com.gingeryj.spectrablocks.client.render.RenderPlasmaStorm;
 import com.gingeryj.spectrablocks.client.render.RenderQuantumBubble;
+import com.gingeryj.spectrablocks.client.render.RenderRuneObelisk;
 import com.gingeryj.spectrablocks.client.render.RenderSolarCoronaBurst;
 import com.gingeryj.spectrablocks.client.render.RenderSoulVortex;
 import com.gingeryj.spectrablocks.client.render.RenderSpatialRift;
@@ -40,6 +43,7 @@ import com.gingeryj.spectrablocks.tile.TileAbyssalCore;
 import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
 import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
+import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
@@ -49,6 +53,7 @@ import com.gingeryj.spectrablocks.tile.TileDreamShards;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
+import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
@@ -58,6 +63,7 @@ import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
+import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
 import com.gingeryj.spectrablocks.tile.TileSpatialRift;
@@ -121,6 +127,10 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileDreamShards.class, new RenderDreamShards());
         ClientRegistry.bindTileEntitySpecialRenderer(TileSolarCoronaBurst.class, new RenderSolarCoronaBurst());
         ClientRegistry.bindTileEntitySpecialRenderer(TileEnergyNexus.class, new RenderEnergyNexus());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileHologramField.class, new RenderHologramField());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileRuneObelisk.class, new RenderRuneObelisk());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileBioluminescentSpores.class,
+                new RenderBioluminescentSpores());
     }
 
     @Override
@@ -163,6 +173,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.DREAM_SHARDS);
         registerBlockItemModel(ModContent.SOLAR_CORONA_BURST);
         registerBlockItemModel(ModContent.ENERGY_NEXUS);
+        registerBlockItemModel(ModContent.HOLOGRAM_FIELD);
+        registerBlockItemModel(ModContent.RUNE_OBELISK);
+        registerBlockItemModel(ModContent.BIOLUMINESCENT_SPORES);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

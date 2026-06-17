@@ -5,6 +5,7 @@ import com.gingeryj.spectrablocks.block.BlockAbyssalCore;
 import com.gingeryj.spectrablocks.block.BlockArcaneStarRing;
 import com.gingeryj.spectrablocks.block.BlockAstralAltarCore;
 import com.gingeryj.spectrablocks.block.BlockAuroraVeil;
+import com.gingeryj.spectrablocks.block.BlockBioluminescentSpores;
 import com.gingeryj.spectrablocks.block.BlockCollapsingStar;
 import com.gingeryj.spectrablocks.block.BlockCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.block.BlockCrystalRefractionField;
@@ -14,6 +15,7 @@ import com.gingeryj.spectrablocks.block.BlockDreamShards;
 import com.gingeryj.spectrablocks.block.BlockEnergyNexus;
 import com.gingeryj.spectrablocks.block.BlockEntropyCloud;
 import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
+import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
 import com.gingeryj.spectrablocks.block.BlockMicroSingularity;
 import com.gingeryj.spectrablocks.block.BlockMicroStellarSource;
@@ -23,6 +25,7 @@ import com.gingeryj.spectrablocks.block.BlockMiniatureGalaxy;
 import com.gingeryj.spectrablocks.block.BlockNebulaCore;
 import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
 import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
+import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
 import com.gingeryj.spectrablocks.block.BlockSoulVortex;
 import com.gingeryj.spectrablocks.block.BlockSpatialRift;
@@ -39,6 +42,7 @@ import com.gingeryj.spectrablocks.tile.TileAbyssalCore;
 import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
 import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
+import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
@@ -48,6 +52,7 @@ import com.gingeryj.spectrablocks.tile.TileDreamShards;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
+import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
@@ -57,6 +62,7 @@ import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
+import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
 import com.gingeryj.spectrablocks.tile.TileSpatialRift;
@@ -115,6 +121,9 @@ public final class ModContent {
     public static final BlockDreamShards DREAM_SHARDS = new BlockDreamShards();
     public static final BlockSolarCoronaBurst SOLAR_CORONA_BURST = new BlockSolarCoronaBurst();
     public static final BlockEnergyNexus ENERGY_NEXUS = new BlockEnergyNexus();
+    public static final BlockHologramField HOLOGRAM_FIELD = new BlockHologramField();
+    public static final BlockRuneObelisk RUNE_OBELISK = new BlockRuneObelisk();
+    public static final BlockBioluminescentSpores BIOLUMINESCENT_SPORES = new BlockBioluminescentSpores();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -155,7 +164,10 @@ public final class ModContent {
                 ENTROPY_CLOUD,
                 DREAM_SHARDS,
                 SOLAR_CORONA_BURST,
-                ENERGY_NEXUS
+                ENERGY_NEXUS,
+                HOLOGRAM_FIELD,
+                RUNE_OBELISK,
+                BIOLUMINESCENT_SPORES
         );
     }
 
@@ -195,6 +207,9 @@ public final class ModContent {
                 itemBlock(DREAM_SHARDS),
                 itemBlock(SOLAR_CORONA_BURST),
                 itemBlock(ENERGY_NEXUS),
+                itemBlock(HOLOGRAM_FIELD),
+                itemBlock(RUNE_OBELISK),
+                itemBlock(BIOLUMINESCENT_SPORES),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -233,6 +248,9 @@ public final class ModContent {
         registerTileEntity(TileDreamShards.class, "dream_shards");
         registerTileEntity(TileSolarCoronaBurst.class, "solar_corona_burst");
         registerTileEntity(TileEnergyNexus.class, "energy_nexus");
+        registerTileEntity(TileHologramField.class, "hologram_field");
+        registerTileEntity(TileRuneObelisk.class, "rune_obelisk");
+        registerTileEntity(TileBioluminescentSpores.class, "bioluminescent_spores");
     }
 
     private static ItemBlock itemBlock(Block block) {
