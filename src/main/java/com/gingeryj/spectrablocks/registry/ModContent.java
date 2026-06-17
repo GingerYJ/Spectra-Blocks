@@ -11,6 +11,7 @@ import com.gingeryj.spectrablocks.block.BlockCrystalRefractionField;
 import com.gingeryj.spectrablocks.block.BlockDataStreamMatrix;
 import com.gingeryj.spectrablocks.block.BlockDimensionalGate;
 import com.gingeryj.spectrablocks.block.BlockDreamShards;
+import com.gingeryj.spectrablocks.block.BlockEnergyNexus;
 import com.gingeryj.spectrablocks.block.BlockEntropyCloud;
 import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
@@ -33,6 +34,7 @@ import com.gingeryj.spectrablocks.block.BlockTemporalRift;
 import com.gingeryj.spectrablocks.block.BlockVoidCrystal;
 import com.gingeryj.spectrablocks.block.BlockVoidLotus;
 import com.gingeryj.spectrablocks.block.BlockWormhole;
+import com.gingeryj.spectrablocks.item.ItemEffectConfigurator;
 import com.gingeryj.spectrablocks.tile.TileAbyssalCore;
 import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
@@ -43,6 +45,7 @@ import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import com.gingeryj.spectrablocks.tile.TileDataStreamMatrix;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
+import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
@@ -111,6 +114,8 @@ public final class ModContent {
     public static final BlockEntropyCloud ENTROPY_CLOUD = new BlockEntropyCloud();
     public static final BlockDreamShards DREAM_SHARDS = new BlockDreamShards();
     public static final BlockSolarCoronaBurst SOLAR_CORONA_BURST = new BlockSolarCoronaBurst();
+    public static final BlockEnergyNexus ENERGY_NEXUS = new BlockEnergyNexus();
+    public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
     }
@@ -149,7 +154,8 @@ public final class ModContent {
                 STORM_CORE,
                 ENTROPY_CLOUD,
                 DREAM_SHARDS,
-                SOLAR_CORONA_BURST
+                SOLAR_CORONA_BURST,
+                ENERGY_NEXUS
         );
     }
 
@@ -187,7 +193,9 @@ public final class ModContent {
                 itemBlock(STORM_CORE),
                 itemBlock(ENTROPY_CLOUD),
                 itemBlock(DREAM_SHARDS),
-                itemBlock(SOLAR_CORONA_BURST)
+                itemBlock(SOLAR_CORONA_BURST),
+                itemBlock(ENERGY_NEXUS),
+                EFFECT_CONFIGURATOR
         );
     }
 
@@ -224,6 +232,7 @@ public final class ModContent {
         registerTileEntity(TileEntropyCloud.class, "entropy_cloud");
         registerTileEntity(TileDreamShards.class, "dream_shards");
         registerTileEntity(TileSolarCoronaBurst.class, "solar_corona_burst");
+        registerTileEntity(TileEnergyNexus.class, "energy_nexus");
     }
 
     private static ItemBlock itemBlock(Block block) {

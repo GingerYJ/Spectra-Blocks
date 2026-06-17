@@ -1,6 +1,7 @@
 package com.gingeryj.spectrablocks.proxy;
 
 import com.gingeryj.spectrablocks.Reference;
+import com.gingeryj.spectrablocks.client.gui.GuiEffectConfigurator;
 import com.gingeryj.spectrablocks.client.render.RenderAbyssalCore;
 import com.gingeryj.spectrablocks.client.render.RenderArcaneStarRing;
 import com.gingeryj.spectrablocks.client.render.RenderAstralAltarCore;
@@ -11,6 +12,7 @@ import com.gingeryj.spectrablocks.client.render.RenderCrystalRefractionField;
 import com.gingeryj.spectrablocks.client.render.RenderDataStreamMatrix;
 import com.gingeryj.spectrablocks.client.render.RenderDimensionalGate;
 import com.gingeryj.spectrablocks.client.render.RenderDreamShards;
+import com.gingeryj.spectrablocks.client.render.RenderEnergyNexus;
 import com.gingeryj.spectrablocks.client.render.RenderEntropyCloud;
 import com.gingeryj.spectrablocks.client.render.RenderGravitationalLens;
 import com.gingeryj.spectrablocks.client.render.RenderImaginaryCube;
@@ -44,6 +46,7 @@ import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import com.gingeryj.spectrablocks.tile.TileDataStreamMatrix;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
+import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
@@ -67,8 +70,10 @@ import com.gingeryj.spectrablocks.tile.TileVoidCrystal;
 import com.gingeryj.spectrablocks.tile.TileVoidLotus;
 import com.gingeryj.spectrablocks.tile.TileWormhole;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -115,6 +120,12 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntropyCloud.class, new RenderEntropyCloud());
         ClientRegistry.bindTileEntitySpecialRenderer(TileDreamShards.class, new RenderDreamShards());
         ClientRegistry.bindTileEntitySpecialRenderer(TileSolarCoronaBurst.class, new RenderSolarCoronaBurst());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEnergyNexus.class, new RenderEnergyNexus());
+    }
+
+    @Override
+    public void openEffectConfigurator(BlockPos pos, double renderScale) {
+        Minecraft.getMinecraft().displayGuiScreen(new GuiEffectConfigurator(pos, renderScale));
     }
 
     @SubscribeEvent
@@ -151,6 +162,8 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.ENTROPY_CLOUD);
         registerBlockItemModel(ModContent.DREAM_SHARDS);
         registerBlockItemModel(ModContent.SOLAR_CORONA_BURST);
+        registerBlockItemModel(ModContent.ENERGY_NEXUS);
+        registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 
     private static void registerBlockItemModel(Block block) {
@@ -158,6 +171,13 @@ public class ClientProxy extends CommonProxy {
         if (item != null) {
             ModelLoader.setCustomModelResourceLocation(item, 0,
                     new ModelResourceLocation(block.getRegistryName(), "inventory"));
+        }
+    }
+
+    private static void registerItemModel(Item item) {
+        if (item != null) {
+            ModelLoader.setCustomModelResourceLocation(item, 0,
+                    new ModelResourceLocation(item.getRegistryName(), "inventory"));
         }
     }
 }

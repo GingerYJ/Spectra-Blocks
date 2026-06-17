@@ -8,8 +8,8 @@ public final class ModConfig {
 
     private static final String CATEGORY_RENDERING = "rendering";
     private static final double DEFAULT_RENDER_SCALE = 1.0D;
-    private static final double MIN_RENDER_SCALE = 0.25D;
-    private static final double MAX_RENDER_SCALE = 4.0D;
+    private static final double MIN_RENDER_SCALE = 0.01D;
+    private static final double MAX_RENDER_SCALE = 50.0D;
 
     private static double microSingularityScale = DEFAULT_RENDER_SCALE;
     private static double microWhiteHoleScale = DEFAULT_RENDER_SCALE;
