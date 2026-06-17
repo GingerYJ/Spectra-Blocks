@@ -11,6 +11,17 @@ import org.lwjgl.opengl.GL11;
 
 public final class RenderHelper {
 
+    private static final double[] GLOW_POINT_COS = new double[8];
+    private static final double[] GLOW_POINT_SIN = new double[8];
+
+    static {
+        for (int i = 0; i < GLOW_POINT_COS.length; i++) {
+            double angle = Math.PI * 2.0D * i / GLOW_POINT_COS.length;
+            GLOW_POINT_COS[i] = Math.cos(angle);
+            GLOW_POINT_SIN[i] = Math.sin(angle);
+        }
+    }
+
     private RenderHelper() {
     }
 
@@ -226,27 +237,17 @@ public final class RenderHelper {
         float blue = (point.color & 0xFF) / 255.0F;
         double size = point.size;
 
-        double leftX = point.x - rightX * size;
-        double leftY = point.y;
-        double leftZ = point.z - rightZ * size;
-        double rightPointX = point.x + rightX * size;
-        double rightPointY = point.y;
-        double rightPointZ = point.z + rightZ * size;
-        double upPointX = point.x + upX * size;
-        double upPointY = point.y + upY * size;
-        double upPointZ = point.z + upZ * size;
-        double downPointX = point.x - upX * size;
-        double downPointY = point.y - upY * size;
-        double downPointZ = point.z - upZ * size;
-
-        addGlowTriangle(buffer, point, leftX, leftY, leftZ, upPointX, upPointY, upPointZ,
-                red, green, blue);
-        addGlowTriangle(buffer, point, upPointX, upPointY, upPointZ, rightPointX, rightPointY, rightPointZ,
-                red, green, blue);
-        addGlowTriangle(buffer, point, rightPointX, rightPointY, rightPointZ, downPointX, downPointY, downPointZ,
-                red, green, blue);
-        addGlowTriangle(buffer, point, downPointX, downPointY, downPointZ, leftX, leftY, leftZ,
-                red, green, blue);
+        for (int i = 0; i < GLOW_POINT_COS.length; i++) {
+            int next = (i + 1) % GLOW_POINT_COS.length;
+            addGlowTriangle(buffer, point,
+                    point.x + (rightX * GLOW_POINT_COS[i] + upX * GLOW_POINT_SIN[i]) * size,
+                    point.y + upY * GLOW_POINT_SIN[i] * size,
+                    point.z + (rightZ * GLOW_POINT_COS[i] + upZ * GLOW_POINT_SIN[i]) * size,
+                    point.x + (rightX * GLOW_POINT_COS[next] + upX * GLOW_POINT_SIN[next]) * size,
+                    point.y + upY * GLOW_POINT_SIN[next] * size,
+                    point.z + (rightZ * GLOW_POINT_COS[next] + upZ * GLOW_POINT_SIN[next]) * size,
+                    red, green, blue);
+        }
     }
 
     private static void addGlowTriangle(BufferBuilder buffer, BillboardPoint point,
