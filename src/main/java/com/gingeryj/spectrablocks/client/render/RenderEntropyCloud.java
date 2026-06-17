@@ -21,8 +21,7 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
 
     private void drawCloudBody(float ticks) {
         useAlphaBlend();
-        int layers = RenderQuality.low() ? Math.max(3, CLOUD_LAYER_COUNT - 2) : CLOUD_LAYER_COUNT;
-        for (int i = 0; i < layers; i++) {
+        for (int i = 0; i < CLOUD_LAYER_COUNT; i++) {
             float pulse = wave(ticks * (0.021D + i * 0.004D) + i * 0.91D);
             double radius = 1.44D + i * 0.33D + pulse * 0.16D;
             int color = i % 3 == 0 ? 0xF4F5F0 : (i % 3 == 1 ? 0xB9BCBB : 0x777B80);
@@ -44,9 +43,7 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
 
     private void drawNoiseNodes(float ticks) {
         useAlphaBlend();
-        int stride = RenderQuality.detailStride();
-        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
-        for (int i = 0; i < CLOUD_NODE_COUNT; i += stride) {
+        for (int i = 0; i < CLOUD_NODE_COUNT; i++) {
             double band = (i + 0.5D) / CLOUD_NODE_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0035D + (i % 5) * 0.0007D);
             double yNorm = -0.94D + (i % 41) * (1.88D / 40.0D);
@@ -62,21 +59,13 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
             float alpha = 0.055F + 0.075F * wave(ticks * 0.049D + i * 0.51D);
             int color = i % 7 == 0 ? 0xFFFFFF : (i % 4 == 0 ? 0xD1D4D2 : 0x8F9494);
 
-            if (points != null) {
-                points.add(x, y, z, color, alpha * 1.18F);
-            } else {
-                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
-            }
-        }
-        if (points != null) {
-            points.draw();
+            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
         }
     }
 
     private void drawBlackCracks(float ticks) {
         useAlphaBlend();
-        int crackCount = RenderQuality.detailCount(CRACK_COUNT, 3);
-        for (int i = 0; i < crackCount; i++) {
+        for (int i = 0; i < CRACK_COUNT; i++) {
             double cycle = fract(ticks * (0.010D + i * 0.0012D) + i * 0.173D);
             float flash = (float) Math.max(0.0D, Math.sin(Math.PI * cycle));
             flash = flash * flash * flash;

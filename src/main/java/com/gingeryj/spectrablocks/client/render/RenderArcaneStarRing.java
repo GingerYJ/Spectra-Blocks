@@ -25,9 +25,6 @@ public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneSt
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
-        if (!RenderQuality.shouldRender(centerX, centerY, centerZ)) {
-            return;
-        }
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
@@ -54,9 +51,7 @@ public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneSt
             drawCore(ticks);
             drawRuneRings(ticks);
             drawOrbitStars(ticks);
-            if (!RenderQuality.low()) {
-                drawStarLinks(ticks);
-            }
+            drawStarLinks(ticks);
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -110,10 +105,8 @@ public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneSt
                 0xEED28C, 0xFFF2C1, 14, 0.82F);
         drawRuneRing(ticks, MIDDLE_RING_RADIUS, -27.0F, 1.0F, 0.0F, -0.11F,
                 0xBFA2FF, 0xF2E8FF, 20, -0.48F);
-        if (!RenderQuality.low()) {
-            drawRuneRing(ticks, OUTER_RING_RADIUS, 68.0F, 0.35F, 1.0F, 0.07F,
-                    0xFFD176, 0xFFF7D5, 28, 0.28F);
-        }
+        drawRuneRing(ticks, OUTER_RING_RADIUS, 68.0F, 0.35F, 1.0F, 0.07F,
+                0xFFD176, 0xFFF7D5, 28, 0.28F);
     }
 
     private void drawRuneRing(float ticks, double radius, float tilt, float axisX, float axisZ,
@@ -140,8 +133,7 @@ public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneSt
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        int stride = RenderQuality.detailStride();
-        for (int i = 0; i < STAR_COUNT; i += stride) {
+        for (int i = 0; i < STAR_COUNT; i++) {
             double angle = i * 2.399963229728653D + ticks * (STAR_ORBIT_SPEED + (i % 5) * 0.0018D);
             double wave = Math.sin(ticks * 0.035D + i * 0.77D);
             double radius = 1.55D + (i % 11) * 0.135D + wave * 0.10D;
@@ -176,8 +168,7 @@ public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneSt
         );
 
         GlStateManager.glLineWidth(1.6F);
-        int linkCount = RenderQuality.detailCount(STAR_LINK_COUNT, 4);
-        for (int i = 0; i < linkCount; i++) {
+        for (int i = 0; i < STAR_LINK_COUNT; i++) {
             double angle = i * 0.947D + ticks * 0.014D;
             double angleB = angle + 0.24D + (i % 3) * 0.07D;
             double radiusA = 1.18D + (i % 4) * 0.42D;

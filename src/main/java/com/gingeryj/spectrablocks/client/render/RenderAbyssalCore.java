@@ -59,9 +59,8 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
 
     private void drawWaveRings(float ticks) {
         useAdditiveBlend();
-        int ringCount = RenderQuality.detailCount(WAVE_RING_COUNT, 3);
-        for (int i = 0; i < ringCount; i++) {
-            double progress = (i + 1.0D) / ringCount;
+        for (int i = 0; i < WAVE_RING_COUNT; i++) {
+            double progress = (i + 1.0D) / WAVE_RING_COUNT;
             double y = -1.16D + i * 0.46D + Math.sin(ticks * 0.026D + i) * 0.055D;
             double baseRadius = 0.68D + progress * 2.10D;
             float pulse = wave(ticks * (0.028D + i * 0.003D) + i * 0.81D);
@@ -84,9 +83,7 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
 
     private void drawPlankton(float ticks) {
         useAdditiveBlend();
-        int stride = RenderQuality.detailStride();
-        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
-        for (int i = 0; i < PLANKTON_COUNT; i += stride) {
+        for (int i = 0; i < PLANKTON_COUNT; i++) {
             double band = (i + 0.5D) / PLANKTON_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (CURRENT_SPEED + (i % 5) * 0.0007D);
             double yNorm = -0.88D + (i % 41) * (1.76D / 40.0D);
@@ -100,28 +97,20 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
             int color = i % 7 == 0 ? 0xE9FFF8 : (i % 3 == 0 ? 0x48FFE2 : 0x2CC8FF);
             float alpha = 0.13F + 0.28F * wave(ticks * 0.036D + i);
 
-            if (points != null) {
-                points.add(x, y, z, color, alpha * 1.08F);
-            } else {
-                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
-            }
-            if (points == null && (i & 15) == 0) {
+            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            if ((i & 15) == 0) {
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(x, y, z);
                 RenderEnergyEffectHelper.drawSpark(size * 3.2D, color, alpha * 0.55F);
                 GlStateManager.popMatrix();
             }
         }
-        if (points != null) {
-            points.draw();
-        }
         useAlphaBlend();
     }
 
     private void drawRisingBubbles(float ticks) {
         useAlphaBlend();
-        int bubbleCount = RenderQuality.detailCount(22, 7);
-        for (int i = 0; i < bubbleCount; i++) {
+        for (int i = 0; i < 22; i++) {
             double progress = fract(i * 0.137D + ticks * 0.0036D);
             double yaw = i * GOLDEN_ANGLE + Math.sin(ticks * 0.010D + i) * 0.20D;
             double radius = 0.26D + (i % 6) * 0.19D;

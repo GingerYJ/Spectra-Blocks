@@ -10,19 +10,11 @@ public final class ModConfig {
     private static final double DEFAULT_RENDER_SCALE = 1.0D;
     private static final double MIN_RENDER_SCALE = 0.01D;
     private static final double MAX_RENDER_SCALE = 50.0D;
-    private static final int DEFAULT_RENDER_PERFORMANCE_MODE = 1;
-    private static final int MIN_RENDER_PERFORMANCE_MODE = 0;
-    private static final int MAX_RENDER_PERFORMANCE_MODE = 2;
-    private static final int DEFAULT_MAX_EFFECT_RENDER_DISTANCE = 160;
-    private static final int MIN_MAX_EFFECT_RENDER_DISTANCE = 64;
-    private static final int MAX_MAX_EFFECT_RENDER_DISTANCE = 512;
 
     private static double microSingularityScale = DEFAULT_RENDER_SCALE;
     private static double microWhiteHoleScale = DEFAULT_RENDER_SCALE;
     private static double microUniverseScale = DEFAULT_RENDER_SCALE;
     private static double microStellarSourceScale = DEFAULT_RENDER_SCALE;
-    private static int renderPerformanceMode = DEFAULT_RENDER_PERFORMANCE_MODE;
-    private static int maxEffectRenderDistance = DEFAULT_MAX_EFFECT_RENDER_DISTANCE;
 
     private ModConfig() {
     }
@@ -41,22 +33,6 @@ public final class ModConfig {
                     "\u5fae\u7f29\u5b87\u5b99\u6e32\u67d3\u7f29\u653e\u3002 / Scale for Micro Universe rendering.");
             microStellarSourceScale = readScale(config, "microStellarSourceScale",
                     "\u5fae\u7f29\u6052\u661f\u6e90\u6e32\u67d3\u7f29\u653e\u3002 / Scale for Micro Stellar Source rendering.");
-            renderPerformanceMode = config.getInt(
-                    "renderPerformanceMode",
-                    CATEGORY_RENDERING,
-                    DEFAULT_RENDER_PERFORMANCE_MODE,
-                    MIN_RENDER_PERFORMANCE_MODE,
-                    MAX_RENDER_PERFORMANCE_MODE,
-                    "\u89c6\u89c9\u7279\u6548\u6027\u80fd\u6a21\u5f0f\uff1a0=\u5e73\u8861\uff0c1=\u5feb\u901f\uff08\u9ed8\u8ba4\uff09\uff0c2=\u6781\u901f\u3002\u503c\u8d8a\u9ad8\uff0c\u8fdc\u8ddd\u79bb\u548c\u5927\u91cf\u65b9\u5757\u65f6\u6e32\u67d3\u7ec6\u8282\u8d8a\u5c11\u3002 / Visual effect performance mode: 0=balanced, 1=fast (default), 2=fastest. Higher values reduce more render details at distance and in dense scenes."
-            );
-            maxEffectRenderDistance = config.getInt(
-                    "maxEffectRenderDistance",
-                    CATEGORY_RENDERING,
-                    DEFAULT_MAX_EFFECT_RENDER_DISTANCE,
-                    MIN_MAX_EFFECT_RENDER_DISTANCE,
-                    MAX_MAX_EFFECT_RENDER_DISTANCE,
-                    "\u89c6\u89c9\u7279\u6548\u65b9\u5757\u6700\u5927\u6e32\u67d3\u8ddd\u79bb\uff08\u683c\uff09\u3002\u653e\u5927 RenderScale \u540e\uff0c\u8be5\u503c\u4f1a\u9632\u6b62\u8fc7\u591a\u8fdc\u5904 TESR \u540c\u65f6\u6e32\u67d3\u3002 / Maximum render distance in blocks for visual effect blocks. This caps far-away TESR rendering when RenderScale is large."
-            );
         } finally {
             if (config.hasChanged()) {
                 config.save();
@@ -89,14 +65,6 @@ public final class ModConfig {
 
     public static double microStellarSourceScale() {
         return microStellarSourceScale;
-    }
-
-    public static int renderPerformanceMode() {
-        return renderPerformanceMode;
-    }
-
-    public static double maxEffectRenderDistanceSquared() {
-        return (double) maxEffectRenderDistance * maxEffectRenderDistance;
     }
 
     public static double clampRenderScale(double scale) {

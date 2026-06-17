@@ -23,9 +23,6 @@ abstract class RenderCelestialEffectBase<T extends TileScalableEffect> extends T
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
-        if (!RenderQuality.shouldRender(centerX, centerY, centerZ)) {
-            return;
-        }
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY, centerZ);
@@ -114,8 +111,6 @@ abstract class RenderCelestialEffectBase<T extends TileScalableEffect> extends T
         }
 
         float[] rgb = RenderHelper.unpackRGB(color);
-        alpha *= RenderQuality.alphaMultiplier();
-        segments = RenderQuality.scaleSegments(segments, 8, 96);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
@@ -142,8 +137,6 @@ abstract class RenderCelestialEffectBase<T extends TileScalableEffect> extends T
         }
 
         float[] rgb = RenderHelper.unpackRGB(color);
-        alpha *= RenderQuality.alphaMultiplier();
-        segments = RenderQuality.scaleSegments(segments, 8, 96);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
@@ -178,8 +171,6 @@ abstract class RenderCelestialEffectBase<T extends TileScalableEffect> extends T
         }
 
         float[] rgb = RenderHelper.unpackRGB(color);
-        alpha *= RenderQuality.alphaMultiplier();
-        segments = RenderQuality.scaleSegments(segments, 6, 96);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
@@ -205,8 +196,6 @@ abstract class RenderCelestialEffectBase<T extends TileScalableEffect> extends T
         }
 
         float[] rgb = RenderHelper.unpackRGB(color);
-        alpha *= RenderQuality.alphaMultiplier();
-        segments = RenderQuality.scaleSegments(segments, 8, 96);
         double radius = Math.sqrt(Math.max(0.0D, sphereRadius * sphereRadius - y * y));
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();

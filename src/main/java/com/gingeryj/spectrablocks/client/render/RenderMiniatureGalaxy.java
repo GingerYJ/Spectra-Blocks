@@ -57,9 +57,7 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
 
     private void drawStars(float ticks) {
         useAdditiveBlend();
-        int stride = RenderQuality.detailStride();
-        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
-        for (int i = 0; i < STAR_COUNT; i += stride) {
+        for (int i = 0; i < STAR_COUNT; i++) {
             double band = (i + 0.5D) / STAR_COUNT;
             double radius = 0.58D + Math.pow(band, 0.64D) * (GALAXY_RADIUS - 0.68D);
             double angle = i * GOLDEN_ANGLE + ticks * (0.0038D / (0.45D + radius));
@@ -78,24 +76,15 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
 
             float flicker = 0.65F + 0.35F * wave(ticks * (0.035D + (i % 5) * 0.006D) + i);
             double size = 0.018D + (i % 4) * 0.004D + (i % 13 == 0 ? 0.020D : 0.0D);
-            double starX = Math.cos(angle) * radius;
-            double starZ = Math.sin(angle) * radius;
-            if (points != null) {
-                points.add(starX, y, starZ, color, 0.48F * flicker);
-            } else {
-                drawSphereAt(starX, y, starZ, size, color, 0.42F * flicker, 6, 6);
-            }
-        }
-        if (points != null) {
-            points.draw();
+            drawSphereAt(Math.cos(angle) * radius, y, Math.sin(angle) * radius,
+                    size, color, 0.42F * flicker, 6, 6);
         }
         useAlphaBlend();
     }
 
     private void drawTrailingClusters(float ticks) {
         useAdditiveBlend();
-        int trailCount = RenderQuality.detailCount(TRAIL_COUNT, 4);
-        for (int i = 0; i < trailCount; i++) {
+        for (int i = 0; i < TRAIL_COUNT; i++) {
             double radius = 1.25D + i * 0.205D;
             double angle = i * GOLDEN_ANGLE + ticks * (0.0048D / radius);
             double trailAngle = angle - 0.34D;

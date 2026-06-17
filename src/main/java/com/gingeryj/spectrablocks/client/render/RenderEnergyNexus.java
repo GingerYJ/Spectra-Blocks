@@ -22,10 +22,8 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         drawCentralReactor(ticks);
         drawPowerNodes(ticks);
         drawEnergyLinks(ticks);
-        if (!RenderQuality.low()) {
-            drawFluxPackets(ticks);
-            drawRingBursts(ticks);
-        }
+        drawFluxPackets(ticks);
+        drawRingBursts(ticks);
         drawControlledCharge(ticks);
     }
 
@@ -34,12 +32,6 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
 
         useAdditiveBlend();
         GlStateManager.glLineWidth(1.8F);
-        float[] cyan = RenderHelper.unpackRGB(0x6FEAFF);
-        float[] blue = RenderHelper.unpackRGB(0x3A8FFF);
-        float[] white = RenderHelper.unpackRGB(0x8FFFFF);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
         for (int i = 0; i < NODE_COUNT; i++) {
             double angle = TWO_PI * i / NODE_COUNT + Math.PI * 0.25D;
             double x = Math.cos(angle) * NODE_RADIUS;
@@ -49,15 +41,14 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             double tangentX = -Math.sin(angle) * 0.24D;
             double tangentZ = Math.cos(angle) * 0.24D;
 
-            addLine(buffer, x, -0.58D, z, x, 0.58D, z, cyan, 0.16F + pulse * 0.07F);
-            addLine(buffer, inwardX, -0.50D, inwardZ, x, -0.50D, z, blue, 0.13F + pulse * 0.05F);
-            addLine(buffer, inwardX, 0.50D, inwardZ, x, 0.50D, z, blue, 0.13F + pulse * 0.05F);
-            addLine(buffer, x - tangentX, -0.58D, z - tangentZ,
-                    x + tangentX, -0.58D, z + tangentZ, white, 0.12F + pulse * 0.04F);
-            addLine(buffer, x - tangentX, 0.58D, z - tangentZ,
-                    x + tangentX, 0.58D, z + tangentZ, white, 0.12F + pulse * 0.04F);
+            RenderHelper.drawLine(x, -0.58D, z, x, 0.58D, z, 0x6FEAFF, 0.16F + pulse * 0.07F);
+            RenderHelper.drawLine(inwardX, -0.50D, inwardZ, x, -0.50D, z, 0x3A8FFF, 0.13F + pulse * 0.05F);
+            RenderHelper.drawLine(inwardX, 0.50D, inwardZ, x, 0.50D, z, 0x3A8FFF, 0.13F + pulse * 0.05F);
+            RenderHelper.drawLine(x - tangentX, -0.58D, z - tangentZ,
+                    x + tangentX, -0.58D, z + tangentZ, 0x8FFFFF, 0.12F + pulse * 0.04F);
+            RenderHelper.drawLine(x - tangentX, 0.58D, z - tangentZ,
+                    x + tangentX, 0.58D, z + tangentZ, 0x8FFFFF, 0.12F + pulse * 0.04F);
         }
-        tessellator.draw();
         RenderHelper.resetLineWidth();
 
         useAlphaBlend();
@@ -170,12 +161,10 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             double sin = Math.sin(angle);
             int color = i % 2 == 0 ? 0xBFFFFF : 0x74A8FF;
 
-            int laneCount = RenderQuality.mediumOrLow() ? 2 : 3;
-            for (int lane = 0; lane < laneCount; lane++) {
+            for (int lane = 0; lane < 3; lane++) {
                 double laneOffset = (lane - 1) * 0.16D;
                 double lanePhase = lane * 0.113D + i * 0.037D;
-                int packetCount = RenderQuality.mediumOrLow() ? 2 : 3;
-                for (int packet = 0; packet < packetCount; packet++) {
+                for (int packet = 0; packet < 3; packet++) {
                     double progress = fract(ticks * (0.018D + lane * 0.002D)
                             + packet * 0.34D + lanePhase);
                     double eased = progress * progress;
@@ -226,8 +215,7 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
 
     private void drawControlledCharge(float ticks) {
         useAdditiveBlend();
-        int stride = RenderQuality.detailStride();
-        for (int i = 0; i < ENERGY_DOT_COUNT; i += stride) {
+        for (int i = 0; i < ENERGY_DOT_COUNT; i++) {
             double band = (i + 0.5D) / ENERGY_DOT_COUNT;
             double angle = TWO_PI * (i % 12) / 12.0D + ticks * (0.006D + (i % 3) * 0.0007D);
             double radius = 0.54D + (i / 12) * 0.28D + Math.sin(ticks * 0.018D + i) * 0.025D;
@@ -246,19 +234,14 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             return;
         }
 
-        float[] rgb = RenderHelper.unpackRGB(color);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-        addLine(buffer, 0.0D, y + radius, 0.0D, radius, y, 0.0D, rgb, alpha);
-        addLine(buffer, radius, y, 0.0D, 0.0D, y - radius, 0.0D, rgb, alpha);
-        addLine(buffer, 0.0D, y - radius, 0.0D, -radius, y, 0.0D, rgb, alpha);
-        addLine(buffer, -radius, y, 0.0D, 0.0D, y + radius, 0.0D, rgb, alpha);
-        addLine(buffer, 0.0D, y, radius, radius, y, 0.0D, rgb, alpha * 0.72F);
-        addLine(buffer, radius, y, 0.0D, 0.0D, y, -radius, rgb, alpha * 0.72F);
-        addLine(buffer, 0.0D, y, -radius, -radius, y, 0.0D, rgb, alpha * 0.72F);
-        addLine(buffer, -radius, y, 0.0D, 0.0D, y, radius, rgb, alpha * 0.72F);
-        tessellator.draw();
+        RenderHelper.drawLine(0.0D, y + radius, 0.0D, radius, y, 0.0D, color, alpha);
+        RenderHelper.drawLine(radius, y, 0.0D, 0.0D, y - radius, 0.0D, color, alpha);
+        RenderHelper.drawLine(0.0D, y - radius, 0.0D, -radius, y, 0.0D, color, alpha);
+        RenderHelper.drawLine(-radius, y, 0.0D, 0.0D, y + radius, 0.0D, color, alpha);
+        RenderHelper.drawLine(0.0D, y, radius, radius, y, 0.0D, color, alpha * 0.72F);
+        RenderHelper.drawLine(radius, y, 0.0D, 0.0D, y, -radius, color, alpha * 0.72F);
+        RenderHelper.drawLine(0.0D, y, -radius, -radius, y, 0.0D, color, alpha * 0.72F);
+        RenderHelper.drawLine(-radius, y, 0.0D, 0.0D, y, radius, color, alpha * 0.72F);
     }
 
     private static void drawNodeBrace(double radius, double y, int color, float alpha, double phase) {
@@ -266,30 +249,24 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             return;
         }
 
-        int braces = RenderQuality.low() ? 2 : 3;
-        int segmentsPerBrace = RenderQuality.mediumOrLow() ? 3 : 4;
+        int braces = 3;
+        int segmentsPerBrace = 4;
         double braceLength = Math.PI * 0.34D;
-        float[] rgb = RenderHelper.unpackRGB(color);
-        float[] white = RenderHelper.unpackRGB(0xFFFFFF);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
         for (int brace = 0; brace < braces; brace++) {
             double center = phase + TWO_PI * brace / braces;
             double start = center - braceLength * 0.5D;
             for (int segment = 0; segment < segmentsPerBrace; segment++) {
                 double a0 = start + braceLength * segment / segmentsPerBrace;
                 double a1 = start + braceLength * (segment + 1) / segmentsPerBrace;
-                addLine(buffer, Math.cos(a0) * radius, y, Math.sin(a0) * radius,
-                        Math.cos(a1) * radius, y, Math.sin(a1) * radius, rgb, alpha);
+                RenderHelper.drawLine(Math.cos(a0) * radius, y, Math.sin(a0) * radius,
+                        Math.cos(a1) * radius, y, Math.sin(a1) * radius, color, alpha);
             }
 
             double spoke = center;
-            addLine(buffer, Math.cos(spoke) * (radius - 0.08D), y, Math.sin(spoke) * (radius - 0.08D),
+            RenderHelper.drawLine(Math.cos(spoke) * (radius - 0.08D), y, Math.sin(spoke) * (radius - 0.08D),
                     Math.cos(spoke) * (radius + 0.04D), y, Math.sin(spoke) * (radius + 0.04D),
-                    white, alpha * 0.45F);
+                    0xFFFFFF, alpha * 0.45F);
         }
-        tessellator.draw();
     }
 
     private static void drawSegmentedBeam(double angle, double innerRadius, double outerRadius,
@@ -300,18 +277,14 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
 
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
-        int segments = RenderQuality.mediumOrLow() ? 3 : 5;
-        float[] rgb = RenderHelper.unpackRGB(color);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+        int segments = 5;
         for (int i = 0; i < segments; i++) {
             double start = innerRadius + (outerRadius - innerRadius) * (i / (double) segments);
             double end = innerRadius + (outerRadius - innerRadius) * ((i + 0.62D) / segments);
             float segmentAlpha = alpha * (0.65F + 0.35F * (i % 2));
-            addLine(buffer, cos * start, y, sin * start, cos * end, y, sin * end, rgb, segmentAlpha);
+            RenderHelper.drawLine(cos * start, y, sin * start, cos * end, y, sin * end,
+                    color, segmentAlpha);
         }
-        tessellator.draw();
     }
 
     private static void drawDashedRing(double radius, int color, float alpha, int dashes, double phase) {
@@ -319,13 +292,8 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             return;
         }
 
-        dashes = RenderQuality.detailCount(dashes, 8);
         double dashLength = TWO_PI / dashes * 0.54D;
-        int segments = RenderQuality.mediumOrLow() ? 3 : 4;
-        float[] rgb = RenderHelper.unpackRGB(color);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+        int segments = 4;
         for (int dash = 0; dash < dashes; dash++) {
             double start = phase + TWO_PI * dash / dashes - dashLength * 0.5D;
             double previousX = Math.cos(start) * radius;
@@ -336,13 +304,12 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
                 double localRadius = radius + Math.sin(phase * 3.0D + dash * 0.73D + progress * Math.PI) * 0.010D;
                 double x = Math.cos(angle) * localRadius;
                 double z = Math.sin(angle) * localRadius;
-                addLine(buffer, previousX, 0.0D, previousZ, x, 0.0D, z,
-                        rgb, alpha * (0.72F + 0.28F * (dash % 3) / 2.0F));
+                RenderHelper.drawLine(previousX, 0.0D, previousZ, x, 0.0D, z,
+                        color, alpha * (0.72F + 0.28F * (dash % 3) / 2.0F));
                 previousX = x;
                 previousZ = z;
             }
         }
-        tessellator.draw();
     }
 
     private static int particleColor(int packet, int lane, int node, int fallback) {
@@ -390,26 +357,20 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             return;
         }
 
-        segments = RenderQuality.scaleSegments(segments, 4, 16);
         double start = -0.58D;
         double sweep = 1.16D;
         double previousX = Math.cos(start) * radius;
         double previousZ = Math.sin(start) * radius;
-        float[] rgb = RenderHelper.unpackRGB(color);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
         for (int i = 1; i <= segments; i++) {
             double progress = (double) i / segments;
             double angle = start + sweep * progress;
             double x = Math.cos(angle) * radius;
             double z = Math.sin(angle) * radius;
             float localAlpha = alpha * (float) Math.sin(progress * Math.PI);
-            addLine(buffer, previousX, 0.0D, previousZ, x, 0.0D, z, rgb, localAlpha);
+            RenderHelper.drawLine(previousX, 0.0D, previousZ, x, 0.0D, z, color, localAlpha);
             previousX = x;
             previousZ = z;
         }
-        tessellator.draw();
     }
 
     private static void drawEnergyColumn(double radius, double height, int color, float alpha) {
@@ -420,8 +381,7 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         float[] rgb = RenderHelper.unpackRGB(color);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        int segments = RenderQuality.scaleSegments(28, 8, 28);
-        alpha *= RenderQuality.alphaMultiplier();
+        int segments = 28;
         double halfHeight = height * 0.5D;
         buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
         for (int i = 0; i <= segments; i++) {
@@ -432,18 +392,5 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             buffer.pos(x, halfHeight, z).color(rgb[0], rgb[1], rgb[2], alpha * 0.20F).endVertex();
         }
         tessellator.draw();
-    }
-
-    private static void addLine(BufferBuilder buffer,
-                                double x1, double y1, double z1,
-                                double x2, double y2, double z2,
-                                float[] rgb, float alpha) {
-        if (alpha <= 0.01F) {
-            return;
-        }
-
-        alpha *= RenderQuality.alphaMultiplier();
-        buffer.pos(x1, y1, z1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-        buffer.pos(x2, y2, z2).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
     }
 }

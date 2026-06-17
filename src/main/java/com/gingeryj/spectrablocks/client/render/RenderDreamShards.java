@@ -56,8 +56,7 @@ public class RenderDreamShards extends RenderCelestialEffectBase<TileDreamShards
 
     private void drawShards(float ticks, float ringPulse) {
         useAlphaBlend();
-        int stride = RenderQuality.low() ? 2 : 1;
-        for (int i = 0; i < SHARD_COUNT; i += stride) {
+        for (int i = 0; i < SHARD_COUNT; i++) {
             double driftYaw = i * GOLDEN_ANGLE + ticks * (0.006D + (i % 6) * 0.0011D);
             double yNorm = -0.78D + (i % 17) * (1.56D / 16.0D);
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - yNorm * yNorm));
@@ -90,8 +89,7 @@ public class RenderDreamShards extends RenderCelestialEffectBase<TileDreamShards
 
     private void drawGlimmers(float ticks) {
         useAdditiveBlend();
-        int stride = RenderQuality.detailStride();
-        for (int i = 0; i < GLIMMER_COUNT; i += stride) {
+        for (int i = 0; i < GLIMMER_COUNT; i++) {
             double yaw = i * GOLDEN_ANGLE - ticks * (0.004D + (i % 4) * 0.0007D);
             double yNorm = -0.86D + (i % 29) * (1.72D / 28.0D);
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - yNorm * yNorm));
@@ -148,16 +146,14 @@ public class RenderDreamShards extends RenderCelestialEffectBase<TileDreamShards
 
         tessellator.draw();
 
-        if (!RenderQuality.low()) {
-            GlStateManager.glLineWidth(1.2F);
-            RenderHelper.drawLine(0.0D, height * 0.58D, 0.0D,
-                    -width * 0.42D, -height * 0.34D, width * 0.10D, 0xFFFFFF, alpha * 0.24F);
-            RenderHelper.drawLine(0.0D, height * 0.58D, 0.0D,
-                    width * 0.36D, -height * 0.18D, width * 0.16D, 0xFFFFFF, alpha * 0.22F);
-            RenderHelper.drawLine(0.0D, height * 0.58D, 0.0D,
-                    width * 0.12D, -height * 0.46D, -width * 0.38D, 0xFFFFFF, alpha * 0.20F);
-            RenderHelper.resetLineWidth();
-        }
+        GlStateManager.glLineWidth(1.2F);
+        RenderHelper.drawLine(0.0D, height * 0.58D, 0.0D,
+                -width * 0.42D, -height * 0.34D, width * 0.10D, 0xFFFFFF, alpha * 0.24F);
+        RenderHelper.drawLine(0.0D, height * 0.58D, 0.0D,
+                width * 0.36D, -height * 0.18D, width * 0.16D, 0xFFFFFF, alpha * 0.22F);
+        RenderHelper.drawLine(0.0D, height * 0.58D, 0.0D,
+                width * 0.12D, -height * 0.46D, -width * 0.38D, 0xFFFFFF, alpha * 0.20F);
+        RenderHelper.resetLineWidth();
     }
 
     private static void addVertex(BufferBuilder buffer, double x, double y, double z,

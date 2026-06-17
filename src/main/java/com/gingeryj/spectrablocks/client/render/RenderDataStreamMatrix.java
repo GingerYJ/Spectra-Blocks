@@ -36,8 +36,7 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * MATRIX_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        int ringCount = RenderQuality.detailCount(GRID_RING_COUNT, 2);
-        for (int i = 0; i < ringCount; i++) {
+        for (int i = 0; i < GRID_RING_COUNT; i++) {
             double radius = 0.72D + i * 0.54D;
             float alpha = 0.070F + 0.030F * wave(ticks * 0.041D + i);
             GlStateManager.glLineWidth(1.0F + i * 0.16F);
@@ -53,45 +52,37 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * MATRIX_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
-        int columnCount = RenderQuality.detailCount(COLUMN_COUNT, 9);
-        int glyphCount = RenderQuality.mediumOrLow() ? 5 : GLYPHS_PER_COLUMN;
-        GlStateManager.glLineWidth(1.0F);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < columnCount; i++) {
-            double band = (i + 0.5D) / columnCount;
+        for (int i = 0; i < COLUMN_COUNT; i++) {
+            double band = (i + 0.5D) / COLUMN_COUNT;
             double angle = i * GOLDEN_ANGLE;
             double radius = 0.55D + Math.pow(band, 0.52D) * COLUMN_RADIUS;
             double x = Math.cos(angle) * radius;
             double z = Math.sin(angle) * radius;
             double drift = fract(ticks * FALL_SPEED + i * 0.137D);
             int color = i % 3 == 0 ? SECONDARY_COLOR : PRIMARY_COLOR;
-            float[] columnRgb = RenderHelper.unpackRGB(color);
-            float guideAlpha = (0.045F + 0.025F * wave(ticks * 0.030D + i)) * RenderQuality.alphaMultiplier();
 
-            addLine(buffer, x, -COLUMN_HEIGHT * 0.5D, z, x, COLUMN_HEIGHT * 0.5D, z, columnRgb, guideAlpha);
-            for (int j = 0; j < glyphCount; j++) {
-                double local = fract(drift + (double) j / glyphCount);
+            drawColumnGuide(x, z, color, 0.045F + 0.025F * wave(ticks * 0.030D + i));
+            for (int j = 0; j < GLYPHS_PER_COLUMN; j++) {
+                double local = fract(drift + (double) j / GLYPHS_PER_COLUMN);
                 double y = COLUMN_HEIGHT * 0.5D - local * COLUMN_HEIGHT;
                 float fade = (float) Math.sin(Math.PI * local);
                 float alpha = (0.10F + 0.36F * fade) * (j == 0 ? 1.15F : 1.0F);
                 int glyphColor = j == 0 ? WHITE_COLOR : color;
 
-                addGlyph(buffer, (i + j * 5) & 7, x, y, z, angle,
-                        GLYPH_SIZE * (0.86D + (j % 3) * 0.10D), glyphColor, alpha);
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(x, y, z);
+                GlStateManager.rotate((float) Math.toDegrees(-angle) + 90.0F, 0.0F, 1.0F, 0.0F);
+                drawGlyph((i + j * 5) & 7, GLYPH_SIZE * (0.86D + (j % 3) * 0.10D), glyphColor, alpha);
+                GlStateManager.popMatrix();
             }
         }
-        tessellator.draw();
-        RenderHelper.resetLineWidth();
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
     private void drawScanRings(float ticks) {
         useAdditiveBlend();
-        int ringCount = RenderQuality.low() ? 1 : 3;
-        for (int i = 0; i < ringCount; i++) {
+        for (int i = 0; i < 3; i++) {
             double progress = fract(ticks * 0.010D + i * 0.333D);
             double y = 1.82D - progress * 3.64D;
             float fade = (float) Math.sin(Math.PI * progress);
@@ -111,56 +102,48 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
         useAlphaBlend();
     }
 
-    private static void addGlyph(BufferBuilder buffer, int glyph, double x, double y, double z,
-                                 double angle, double size, int color, float alpha) {
+    private static void drawColumnGuide(double x, double z, int color, float alpha) {
+        GlStateManager.glLineWidth(1.0F);
+        RenderHelper.drawLine(x, -COLUMN_HEIGHT * 0.5D, z, x, COLUMN_HEIGHT * 0.5D, z, color, alpha);
+        RenderHelper.resetLineWidth();
+    }
+
+    private static void drawGlyph(int glyph, double size, int color, float alpha) {
         if (alpha <= 0.01F) {
             return;
         }
 
         float[] rgb = RenderHelper.unpackRGB(color);
-        double tangentX = Math.sin(angle);
-        double tangentZ = -Math.cos(angle);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
 
         if ((glyph & 1) == 0) {
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, -size, -size, size, -size, rgb, alpha);
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, -size, size, size, size, rgb, alpha * 0.80F);
+            addLine(buffer, -size, -size, size, -size, rgb, alpha);
+            addLine(buffer, -size, size, size, size, rgb, alpha * 0.80F);
         } else {
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, -size, -size, -size, size, rgb, alpha);
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, size, -size, size, size, rgb, alpha * 0.80F);
+            addLine(buffer, -size, -size, -size, size, rgb, alpha);
+            addLine(buffer, size, -size, size, size, rgb, alpha * 0.80F);
         }
 
         if ((glyph & 2) == 0) {
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, -size, 0.0D, size, 0.0D, rgb, alpha * 0.92F);
+            addLine(buffer, -size, 0.0D, size, 0.0D, rgb, alpha * 0.92F);
         } else {
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, 0.0D, -size, 0.0D, size, rgb, alpha * 0.92F);
+            addLine(buffer, 0.0D, -size, 0.0D, size, rgb, alpha * 0.92F);
         }
 
         if ((glyph & 4) == 0) {
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, -size, -size, size, size, rgb, alpha * 0.72F);
+            addLine(buffer, -size, -size, size, size, rgb, alpha * 0.72F);
         } else {
-            addGlyphLine(buffer, x, y, z, tangentX, tangentZ, -size, size, size, -size, rgb, alpha * 0.72F);
+            addLine(buffer, -size, size, size, -size, rgb, alpha * 0.72F);
         }
+
+        tessellator.draw();
     }
 
-    private static void addGlyphLine(BufferBuilder buffer, double x, double y, double z,
-                                     double tangentX, double tangentZ,
-                                     double x0, double y0, double x1, double y1,
-                                     float[] rgb, float alpha) {
-        addLine(buffer,
-                x + x0 * tangentX, y + y0, z + x0 * tangentZ,
-                x + x1 * tangentX, y + y1, z + x1 * tangentZ,
-                rgb, alpha);
-    }
-
-    private static void addLine(BufferBuilder buffer,
-                                double x0, double y0, double z0,
-                                double x1, double y1, double z1,
+    private static void addLine(BufferBuilder buffer, double x0, double y0, double x1, double y1,
                                 float[] rgb, float alpha) {
-        if (alpha <= 0.01F) {
-            return;
-        }
-
-        buffer.pos(x0, y0, z0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-        buffer.pos(x1, y1, z1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+        buffer.pos(x0, y0, 0.0D).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+        buffer.pos(x1, y1, 0.0D).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
     }
 }

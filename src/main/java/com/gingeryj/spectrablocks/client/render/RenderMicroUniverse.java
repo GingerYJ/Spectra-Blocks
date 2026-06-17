@@ -11,9 +11,9 @@ import org.lwjgl.opengl.GL11;
 public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniverse> {
 
     private static final double SHELL_RADIUS = 5.45D;
-    private static final int SHELL_LAT_SEGMENTS = 24;
-    private static final int SHELL_LON_SEGMENTS = 24;
-    private static final int ORBIT_SEGMENTS = 96;
+    private static final int SHELL_LAT_SEGMENTS = 36;
+    private static final int SHELL_LON_SEGMENTS = 36;
+    private static final int ORBIT_SEGMENTS = 192;
     private static final double ORBIT_SPEED_SCALE = 0.28D;
     private static final ResourceLocation SUN_TEXTURE =
             new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/sun.png");
@@ -34,9 +34,6 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
-        if (!RenderQuality.shouldRender(centerX, centerY, centerZ)) {
-            return;
-        }
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
@@ -62,9 +59,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         try {
             drawUniverseShell(ticks);
             drawSolarSystem(ticks);
-            if (!RenderQuality.low()) {
-                drawMeteors(ticks);
-            }
+            drawMeteors(ticks);
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -101,8 +96,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     }
 
     private void drawStars(float ticks) {
-        int starCount = RenderQuality.detailCount(36, 12);
-        for (int i = 0; i < starCount; i++) {
+        for (int i = 0; i < 64; i++) {
             double yaw = i * 2.399963229728653D + ticks * 0.002D;
             double y = -0.92D + (i % 23) * 0.083D;
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));
@@ -113,7 +107,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
                     y * radius,
                     Math.sin(yaw) * horizontal * radius
             );
-            RenderHelper.drawSphere(0.024D + (i % 4) * 0.007D, 0xDDE7FF, 0.65F, 5, 5);
+            RenderHelper.drawSphere(0.024D + (i % 4) * 0.007D, 0xDDE7FF, 0.65F, 7, 7);
             GlStateManager.popMatrix();
         }
         RenderHelper.resetLineWidth();
@@ -126,20 +120,18 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         drawSun(ticks);
 
-        int planetLimit = RenderQuality.low() ? 5 : PLANETS.length;
-        for (int i = 0; i < planetLimit; i++) {
-            Planet planet = PLANETS[i];
+        for (Planet planet : PLANETS) {
             drawGlowingOrbit(planet);
             double angle = ticks * planet.speed + planet.phase;
             double planetX = Math.cos(angle) * planet.orbitRadius;
             double planetZ = Math.sin(angle) * planet.orbitRadius;
             GlStateManager.pushMatrix();
             GlStateManager.translate(planetX, planet.verticalOffset, planetZ);
-            RenderHelper.drawSphere(planet.radius * 1.65D, planet.orbitGlowColor, 0.13F, 6, 6);
+            RenderHelper.drawSphere(planet.radius * 1.65D, planet.orbitGlowColor, 0.13F, 10, 10);
             GlStateManager.pushMatrix();
             GlStateManager.rotate(ticks * planet.selfRotationSpeed, 0.0F, 1.0F, 0.0F);
             GlStateManager.enableTexture2D();
-            RenderHelper.drawTexturedSphere(planet.radius, planet.texture, 0.98F, 24, 24);
+            RenderHelper.drawTexturedSphere(planet.radius, planet.texture, 0.98F, 40, 40);
             GlStateManager.disableTexture2D();
             GlStateManager.popMatrix();
             GlStateManager.popMatrix();
@@ -155,7 +147,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
-        RenderHelper.drawSphere(0.76D + 0.045D * pulse, 0xFFE8B5, 0.390F, 22, 22);
+        RenderHelper.drawSphere(0.76D + 0.045D * pulse, 0xFFE8B5, 0.390F, 32, 32);
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
@@ -165,7 +157,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.26F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(6.0F, 0.0F, 0.0F, 1.0F);
-        RenderHelper.drawTexturedSphere(0.42D, SUN_TEXTURE, 1.0F, 26, 26);
+        RenderHelper.drawTexturedSphere(0.42D, SUN_TEXTURE, 1.0F, 48, 48);
         GlStateManager.popMatrix();
         GlStateManager.disableTexture2D();
 
@@ -213,8 +205,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         RenderHelper.drawLine(headX, headY, headZ, tailX, tailY, tailZ, 0xDDEBFF, 0.34F * fade);
         RenderHelper.resetLineWidth();
         GlStateManager.translate(headX, headY, headZ);
-        RenderHelper.drawSphere(0.070D, 0xFFFFFF, 0.80F * fade, 5, 5);
-        RenderHelper.drawSphere(0.130D, 0x75B8FF, 0.22F * fade, 5, 5);
+        RenderHelper.drawSphere(0.070D, 0xFFFFFF, 0.80F * fade, 8, 8);
+        RenderHelper.drawSphere(0.130D, 0x75B8FF, 0.22F * fade, 8, 8);
         GlStateManager.popMatrix();
     }
 

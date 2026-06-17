@@ -36,9 +36,6 @@ public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
-        if (!RenderQuality.shouldRender(centerX, centerY, centerZ)) {
-            return;
-        }
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
@@ -62,9 +59,7 @@ public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
             drawCore(ticks);
             drawSwirl(ticks);
             drawGlowingRings(ticks);
-            if (!RenderQuality.low()) {
-                drawInwardParticles(ticks);
-            }
+            drawInwardParticles(ticks);
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -105,13 +100,12 @@ public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
         GlStateManager.rotate(68.0F, 1.0F, 0.0F, 0.0F);
 
         GlStateManager.glLineWidth(3.0F);
-        int armCount = RenderQuality.low() ? 3 : SPIRAL_ARMS;
-        for (int arm = 0; arm < armCount; arm++) {
+        for (int arm = 0; arm < SPIRAL_ARMS; arm++) {
             drawSpiralArm(arm, ticks, OUTER_COLOR, 0.26F);
         }
 
         GlStateManager.glLineWidth(1.5F);
-        for (int arm = 0; arm < armCount; arm++) {
+        for (int arm = 0; arm < SPIRAL_ARMS; arm++) {
             drawSpiralArm(arm, ticks + 8.0F, RING_COLOR, 0.42F);
         }
         RenderHelper.resetLineWidth();
@@ -124,9 +118,8 @@ public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
         BufferBuilder buffer = tessellator.getBuffer();
         double armOffset = arm * Math.PI * 2.0D / SPIRAL_ARMS;
         buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-        int points = RenderQuality.scaleSegments(SPIRAL_POINTS, 12, SPIRAL_POINTS);
-        for (int i = 0; i < points; i++) {
-            double progress = (double) i / (points - 1);
+        for (int i = 0; i < SPIRAL_POINTS; i++) {
+            double progress = (double) i / (SPIRAL_POINTS - 1);
             double radius = 0.26D + progress * 1.55D;
             double angle = armOffset + progress * Math.PI * 4.6D - ticks * 0.034D;
             double wave = Math.sin(progress * Math.PI * 6.0D + ticks * 0.060D + arm) * 0.055D;
@@ -146,16 +139,12 @@ public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
         GlStateManager.rotate(ticks * OUTER_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
         drawTiltedRing(0.92D, 62.0F, 0.0F, RING_COLOR, 0.40F, 3.0F);
         drawTiltedRing(1.28D, -54.0F, 34.0F, OUTER_COLOR, 0.30F, 2.0F);
-        if (!RenderQuality.low()) {
-            drawTiltedRing(1.68D, 76.0F, -28.0F, HOT_COLOR, 0.16F, 1.5F);
-        }
+        drawTiltedRing(1.68D, 76.0F, -28.0F, HOT_COLOR, 0.16F, 1.5F);
         GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * RING_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
-        if (!RenderQuality.low()) {
-            drawTiltedRing(1.48D, 18.0F, 90.0F, 0x6D4DFF, 0.20F, 2.0F);
-        }
+        drawTiltedRing(1.48D, 18.0F, 90.0F, 0x6D4DFF, 0.20F, 2.0F);
         GlStateManager.popMatrix();
     }
 
@@ -173,8 +162,7 @@ public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
 
     private void drawInwardParticles(float ticks) {
         useAdditiveBlend();
-        int stride = RenderQuality.mediumOrLow() ? 2 : 1;
-        for (int i = 0; i < PARTICLE_COUNT; i += stride) {
+        for (int i = 0; i < PARTICLE_COUNT; i++) {
             double progress = fract(ticks * (0.012D + (i % 4) * 0.0016D) + i * 0.113D);
             double radius = 1.82D - progress * 1.44D;
             double angle = i * GOLDEN_ANGLE + ticks * 0.070D + progress * Math.PI * 3.0D;

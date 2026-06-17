@@ -56,8 +56,7 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
 
     private void drawNebulaLobe(float ticks, double yOffset, int color, float direction) {
         useAlphaBlend();
-        int layers = RenderQuality.low() ? Math.max(2, CLOUD_LAYER_COUNT - 1) : CLOUD_LAYER_COUNT;
-        for (int i = 0; i < layers; i++) {
+        for (int i = 0; i < CLOUD_LAYER_COUNT; i++) {
             double radius = LOBE_RADIUS + i * 0.22D;
             float pulse = wave(ticks * (0.026D + i * 0.006D) + i);
 
@@ -82,9 +81,7 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
 
     private void drawFallingDust(float ticks) {
         useAdditiveBlend();
-        int streamStride = RenderQuality.mediumOrLow() ? 2 : 1;
-        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
-        for (int i = 0; i < STREAM_COUNT; i += streamStride) {
+        for (int i = 0; i < STREAM_COUNT; i++) {
             double progress = fract(ticks * 0.018D + i * 0.071D);
             double y = 1.18D - progress * 2.36D;
             double pinch = Math.abs(y) / 1.18D;
@@ -93,17 +90,11 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
             int color = progress < 0.52D ? TOP_COLOR : BOTTOM_COLOR;
             float alpha = 0.22F + 0.22F * wave(ticks * 0.055D + i);
 
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            if (points != null) {
-                points.add(x, y, z, color, alpha * 1.10F);
-            } else {
-                drawSphereAt(x, y, z, 0.026D + (i % 4) * 0.005D, color, alpha, 6, 6);
-            }
+            drawSphereAt(Math.cos(angle) * radius, y, Math.sin(angle) * radius,
+                    0.026D + (i % 4) * 0.005D, color, alpha, 6, 6);
         }
 
-        int dustStride = RenderQuality.detailStride();
-        for (int i = 0; i < DUST_COUNT; i += dustStride) {
+        for (int i = 0; i < DUST_COUNT; i++) {
             double top = i < DUST_COUNT / 2 ? 1.0D : -1.0D;
             int local = i % (DUST_COUNT / 2);
             double band = (local + 0.5D) / (DUST_COUNT / 2);
@@ -113,24 +104,15 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
             int color = top > 0.0D ? TOP_COLOR : BOTTOM_COLOR;
             float alpha = 0.12F + 0.12F * wave(ticks * 0.046D + local);
 
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            if (points != null) {
-                points.add(x, y, z, color, alpha * 1.12F);
-            } else {
-                drawSphereAt(x, y, z, 0.018D + (local % 3) * 0.004D, color, alpha, 5, 5);
-            }
-        }
-        if (points != null) {
-            points.draw();
+            drawSphereAt(Math.cos(angle) * radius, y, Math.sin(angle) * radius,
+                    0.018D + (local % 3) * 0.004D, color, alpha, 5, 5);
         }
         useAlphaBlend();
     }
 
     private void drawStarArcs(float ticks) {
         useAdditiveBlend();
-        int arcCount = RenderQuality.detailCount(ARC_COUNT, 3);
-        for (int i = 0; i < arcCount; i++) {
+        for (int i = 0; i < ARC_COUNT; i++) {
             double radius = 1.42D + (i % 4) * 0.17D;
             double start = i * 0.74D + ticks * (0.006D + (i % 2) * 0.002D);
             double sweep = Math.PI * (0.84D + (i % 3) * 0.18D);

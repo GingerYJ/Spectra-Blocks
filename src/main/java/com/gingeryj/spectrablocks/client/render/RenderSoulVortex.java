@@ -46,9 +46,8 @@ public class RenderSoulVortex extends RenderCelestialEffectBase<TileSoulVortex> 
 
     private void drawHelices(float ticks) {
         useAdditiveBlend();
-        int helixCount = RenderQuality.low() ? 2 : HELIX_COUNT;
-        for (int i = 0; i < helixCount; i++) {
-            double phase = TWO_PI * i / helixCount + ticks * VORTEX_ROTATION_SPEED;
+        for (int i = 0; i < HELIX_COUNT; i++) {
+            double phase = TWO_PI * i / HELIX_COUNT + ticks * VORTEX_ROTATION_SPEED;
             int color = i % 2 == 0 ? 0x51FFD0 : 0x8CFBFF;
             GlStateManager.glLineWidth(i % 2 == 0 ? 2.2F : 1.4F);
             drawHelix(phase, color, 0.24F);
@@ -59,8 +58,7 @@ public class RenderSoulVortex extends RenderCelestialEffectBase<TileSoulVortex> 
 
     private void drawSouls(float ticks) {
         useAdditiveBlend();
-        int stride = RenderQuality.detailStride();
-        for (int i = 0; i < SOUL_COUNT; i += stride) {
+        for (int i = 0; i < SOUL_COUNT; i++) {
             double progress = fract(ticks * SOUL_RISE_SPEED + i * 0.023D);
             double angle = i * 2.399963229728653D + progress * TWO_PI * 1.85D + ticks * VORTEX_ROTATION_SPEED;
             double radius = lerp(BASE_RADIUS, TOP_RADIUS, progress) + Math.sin(ticks * 0.034D + i) * 0.045D;
@@ -99,9 +97,8 @@ public class RenderSoulVortex extends RenderCelestialEffectBase<TileSoulVortex> 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-        int segments = RenderQuality.scaleSegments(HELIX_SEGMENTS, 12, HELIX_SEGMENTS);
-        for (int i = 0; i <= segments; i++) {
-            double progress = (double) i / segments;
+        for (int i = 0; i <= HELIX_SEGMENTS; i++) {
+            double progress = (double) i / HELIX_SEGMENTS;
             double angle = phase + progress * TWO_PI * 1.85D;
             double radius = lerp(BASE_RADIUS, TOP_RADIUS, progress);
             double height = progress * VORTEX_HEIGHT - 0.08D;

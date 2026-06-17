@@ -28,9 +28,6 @@ public class RenderVoidCrystal extends TileEntitySpecialRenderer<TileVoidCrystal
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
-        if (!RenderQuality.shouldRender(centerX, centerY, centerZ)) {
-            return;
-        }
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
@@ -58,9 +55,7 @@ public class RenderVoidCrystal extends TileEntitySpecialRenderer<TileVoidCrystal
             drawCrystal(ticks);
             drawRuneRing(ticks);
             drawInwardParticles(ticks);
-            if (!RenderQuality.low()) {
-                drawShortArcs(ticks);
-            }
+            drawShortArcs(ticks);
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -148,8 +143,7 @@ public class RenderVoidCrystal extends TileEntitySpecialRenderer<TileVoidCrystal
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        int stride = RenderQuality.detailStride();
-        for (int i = 0; i < INWARD_PARTICLE_COUNT; i += stride) {
+        for (int i = 0; i < INWARD_PARTICLE_COUNT; i++) {
             double progress = (ticks * PARTICLE_PULL_SPEED + i * 0.061D) % 1.0D;
             double radius = 2.35D * (1.0D - progress) + 0.20D;
             double angle = i * 2.399963229728653D + ticks * (0.012D + (i % 5) * 0.002D);
@@ -178,8 +172,7 @@ public class RenderVoidCrystal extends TileEntitySpecialRenderer<TileVoidCrystal
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        int arcCount = RenderQuality.detailCount(ARC_COUNT, 2);
-        for (int i = 0; i < arcCount; i++) {
+        for (int i = 0; i < ARC_COUNT; i++) {
             double phase = ticks * ARC_ROTATION_SPEED + i * 1.2566370614359172D;
             double arcPhase = (ticks * 0.013D + i * 0.21D) % 1.0D;
             float arcAlpha = (float) Math.sin(Math.PI * arcPhase) * 0.46F;

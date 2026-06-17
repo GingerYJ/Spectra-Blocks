@@ -36,8 +36,7 @@ public class RenderNebulaCore extends RenderCelestialEffectBase<TileNebulaCore> 
 
     private void drawCloudLayers(float ticks) {
         useAlphaBlend();
-        int layers = RenderQuality.low() ? Math.max(2, CLOUD_LAYER_COUNT - 2) : CLOUD_LAYER_COUNT;
-        for (int i = 0; i < layers; i++) {
+        for (int i = 0; i < CLOUD_LAYER_COUNT; i++) {
             float direction = i % 2 == 0 ? 1.0F : -1.0F;
             float pulse = wave(ticks * (0.018D + i * 0.004D) + i * 0.7D);
             double radius = 2.15D + i * 0.54D + pulse * 0.12D;
@@ -56,9 +55,7 @@ public class RenderNebulaCore extends RenderCelestialEffectBase<TileNebulaCore> 
 
     private void drawDust(float ticks) {
         useAdditiveBlend();
-        int stride = RenderQuality.detailStride();
-        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
-        for (int i = 0; i < DUST_COUNT; i += stride) {
+        for (int i = 0; i < DUST_COUNT; i++) {
             double band = (i + 0.5D) / DUST_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0016D + (i % 6) * 0.00025D);
             double yNorm = -0.90D + (i % 37) * (1.80D / 36.0D);
@@ -72,22 +69,14 @@ public class RenderNebulaCore extends RenderCelestialEffectBase<TileNebulaCore> 
             float alpha = 0.16F + 0.14F * wave(ticks * 0.031D + i);
             double size = 0.020D + (i % 5) * 0.004D;
 
-            if (points != null) {
-                points.add(x, y, z, color, alpha * 1.10F);
-            } else {
-                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
-            }
-        }
-        if (points != null) {
-            points.draw();
+            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
         }
         useAlphaBlend();
     }
 
     private void drawStreamLines(float ticks) {
         useAdditiveBlend();
-        int streamCount = RenderQuality.detailCount(STREAM_COUNT, 3);
-        for (int i = 0; i < streamCount; i++) {
+        for (int i = 0; i < STREAM_COUNT; i++) {
             double radius = 2.55D + (i % 3) * 0.54D;
             double startYaw = i * Math.PI * 0.43D + ticks * (0.004D + (i % 2) * 0.002D);
             double sweep = Math.PI * (0.80D + (i % 4) * 0.17D);

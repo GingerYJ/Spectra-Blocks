@@ -24,9 +24,6 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
         double centerZ = z + 0.5D;
-        if (!RenderQuality.shouldRender(centerX, centerY, centerZ)) {
-            return;
-        }
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
         GlStateManager.pushMatrix();
@@ -54,9 +51,7 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
             drawStormShell(ticks);
             drawStormBands(ticks);
             drawFastParticles(ticks);
-            if (!RenderQuality.low()) {
-                drawLightning(ticks);
-            }
+            drawLightning(ticks);
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -116,10 +111,8 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
     private void drawStormBands(float ticks) {
         drawStormBand(ticks, 34.0F, 0.0F, 1.0F, 0.0F, 0x19CFFF, 0.62F);
         drawStormBand(ticks, -52.0F, 1.0F, 0.15F, 0.25F, 0xA85CFF, -0.48F);
-        if (!RenderQuality.low()) {
-            drawStormBand(ticks, 72.0F, 0.35F, 1.0F, 0.0F, 0xF8FEFF, 0.32F);
-            drawStormBand(ticks, -18.0F, 1.0F, 0.0F, 0.45F, 0x00F0B8, -0.86F);
-        }
+        drawStormBand(ticks, 72.0F, 0.35F, 1.0F, 0.0F, 0xF8FEFF, 0.32F);
+        drawStormBand(ticks, -18.0F, 1.0F, 0.0F, 0.45F, 0x00F0B8, -0.86F);
     }
 
     private void drawStormBand(float ticks, float tilt, float axisX, float axisY, float axisZ,
@@ -144,9 +137,7 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        int stride = RenderQuality.detailStride();
-        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
-        for (int i = 0; i < STORM_PARTICLE_COUNT; i += stride) {
+        for (int i = 0; i < STORM_PARTICLE_COUNT; i++) {
             double baseAngle = i * 2.399963229728653D;
             double angle = baseAngle + ticks * (PARTICLE_SPEED + (i % 7) * 0.004D);
             double normalizedY = -0.92D + (i % 47) * (1.84D / 46.0D);
@@ -160,17 +151,10 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
             float particleAlpha = 0.20F + (float) surge * 0.52F;
             int color = i % 5 == 0 ? 0xFFFFFF : (i % 2 == 0 ? 0x43F1FF : 0xBD6DFF);
 
-            if (points != null) {
-                points.add(x, y, z, color, particleAlpha * 1.08F);
-            } else {
-                GlStateManager.pushMatrix();
-                GlStateManager.translate(x, y, z);
-                RenderHelper.drawSphere(size, color, particleAlpha, 6, 6);
-                GlStateManager.popMatrix();
-            }
-        }
-        if (points != null) {
-            points.draw();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(x, y, z);
+            RenderHelper.drawSphere(size, color, particleAlpha, 6, 6);
+            GlStateManager.popMatrix();
         }
 
         GlStateManager.tryBlendFuncSeparate(
@@ -185,8 +169,7 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
 
-        int arcCount = RenderQuality.detailCount(ARC_COUNT, 3);
-        for (int i = 0; i < arcCount; i++) {
+        for (int i = 0; i < ARC_COUNT; i++) {
             double flashPhase = (ticks * ARC_CYCLE_SPEED + i * 0.137D) % 1.0D;
             float flash = (float) Math.max(0.0D, Math.sin(Math.PI * flashPhase));
             double angle = i * 0.6981317007977318D + ticks * (0.020D + (i % 4) * 0.006D);
