@@ -1,10 +1,15 @@
 package com.gingeryj.spectrablocks.client.render;
 
 import com.gingeryj.spectrablocks.Reference;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.config.ModConfig;
 import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
@@ -13,6 +18,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     private static final double SHELL_RADIUS = 5.45D;
     private static final int SHELL_LAT_SEGMENTS = 36;
     private static final int SHELL_LON_SEGMENTS = 36;
+    private static final int SHADER_SHELL_LAT_SEGMENTS = 48;
+    private static final int SHADER_SHELL_LON_SEGMENTS = 48;
     private static final int ORBIT_SEGMENTS = 128;
     private static final double ORBIT_SPEED_SCALE = 0.28D;
     private static final int STAR_COUNT = 64;
@@ -86,6 +93,10 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     }
 
     private void drawUniverseShell(float ticks) {
+        if (drawShaderUniverseShell(ticks)) {
+            return;
+        }
+
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.018F);
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.07F, 0.0F, 1.0F, 0.0F);
@@ -96,6 +107,95 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         GlStateManager.popMatrix();
 
         drawStars(ticks);
+    }
+
+    private boolean drawShaderUniverseShell(float ticks) {
+        if (!ModConfig.enableShaderEffects()) {
+            return false;
+        }
+
+        ShaderProgram shader = ShaderManager.getProgram("micro_universe_shell");
+        if (shader == null) {
+            return false;
+        }
+
+        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.018F);
+        boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean matrixPushed = false;
+        try {
+            GlStateManager.pushMatrix();
+            matrixPushed = true;
+            GlStateManager.rotate(ticks * 0.07F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(16.0F, 1.0F, 0.0F, 0.2F);
+            GlStateManager.disableTexture2D();
+            GlStateManager.disableCull();
+
+            if (!shader.begin()) {
+                return false;
+            }
+            shader.setUniform1f("uTime", ticks);
+            shader.setUniform1f("uPulse", pulse);
+            shader.setUniform3f("uShellColor", 0.004F, 0.008F, 0.035F);
+            shader.setUniform3f("uNebulaColor", 0.07F, 0.13F, 0.35F);
+            shader.setUniform3f("uStarColor", 0.82F, 0.90F, 1.0F);
+            drawShaderShellSphere(SHELL_RADIUS, SHADER_SHELL_LAT_SEGMENTS, SHADER_SHELL_LON_SEGMENTS);
+
+            GlStateManager.glLineWidth(1.0F);
+            RenderHelper.drawWireframeSphere(SHELL_RADIUS * 1.012D, 0x20305E, 0.06F + 0.05F * pulse, 10, 16);
+            RenderHelper.resetLineWidth();
+            return true;
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("micro universe shell render failed: " + ex.getMessage());
+            return false;
+        } finally {
+            shader.end();
+            if (matrixPushed) {
+                GlStateManager.popMatrix();
+            }
+            if (cullWasEnabled) {
+                GlStateManager.enableCull();
+            } else {
+                GlStateManager.disableCull();
+            }
+            if (textureWasEnabled) {
+                GlStateManager.enableTexture2D();
+            } else {
+                GlStateManager.disableTexture2D();
+            }
+        }
+    }
+
+    private static void drawShaderShellSphere(double radius, int latSegs, int lonSegs) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int lat = 0; lat < latSegs; lat++) {
+            double theta0 = Math.PI * lat / latSegs;
+            double theta1 = Math.PI * (lat + 1) / latSegs;
+            for (int lon = 0; lon < lonSegs; lon++) {
+                double phi0 = 2.0D * Math.PI * lon / lonSegs;
+                double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
+                addShaderShellVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addShaderShellVertex(buffer, radius, theta1, phi0, lon / (double) lonSegs, (lat + 1.0D) / latSegs);
+                addShaderShellVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addShaderShellVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addShaderShellVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addShaderShellVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
+            }
+        }
+        tessellator.draw();
+    }
+
+    private static void addShaderShellVertex(BufferBuilder buffer, double radius, double theta, double phi,
+                                             double u, double v) {
+        float normalX = (float) (Math.sin(theta) * Math.cos(phi));
+        float normalY = (float) Math.cos(theta);
+        float normalZ = (float) (Math.sin(theta) * Math.sin(phi));
+        buffer.pos(normalX * radius, normalY * radius, normalZ * radius)
+                .tex(u, v)
+                .normal(normalX, normalY, normalZ)
+                .endVertex();
     }
 
     private void drawStars(float ticks) {
