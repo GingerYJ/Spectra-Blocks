@@ -1,5 +1,7 @@
 package com.gingeryj.spectrablocks.client.render;
 
+import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -10,27 +12,14 @@ import org.lwjgl.opengl.GL11;
 
 public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensionalGate> {
 
-    private static final double PORTAL_HALF_WIDTH = 0.78D;
-    private static final double PORTAL_HALF_HEIGHT = 1.35D;
-    private static final double CORE_DEPTH = 0.018D;
-    private static final double OUTER_RING_WIDTH = 0.080D;
-    private static final int ELLIPSE_SEGMENTS = 144;
-    private static final int CORE_RINGS = 8;
-    private static final int STAR_COUNT = 72;
-    private static final int RUNE_COUNT = 28;
-    private static final float CORE_ALPHA = 0.30F;
-    private static final float RING_ALPHA = 0.58F;
-    private static final float RUNE_ALPHA = 0.66F;
-    private static final float STAR_ALPHA = 0.76F;
-    private static final float RING_ROTATION_SPEED = 0.72F;
-    private static final float STAR_FLOW_SPEED = 0.020F;
-    private static final int CORE_INNER_COLOR = 0x071326;
-    private static final int CORE_OUTER_COLOR = 0x223BFF;
-    private static final int EDGE_COLOR = 0x5EF7FF;
-    private static final int RUNE_COLOR = 0xE8D7FF;
-    private static final int STAR_COLOR = 0xFFFFFF;
-    private static final int VIOLET_COLOR = 0xA36BFF;
-    private static final double TWO_PI = Math.PI * 2.0D;
+    private static final float EFFECT_DIMENSIONAL_GATE = 3.0F;
+    private static final double PORTAL_WIDTH = 2.10D;
+    private static final double PORTAL_HEIGHT = 3.18D;
+    private static final double RUNE_FIELD_RADIUS = 1.70D;
+    private static final int PLANE_COLUMNS = 74;
+    private static final int PLANE_ROWS = 112;
+    private static final int SPHERE_LAT_SEGMENTS = 26;
+    private static final int SPHERE_LON_SEGMENTS = 32;
 
     @Override
     public void render(TileDimensionalGate te, double x, double y, double z,
@@ -39,213 +28,196 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
             return;
         }
 
-        double centerX = x + 0.5D;
-        double centerY = y + 0.5D;
-        double centerZ = z + 0.5D;
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
+        ShaderProgram shader = ShaderManager.getProgram("space_effect");
+        if (shader == null) {
+            return;
+        }
 
         GlStateManager.pushMatrix();
-        GlStateManager.translate(centerX, centerY, centerZ);
+        GlStateManager.translate(x + 0.5D, y + 0.5D, z + 0.5D);
         double renderScale = te.renderScale(1.0D);
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
         boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean alphaWasEnabled = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
+        boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean lightingWasEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean depthMaskWasEnabled = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
+
         GlStateManager.depthMask(false);
         GlStateManager.enableBlend();
         useNormalBlend();
         GlStateManager.disableLighting();
         GlStateManager.disableTexture2D();
+        GlStateManager.disableAlpha();
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        GL11.glNormal3f(0.0F, 1.0F, 0.0F);
         GlStateManager.disableCull();
 
         try {
-            drawGatePlane(ticks, 0.0F);
-            drawGatePlane(ticks + 9.0F, 90.0F);
-            drawEdgeRings(ticks);
-            drawRuneRing(ticks);
+            if (shader.begin()) {
+                drawGatePlane(shader, ticks, 0.0F, 0.0F, 1.0F);
+                drawGatePlane(shader, ticks + 9.0F, 90.0F, 0.46F, 0.68F);
+                drawRuneFields(shader, ticks);
+            }
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("dimensional gate render failed: " + ex.getMessage());
         } finally {
-            if (cullWasEnabled) {
-                GlStateManager.enableCull();
-            } else {
-                GlStateManager.disableCull();
-            }
-            GlStateManager.shadeModel(GL11.GL_FLAT);
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableLighting();
-            GlStateManager.depthMask(true);
-            if (!blendWasEnabled) {
-                GlStateManager.disableBlend();
-            }
-            useNormalBlend();
-            RenderHelper.resetLineWidth();
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            shader.end();
+            restoreState(blendWasEnabled, cullWasEnabled, alphaWasEnabled, textureWasEnabled,
+                    lightingWasEnabled, depthMaskWasEnabled, previousCullFace);
             GlStateManager.popMatrix();
         }
     }
 
-    private void drawGatePlane(float ticks, float yRotation) {
+    private void drawGatePlane(ShaderProgram shader, float ticks, float yRotation, float seed, float alpha) {
         GlStateManager.pushMatrix();
         GlStateManager.rotate(yRotation, 0.0F, 1.0F, 0.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_DIMENSIONAL_GATE, 0.0F, alpha, seed,
+                0x071326, 0x223BFF, 0x5EF7FF, 0xFFFFFF);
+        drawShaderPlane(PORTAL_WIDTH, PORTAL_HEIGHT, 0.0D, PLANE_COLUMNS, PLANE_ROWS);
+        GlStateManager.popMatrix();
+    }
+
+    private void drawRuneFields(ShaderProgram shader, float ticks) {
+        useAdditiveBlend();
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(ticks * 0.72F, 0.0F, 0.0F, 1.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_DIMENSIONAL_GATE, 1.0F, 0.76F, 0.24F,
+                0x071326, 0xE8D7FF, 0x5EF7FF, 0xFFFFFF);
+        drawShaderSphere(RUNE_FIELD_RADIUS, SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
+        GlStateManager.popMatrix();
+
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(-ticks * 0.46F, 0.0F, 0.0F, 1.0F);
+        GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_DIMENSIONAL_GATE, 1.0F, 0.44F, 0.58F,
+                0x071326, 0xA36BFF, 0x5EF7FF, 0xFFFFFF);
+        drawShaderSphere(RUNE_FIELD_RADIUS * 1.12D, SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
+        GlStateManager.popMatrix();
         useNormalBlend();
-        drawPortalCore(ticks, yRotation * 0.03D);
-        useAdditiveBlend();
-        drawStarfield(ticks, yRotation * 0.11D);
-        GlStateManager.popMatrix();
     }
 
-    private void drawPortalCore(float ticks, double seed) {
-        for (int ring = CORE_RINGS; ring >= 1; ring--) {
-            double progress = (double) ring / CORE_RINGS;
-            double width = PORTAL_HALF_WIDTH * progress;
-            double height = PORTAL_HALF_HEIGHT * progress;
-            int color = ring < 4 ? CORE_INNER_COLOR : CORE_OUTER_COLOR;
-            float alpha = CORE_ALPHA * (0.20F + 0.80F * (float) progress);
-            drawFilledEllipse(width, height, CORE_DEPTH * (ring % 2 == 0 ? 1.0D : -1.0D),
-                    color, alpha, ticks, seed + ring * 0.63D);
-        }
+    private static void setSpaceUniforms(ShaderProgram shader, float ticks, float effect, float layer,
+                                         float alpha, float seed, int primaryColor, int secondaryColor,
+                                         int accentColor, int highlightColor) {
+        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.052F + seed * 5.0F);
+        shader.setUniform1f("uTime", ticks * 0.035F);
+        shader.setUniform1f("uEffect", effect);
+        shader.setUniform1f("uLayer", layer);
+        shader.setUniform1f("uAlpha", alpha);
+        shader.setUniform1f("uSeed", seed);
+        shader.setUniform1f("uPulse", pulse);
+        setUniformColor(shader, "uPrimaryColor", primaryColor);
+        setUniformColor(shader, "uSecondaryColor", secondaryColor);
+        setUniformColor(shader, "uAccentColor", accentColor);
+        setUniformColor(shader, "uHighlightColor", highlightColor);
     }
 
-    private void drawFilledEllipse(double width, double height, double depth, int color,
-                                   float alpha, float ticks, double seed) {
-        if (alpha <= 0.01F) {
-            return;
-        }
+    private static void setUniformColor(ShaderProgram shader, String name, int color) {
+        shader.setUniform3f(name,
+                ((color >> 16) & 255) / 255.0F,
+                ((color >> 8) & 255) / 255.0F,
+                (color & 255) / 255.0F);
+    }
 
-        float[] rgb = RenderHelper.unpackRGB(color);
+    private static void drawShaderPlane(double width, double height, double z, int columns, int rows) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-        buffer.pos(0.0D, 0.0D, depth)
-                .color(rgb[0], rgb[1], rgb[2], alpha * 0.92F).endVertex();
-        for (int i = 0; i <= ELLIPSE_SEGMENTS; i++) {
-            double angle = TWO_PI * i / ELLIPSE_SEGMENTS;
-            double swirl = 1.0D
-                    + Math.sin(angle * 4.0D + ticks * 0.036D + seed) * 0.040D
-                    + Math.cos(angle * 7.0D - ticks * 0.025D + seed) * 0.020D;
-            float edgeAlpha = alpha * (0.30F + 0.30F * (float) Math.sin(angle * 2.0D + ticks * 0.03D));
-            buffer.pos(Math.cos(angle) * width * swirl,
-                            Math.sin(angle) * height * swirl,
-                            depth)
-                    .color(rgb[0], rgb[1], rgb[2], edgeAlpha).endVertex();
-        }
-        tessellator.draw();
-    }
-
-    private void drawStarfield(float ticks, double seed) {
-        for (int i = 0; i < STAR_COUNT; i++) {
-            double age = fract(ticks * STAR_FLOW_SPEED * (0.70D + (i % 5) * 0.08D) + i * 0.131D + seed);
-            double radius = Math.sqrt(age);
-            double angle = i * 2.399963229728653D + ticks * 0.012D + age * 1.6D;
-            double x = Math.cos(angle) * PORTAL_HALF_WIDTH * radius * 0.92D;
-            double y = Math.sin(angle) * PORTAL_HALF_HEIGHT * radius * 0.92D;
-            double z = Math.sin(ticks * 0.030D + i) * 0.035D;
-            float fade = (float) Math.sin(age * Math.PI);
-            float blink = 0.45F + 0.55F * (float) Math.max(0.0D, Math.sin(ticks * 0.17D + i * 1.9D));
-            double size = 0.010D + (i % 4) * 0.004D + blink * 0.010D;
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(x, y, z);
-            RenderHelper.drawSphere(size, i % 7 == 0 ? VIOLET_COLOR : STAR_COLOR,
-                    STAR_ALPHA * fade * blink, 5, 5);
-            GlStateManager.popMatrix();
-        }
-    }
-
-    private void drawEdgeRings(float ticks) {
-        useAdditiveBlend();
-        GlStateManager.glLineWidth(5.0F);
-        drawEllipseLine(PORTAL_HALF_WIDTH + OUTER_RING_WIDTH, PORTAL_HALF_HEIGHT + OUTER_RING_WIDTH,
-                EDGE_COLOR, RING_ALPHA * 0.45F, ticks, 0.0D);
-        GlStateManager.glLineWidth(2.0F);
-        drawEllipseLine(PORTAL_HALF_WIDTH, PORTAL_HALF_HEIGHT,
-                EDGE_COLOR, RING_ALPHA, ticks, 1.7D);
-        drawEllipseLine(PORTAL_HALF_WIDTH * 0.83D, PORTAL_HALF_HEIGHT * 0.86D,
-                VIOLET_COLOR, RING_ALPHA * 0.36F, -ticks * 0.6F, 2.9D);
-        RenderHelper.resetLineWidth();
-    }
-
-    private void drawEllipseLine(double width, double height, int color, float alpha, float ticks, double seed) {
-        if (alpha <= 0.01F) {
-            return;
-        }
-
-        float[] rgb = RenderHelper.unpackRGB(color);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < ELLIPSE_SEGMENTS; i++) {
-            double angle = TWO_PI * i / ELLIPSE_SEGMENTS;
-            double wave = 1.0D
-                    + Math.sin(angle * 6.0D + ticks * 0.032D + seed) * 0.026D
-                    + Math.cos(angle * 11.0D - ticks * 0.018D + seed) * 0.014D;
-            buffer.pos(Math.cos(angle) * width * wave,
-                            Math.sin(angle) * height * wave,
-                            0.028D)
-                    .color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-        }
-        tessellator.draw();
-    }
-
-    private void drawRuneRing(float ticks) {
-        useAdditiveBlend();
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(ticks * RING_ROTATION_SPEED, 0.0F, 0.0F, 1.0F);
-        GlStateManager.glLineWidth(2.0F);
-        drawRunes(PORTAL_HALF_WIDTH + 0.18D, PORTAL_HALF_HEIGHT + 0.18D,
-                RUNE_COLOR, RUNE_ALPHA, RUNE_COUNT, ticks);
-        RenderHelper.resetLineWidth();
-        GlStateManager.popMatrix();
-
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(-ticks * RING_ROTATION_SPEED * 0.62F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.glLineWidth(1.0F);
-        drawRunes(PORTAL_HALF_WIDTH + 0.31D, PORTAL_HALF_HEIGHT + 0.31D,
-                EDGE_COLOR, RUNE_ALPHA * 0.48F, RUNE_COUNT / 2, ticks + 17.0F);
-        RenderHelper.resetLineWidth();
-        GlStateManager.popMatrix();
-    }
-
-    private void drawRunes(double width, double height, int color, float alpha, int count, float ticks) {
-        if (alpha <= 0.01F) {
-            return;
-        }
-
-        float[] rgb = RenderHelper.unpackRGB(color);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < count; i++) {
-            double angle = TWO_PI * i / count;
-            double pulse = 0.70D + 0.30D * Math.sin(ticks * 0.080D + i);
-            double x = Math.cos(angle) * width;
-            double y = Math.sin(angle) * height;
-            double tx = -Math.sin(angle);
-            double ty = Math.cos(angle);
-            double nx = Math.cos(angle);
-            double ny = Math.sin(angle);
-            double half = (0.030D + (i % 4) * 0.008D) * pulse;
-            double lift = i % 3 == 0 ? 0.068D : 0.042D;
-            float runeAlpha = alpha * (0.65F + 0.35F * (float) pulse);
-
-            buffer.pos(x - tx * half, y - ty * half, 0.040D)
-                    .color(rgb[0], rgb[1], rgb[2], runeAlpha).endVertex();
-            buffer.pos(x + tx * half, y + ty * half, 0.040D)
-                    .color(rgb[0], rgb[1], rgb[2], runeAlpha).endVertex();
-
-            if ((i & 1) == 0) {
-                buffer.pos(x, y, 0.040D)
-                        .color(rgb[0], rgb[1], rgb[2], runeAlpha * 0.75F).endVertex();
-                buffer.pos(x + nx * lift, y + ny * lift, 0.040D)
-                        .color(rgb[0], rgb[1], rgb[2], runeAlpha * 0.55F).endVertex();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int row = 0; row < rows; row++) {
+            double v0 = row / (double) rows;
+            double v1 = (row + 1.0D) / rows;
+            double y0 = (v0 - 0.5D) * height;
+            double y1 = (v1 - 0.5D) * height;
+            for (int column = 0; column < columns; column++) {
+                double u0 = column / (double) columns;
+                double u1 = (column + 1.0D) / columns;
+                double x0 = (u0 - 0.5D) * width;
+                double x1 = (u1 - 0.5D) * width;
+                addPlaneVertex(buffer, x0, y0, z, u0, v0);
+                addPlaneVertex(buffer, x0, y1, z, u0, v1);
+                addPlaneVertex(buffer, x1, y1, z, u1, v1);
+                addPlaneVertex(buffer, x0, y0, z, u0, v0);
+                addPlaneVertex(buffer, x1, y1, z, u1, v1);
+                addPlaneVertex(buffer, x1, y0, z, u1, v0);
             }
         }
         tessellator.draw();
     }
 
-    private static double fract(double value) {
-        return value - Math.floor(value);
+    private static void addPlaneVertex(BufferBuilder buffer, double x, double y, double z, double u, double v) {
+        buffer.pos(x, y, z).tex(u, v).normal(0.0F, 0.0F, 1.0F).endVertex();
+    }
+
+    private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int lat = 0; lat < latSegs; lat++) {
+            double theta0 = Math.PI * lat / latSegs;
+            double theta1 = Math.PI * (lat + 1) / latSegs;
+            for (int lon = 0; lon < lonSegs; lon++) {
+                double phi0 = 2.0D * Math.PI * lon / lonSegs;
+                double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
+                addSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addSphereVertex(buffer, radius, theta1, phi0, lon / (double) lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
+            }
+        }
+        tessellator.draw();
+    }
+
+    private static void addSphereVertex(BufferBuilder buffer, double radius, double theta, double phi,
+                                        double u, double v) {
+        float normalX = (float) (Math.sin(theta) * Math.cos(phi));
+        float normalY = (float) Math.cos(theta);
+        float normalZ = (float) (Math.sin(theta) * Math.sin(phi));
+        buffer.pos(normalX * radius, normalY * radius, normalZ * radius)
+                .tex(u, v)
+                .normal(normalX, normalY, normalZ)
+                .endVertex();
+    }
+
+    private static void restoreState(boolean blendWasEnabled, boolean cullWasEnabled, boolean alphaWasEnabled,
+                                     boolean textureWasEnabled, boolean lightingWasEnabled,
+                                     boolean depthMaskWasEnabled, int previousCullFace) {
+        if (cullWasEnabled) {
+            GlStateManager.enableCull();
+        } else {
+            GlStateManager.disableCull();
+        }
+        GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
+                ? GlStateManager.CullFace.FRONT
+                : GlStateManager.CullFace.BACK);
+        GlStateManager.shadeModel(GL11.GL_FLAT);
+        if (alphaWasEnabled) {
+            GlStateManager.enableAlpha();
+        } else {
+            GlStateManager.disableAlpha();
+        }
+        if (textureWasEnabled) {
+            GlStateManager.enableTexture2D();
+        } else {
+            GlStateManager.disableTexture2D();
+        }
+        if (lightingWasEnabled) {
+            GlStateManager.enableLighting();
+        } else {
+            GlStateManager.disableLighting();
+        }
+        GlStateManager.depthMask(depthMaskWasEnabled);
+        if (!blendWasEnabled) {
+            GlStateManager.disableBlend();
+        }
+        useNormalBlend();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static void useAdditiveBlend() {

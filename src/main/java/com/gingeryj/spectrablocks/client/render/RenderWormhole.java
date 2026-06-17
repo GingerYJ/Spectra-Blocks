@@ -1,5 +1,7 @@
 package com.gingeryj.spectrablocks.client.render;
 
+import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.tile.TileWormhole;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -10,189 +12,235 @@ import org.lwjgl.opengl.GL11;
 
 public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
 
-    private static final double CORE_RADIUS = 0.50D;
-    private static final double INNER_SHELL_RADIUS = 0.80D;
-    private static final double OUTER_HALO_RADIUS = 1.72D;
-    private static final int SPHERE_LAT_SEGMENTS = 24;
-    private static final int SPHERE_LON_SEGMENTS = 24;
-    private static final int RING_SEGMENTS = 160;
-    private static final int SPIRAL_ARMS = 5;
-    private static final int SPIRAL_POINTS = 76;
-    private static final int PARTICLE_COUNT = 76;
-    private static final float CORE_ROTATION_SPEED = 1.30F;
-    private static final float OUTER_ROTATION_SPEED = -0.52F;
-    private static final float RING_ROTATION_SPEED = -0.82F;
-    private static final float PARTICLE_ALPHA = 0.58F;
-    private static final double GOLDEN_ANGLE = 2.399963229728653D;
-    private static final int CORE_COLOR = 0x010007;
-    private static final int INNER_COLOR = 0x10114C;
-    private static final int OUTER_COLOR = 0x295CFF;
-    private static final int RING_COLOR = 0x7FEAFF;
-    private static final int HOT_COLOR = 0xFFFFFF;
+    private static final float EFFECT_WORMHOLE = 1.0F;
+    private static final double CORE_RADIUS = 0.52D;
+    private static final double INNER_SHELL_RADIUS = 0.84D;
+    private static final double OUTER_FIELD_RADIUS = 1.82D;
+    private static final double VORTEX_PLANE_SIZE = 3.86D;
+    private static final int PLANE_SEGMENTS = 96;
+    private static final int SPHERE_LAT_SEGMENTS = 36;
+    private static final int SPHERE_LON_SEGMENTS = 36;
 
     @Override
     public void render(TileWormhole te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
-        double centerX = x + 0.5D;
-        double centerY = y + 0.5D;
-        double centerZ = z + 0.5D;
+        if (te == null || te.getWorld() == null) {
+            return;
+        }
+
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
+        ShaderProgram shader = ShaderManager.getProgram("space_effect");
+        if (shader == null) {
+            return;
+        }
 
         GlStateManager.pushMatrix();
-        GlStateManager.translate(centerX, centerY, centerZ);
+        GlStateManager.translate(x + 0.5D, y + 0.5D, z + 0.5D);
         double renderScale = te.renderScale(1.0D);
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
         boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
         boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean alphaWasEnabled = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
+        boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean lightingWasEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean depthMaskWasEnabled = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
+
         GlStateManager.depthMask(false);
         GlStateManager.enableBlend();
         useNormalBlend();
         GlStateManager.disableLighting();
         GlStateManager.disableTexture2D();
+        GlStateManager.disableAlpha();
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        GL11.glNormal3f(0.0F, 1.0F, 0.0F);
         GlStateManager.disableCull();
 
         try {
-            drawCore(ticks);
-            drawSwirl(ticks);
-            drawGlowingRings(ticks);
-            drawInwardParticles(ticks);
+            if (shader.begin()) {
+                drawCore(shader, ticks);
+                drawVortexPlane(shader, ticks);
+                drawOuterField(shader, ticks);
+            }
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("wormhole render failed: " + ex.getMessage());
         } finally {
-            if (cullWasEnabled) {
-                GlStateManager.enableCull();
-            } else {
-                GlStateManager.disableCull();
-            }
-            GlStateManager.shadeModel(GL11.GL_FLAT);
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableLighting();
-            GlStateManager.depthMask(true);
-            if (!blendWasEnabled) {
-                GlStateManager.disableBlend();
-            }
-            useNormalBlend();
-            RenderHelper.resetLineWidth();
+            shader.end();
+            restoreState(blendWasEnabled, cullWasEnabled, alphaWasEnabled, textureWasEnabled,
+                    lightingWasEnabled, depthMaskWasEnabled, previousCullFace);
             GlStateManager.popMatrix();
         }
     }
 
-    private void drawCore(float ticks) {
-        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.052F);
+    private void drawCore(ShaderProgram shader, float ticks) {
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(ticks * 1.30F, 0.0F, 1.0F, 0.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_WORMHOLE, 0.0F, 0.97F, 0.0F,
+                0x010007, 0x10114C, 0x295CFF, 0xFFFFFF);
+        drawShaderSphere(CORE_RADIUS, SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
+        GlStateManager.popMatrix();
 
-        useNormalBlend();
-        RenderHelper.drawSphere(CORE_RADIUS + 0.025D * pulse, CORE_COLOR, 0.96F,
-                SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
-
-        useAdditiveBlend();
-        RenderHelper.drawSphere(INNER_SHELL_RADIUS + 0.035D * pulse, INNER_COLOR, 0.22F + 0.08F * pulse,
-                SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
-        RenderHelper.drawSphere(OUTER_HALO_RADIUS * 0.78D + 0.05D * pulse, OUTER_COLOR, 0.075F,
-                SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
-    }
-
-    private void drawSwirl(float ticks) {
         useAdditiveBlend();
         GlStateManager.pushMatrix();
-        GlStateManager.rotate(ticks * CORE_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(68.0F, 1.0F, 0.0F, 0.0F);
-
-        GlStateManager.glLineWidth(3.0F);
-        for (int arm = 0; arm < SPIRAL_ARMS; arm++) {
-            drawSpiralArm(arm, ticks, OUTER_COLOR, 0.26F);
-        }
-
-        GlStateManager.glLineWidth(1.5F);
-        for (int arm = 0; arm < SPIRAL_ARMS; arm++) {
-            drawSpiralArm(arm, ticks + 8.0F, RING_COLOR, 0.42F);
-        }
-        RenderHelper.resetLineWidth();
+        GlStateManager.rotate(ticks * -0.52F, 0.0F, 1.0F, 0.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_WORMHOLE, 1.0F, 0.38F, 0.13F,
+                0x10114C, 0x295CFF, 0x7FEAFF, 0xFFFFFF);
+        drawShaderSphere(INNER_SHELL_RADIUS, SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
         GlStateManager.popMatrix();
+        useNormalBlend();
     }
 
-    private void drawSpiralArm(int arm, float ticks, int color, float alpha) {
-        float[] rgb = RenderHelper.unpackRGB(color);
+    private void drawVortexPlane(ShaderProgram shader, float ticks) {
+        useAdditiveBlend();
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(ticks * 0.38F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(68.0F, 1.0F, 0.0F, 0.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_WORMHOLE, 2.0F, 0.78F, 0.27F,
+                0x010007, 0x295CFF, 0x7FEAFF, 0xFFFFFF);
+        drawShaderPlane(VORTEX_PLANE_SIZE, VORTEX_PLANE_SIZE, 0.0D, PLANE_SEGMENTS, PLANE_SEGMENTS);
+        GlStateManager.popMatrix();
+
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(ticks * -0.82F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(18.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_WORMHOLE, 2.0F, 0.46F, 0.62F,
+                0x010007, 0x6D4DFF, 0x7FEAFF, 0xFFFFFF);
+        drawShaderPlane(VORTEX_PLANE_SIZE * 0.92D, VORTEX_PLANE_SIZE * 0.92D, 0.0D, PLANE_SEGMENTS, PLANE_SEGMENTS);
+        GlStateManager.popMatrix();
+        useNormalBlend();
+    }
+
+    private void drawOuterField(ShaderProgram shader, float ticks) {
+        useAdditiveBlend();
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(ticks * 0.070F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(24.0F, 0.0F, 0.0F, 1.0F);
+        setSpaceUniforms(shader, ticks, EFFECT_WORMHOLE, 3.0F, 0.72F, 0.41F,
+                0x010007, 0x295CFF, 0x7FEAFF, 0xFFFFFF);
+        drawShaderSphere(OUTER_FIELD_RADIUS, SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
+        GlStateManager.popMatrix();
+        useNormalBlend();
+    }
+
+    private static void setSpaceUniforms(ShaderProgram shader, float ticks, float effect, float layer,
+                                         float alpha, float seed, int primaryColor, int secondaryColor,
+                                         int accentColor, int highlightColor) {
+        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.052F + seed * 5.0F);
+        shader.setUniform1f("uTime", ticks * 0.035F);
+        shader.setUniform1f("uEffect", effect);
+        shader.setUniform1f("uLayer", layer);
+        shader.setUniform1f("uAlpha", alpha);
+        shader.setUniform1f("uSeed", seed);
+        shader.setUniform1f("uPulse", pulse);
+        setUniformColor(shader, "uPrimaryColor", primaryColor);
+        setUniformColor(shader, "uSecondaryColor", secondaryColor);
+        setUniformColor(shader, "uAccentColor", accentColor);
+        setUniformColor(shader, "uHighlightColor", highlightColor);
+    }
+
+    private static void setUniformColor(ShaderProgram shader, String name, int color) {
+        shader.setUniform3f(name,
+                ((color >> 16) & 255) / 255.0F,
+                ((color >> 8) & 255) / 255.0F,
+                (color & 255) / 255.0F);
+    }
+
+    private static void drawShaderPlane(double width, double height, double z, int columns, int rows) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        double armOffset = arm * Math.PI * 2.0D / SPIRAL_ARMS;
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < SPIRAL_POINTS; i++) {
-            double progress = (double) i / (SPIRAL_POINTS - 1);
-            double radius = 0.26D + progress * 1.55D;
-            double angle = armOffset + progress * Math.PI * 4.6D - ticks * 0.034D;
-            double wave = Math.sin(progress * Math.PI * 6.0D + ticks * 0.060D + arm) * 0.055D;
-            float pointAlpha = alpha * (float) Math.sin(progress * Math.PI);
-            buffer.pos(Math.cos(angle) * radius,
-                            wave,
-                            Math.sin(angle) * radius)
-                    .color(rgb[0], rgb[1], rgb[2], pointAlpha).endVertex();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int row = 0; row < rows; row++) {
+            double v0 = row / (double) rows;
+            double v1 = (row + 1.0D) / rows;
+            double y0 = (v0 - 0.5D) * height;
+            double y1 = (v1 - 0.5D) * height;
+            for (int column = 0; column < columns; column++) {
+                double u0 = column / (double) columns;
+                double u1 = (column + 1.0D) / columns;
+                double x0 = (u0 - 0.5D) * width;
+                double x1 = (u1 - 0.5D) * width;
+                addPlaneVertex(buffer, x0, y0, z, u0, v0);
+                addPlaneVertex(buffer, x0, y1, z, u0, v1);
+                addPlaneVertex(buffer, x1, y1, z, u1, v1);
+                addPlaneVertex(buffer, x0, y0, z, u0, v0);
+                addPlaneVertex(buffer, x1, y1, z, u1, v1);
+                addPlaneVertex(buffer, x1, y0, z, u1, v0);
+            }
         }
         tessellator.draw();
     }
 
-    private void drawGlowingRings(float ticks) {
-        useAdditiveBlend();
-
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(ticks * OUTER_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
-        drawTiltedRing(0.92D, 62.0F, 0.0F, RING_COLOR, 0.40F, 3.0F);
-        drawTiltedRing(1.28D, -54.0F, 34.0F, OUTER_COLOR, 0.30F, 2.0F);
-        drawTiltedRing(1.68D, 76.0F, -28.0F, HOT_COLOR, 0.16F, 1.5F);
-        GlStateManager.popMatrix();
-
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(ticks * RING_ROTATION_SPEED, 0.0F, 1.0F, 0.0F);
-        drawTiltedRing(1.48D, 18.0F, 90.0F, 0x6D4DFF, 0.20F, 2.0F);
-        GlStateManager.popMatrix();
+    private static void addPlaneVertex(BufferBuilder buffer, double x, double y, double z, double u, double v) {
+        buffer.pos(x, y, z).tex(u, v).normal(0.0F, 0.0F, 1.0F).endVertex();
     }
 
-    private void drawTiltedRing(double radius, float xTilt, float zTilt, int color, float alpha, float width) {
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(xTilt, 1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(zTilt, 0.0F, 0.0F, 1.0F);
-        GlStateManager.glLineWidth(width + 2.0F);
-        RenderHelper.drawCircle(radius, color, alpha * 0.35F, RING_SEGMENTS);
-        GlStateManager.glLineWidth(width);
-        RenderHelper.drawCircle(radius, color, alpha, RING_SEGMENTS);
-        RenderHelper.resetLineWidth();
-        GlStateManager.popMatrix();
-    }
-
-    private void drawInwardParticles(float ticks) {
-        useAdditiveBlend();
-        for (int i = 0; i < PARTICLE_COUNT; i++) {
-            double progress = fract(ticks * (0.012D + (i % 4) * 0.0016D) + i * 0.113D);
-            double radius = 1.82D - progress * 1.44D;
-            double angle = i * GOLDEN_ANGLE + ticks * 0.070D + progress * Math.PI * 3.0D;
-            double y = Math.sin(angle * 1.7D + i) * 0.31D * (1.0D - progress * 0.55D);
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            double sparkle = Math.max(0.0D, Math.sin(ticks * 0.18D + i * 1.73D));
-            float fade = (float) Math.sin(progress * Math.PI);
-            float alpha = PARTICLE_ALPHA * fade * (0.45F + 0.55F * (float) sparkle);
-            double size = 0.020D + (1.0D - progress) * 0.030D + sparkle * 0.018D;
-
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(x, y, z);
-            RenderHelper.drawSphere(size, sparkle > 0.72D ? HOT_COLOR : RING_COLOR, alpha, 7, 7);
-            GlStateManager.popMatrix();
-
-            double tailRadius = radius + 0.13D;
-            double tailAngle = angle - 0.16D;
-            GlStateManager.glLineWidth(1.0F);
-            RenderHelper.drawLine(x, y, z,
-                    Math.cos(tailAngle) * tailRadius,
-                    y * 1.06D,
-                    Math.sin(tailAngle) * tailRadius,
-                    OUTER_COLOR, alpha * 0.42F);
+    private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int lat = 0; lat < latSegs; lat++) {
+            double theta0 = Math.PI * lat / latSegs;
+            double theta1 = Math.PI * (lat + 1) / latSegs;
+            for (int lon = 0; lon < lonSegs; lon++) {
+                double phi0 = 2.0D * Math.PI * lon / lonSegs;
+                double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
+                addSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addSphereVertex(buffer, radius, theta1, phi0, lon / (double) lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
+            }
         }
-        RenderHelper.resetLineWidth();
+        tessellator.draw();
     }
 
-    private static double fract(double value) {
-        return value - Math.floor(value);
+    private static void addSphereVertex(BufferBuilder buffer, double radius, double theta, double phi,
+                                        double u, double v) {
+        float normalX = (float) (Math.sin(theta) * Math.cos(phi));
+        float normalY = (float) Math.cos(theta);
+        float normalZ = (float) (Math.sin(theta) * Math.sin(phi));
+        buffer.pos(normalX * radius, normalY * radius, normalZ * radius)
+                .tex(u, v)
+                .normal(normalX, normalY, normalZ)
+                .endVertex();
+    }
+
+    private static void restoreState(boolean blendWasEnabled, boolean cullWasEnabled, boolean alphaWasEnabled,
+                                     boolean textureWasEnabled, boolean lightingWasEnabled,
+                                     boolean depthMaskWasEnabled, int previousCullFace) {
+        if (cullWasEnabled) {
+            GlStateManager.enableCull();
+        } else {
+            GlStateManager.disableCull();
+        }
+        GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
+                ? GlStateManager.CullFace.FRONT
+                : GlStateManager.CullFace.BACK);
+        GlStateManager.shadeModel(GL11.GL_FLAT);
+        if (alphaWasEnabled) {
+            GlStateManager.enableAlpha();
+        } else {
+            GlStateManager.disableAlpha();
+        }
+        if (textureWasEnabled) {
+            GlStateManager.enableTexture2D();
+        } else {
+            GlStateManager.disableTexture2D();
+        }
+        if (lightingWasEnabled) {
+            GlStateManager.enableLighting();
+        } else {
+            GlStateManager.disableLighting();
+        }
+        GlStateManager.depthMask(depthMaskWasEnabled);
+        if (!blendWasEnabled) {
+            GlStateManager.disableBlend();
+        }
+        useNormalBlend();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static void useAdditiveBlend() {
