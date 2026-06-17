@@ -89,9 +89,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         );
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        RenderHelper.drawSphere(SHELL_RADIUS * 1.018D + 0.030D * pulse, 0xFFFFFF, 0.085F + 0.035F * pulse, 30, 30);
-        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.120D * pulse, 0xDDFEFF, 0.145F + 0.055F * pulse, 34, 34);
-        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.38D + 0.160D * pulse, 0x62EFFF, 0.055F + 0.035F * pulse, 28, 28);
+        RenderHelper.drawSphere(SHELL_RADIUS * 1.012D + 0.020D * pulse, 0xDFFFFF, 0.060F + 0.030F * pulse, 28, 28);
+        RenderHelper.drawSphere(OUTER_HALO_RADIUS - 0.26D + 0.070D * pulse, 0x58F6FF, 0.070F + 0.040F * pulse, 30, 30);
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         GlStateManager.disableCull();
 
@@ -132,8 +131,8 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             GlStateManager.disableTexture2D();
             program.setUniform1f("uTime", ticks * 0.045F);
             program.setUniform3f("uBaseColor", 0.18F, 0.82F, 1.0F);
-            program.setUniform1f("uRimIntensity", 1.35F);
-            program.setUniform1f("uPulseAmount", 0.75F + pulse * 0.35F);
+            program.setUniform1f("uRimIntensity", 0.92F);
+            program.setUniform1f("uPulseAmount", 0.92F + pulse * 0.12F);
             program.setUniform1f("uNoiseSpeed", 0.62F);
             drawShaderSphere(SHELL_RADIUS + 0.035D * pulse, SHADER_SPHERE_LAT_SEGS, SHADER_SPHERE_LON_SEGS);
         } catch (RuntimeException ex) {
@@ -212,7 +211,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
                 double z = Math.sin(yaw) * horizontal * radius;
                 double size = 0.045D + crest * (0.070D + surge * 0.060D);
                 float alpha = (float) ((0.10D + crest * 0.34D + surge * 0.20D) * surge);
-                int color = step % 3 == 0 ? 0xFFFFFF : (i % 2 == 0 ? 0xFFF0A8 : 0xAFFFFF);
+                int color = step % 3 == 0 ? 0xEFFFFF : (i % 2 == 0 ? 0x8EFFFF : 0x37DFFF);
 
                 PROMINENCE_POINTS[pointCount++].set(x, y, z, size, color, alpha);
             }
@@ -249,7 +248,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             double particleZ = Math.sin(yaw) * horizontal * radius;
             double size = 0.026D + flutter * 0.036D + surge * 0.060D;
             float alpha = (float) (0.14D + flutter * 0.20D + surge * 0.32D);
-            int color = surge > 0.70D ? 0xF5FFFF : (i % 5 == 0 ? 0xFFF4B8 : (i % 3 == 0 ? 0xBDFEFF : 0x39DFFF));
+            int color = surge > 0.70D ? 0xF4FFFF : (i % 5 == 0 ? 0x9CFFFF : (i % 3 == 0 ? 0x5BEAFF : 0x18CFFF));
 
             PARTICLES[pointCount++].set(particleX, particleY, particleZ, size, color, alpha);
         }
@@ -270,7 +269,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             double particleZ = Math.sin(baseYaw) * horizontal * radius;
             double size = 0.060D + pulse * 0.080D;
             float alpha = (float) (0.22D + pulse * 0.46D);
-            int color = i % 3 == 0 ? 0xFFF1A8 : 0xF8FFFF;
+            int color = i % 3 == 0 ? 0xDFFFFF : 0x63EFFF;
 
             PARTICLES[pointCount++].set(particleX, particleY, particleZ, size, color, alpha);
         }
