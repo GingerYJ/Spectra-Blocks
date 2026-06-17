@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 import java.util.HashMap;
@@ -109,35 +108,6 @@ public final class RenderHelper {
                     .endVertex();
         }
         tessellator.draw();
-    }
-
-    public static void drawTexturedSphere(double radius, ResourceLocation texture, float alpha, int latSegs, int lonSegs) {
-        if (alpha <= 0.01F) {
-            return;
-        }
-
-        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
-        GlStateManager.enableCull();
-        GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        net.minecraft.client.Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-        SphereMesh mesh = sphereMesh(latSegs, lonSegs);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_COLOR);
-        for (int i = 0; i < mesh.vertexCount; i++) {
-            buffer.pos(mesh.x[i] * radius, mesh.y[i] * radius, mesh.z[i] * radius)
-                    .tex(mesh.u[i], mesh.v[i])
-                    .color(1.0F, 1.0F, 1.0F, alpha)
-                    .endVertex();
-        }
-        tessellator.draw();
-        GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
-                ? GlStateManager.CullFace.FRONT
-                : GlStateManager.CullFace.BACK);
-        if (!cullWasEnabled) {
-            GlStateManager.disableCull();
-        }
     }
 
     public static void drawLine(double x1, double y1, double z1, double x2, double y2, double z2,
@@ -261,45 +231,35 @@ public final class RenderHelper {
         private final double[] x;
         private final double[] y;
         private final double[] z;
-        private final double[] u;
-        private final double[] v;
 
         private SphereMesh(int latSegs, int lonSegs) {
             this.vertexCount = latSegs * lonSegs * 6;
             this.x = new double[vertexCount];
             this.y = new double[vertexCount];
             this.z = new double[vertexCount];
-            this.u = new double[vertexCount];
-            this.v = new double[vertexCount];
             int index = 0;
             for (int lat = 0; lat < latSegs; lat++) {
                 double theta0 = Math.PI * lat / latSegs;
                 double theta1 = Math.PI * (lat + 1) / latSegs;
-                double v0 = (double) lat / latSegs;
-                double v1 = (double) (lat + 1) / latSegs;
                 for (int lon = 0; lon < lonSegs; lon++) {
                     double phi0 = 2.0D * Math.PI * lon / lonSegs;
                     double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
-                    double u0 = (double) lon / lonSegs;
-                    double u1 = (double) (lon + 1) / lonSegs;
 
-                    index = addSphereVertex(index, theta0, phi0, u0, v0);
-                    index = addSphereVertex(index, theta1, phi0, u0, v1);
-                    index = addSphereVertex(index, theta0, phi1, u1, v0);
-                    index = addSphereVertex(index, theta0, phi1, u1, v0);
-                    index = addSphereVertex(index, theta1, phi0, u0, v1);
-                    index = addSphereVertex(index, theta1, phi1, u1, v1);
+                    index = addSphereVertex(index, theta0, phi0);
+                    index = addSphereVertex(index, theta1, phi0);
+                    index = addSphereVertex(index, theta0, phi1);
+                    index = addSphereVertex(index, theta0, phi1);
+                    index = addSphereVertex(index, theta1, phi0);
+                    index = addSphereVertex(index, theta1, phi1);
                 }
             }
         }
 
-        private int addSphereVertex(int index, double theta, double phi, double u, double v) {
+        private int addSphereVertex(int index, double theta, double phi) {
             double sinTheta = Math.sin(theta);
             this.x[index] = sinTheta * Math.cos(phi);
             this.y[index] = Math.cos(theta);
             this.z[index] = sinTheta * Math.sin(phi);
-            this.u[index] = u;
-            this.v[index] = v;
             return index + 1;
         }
     }
