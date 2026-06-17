@@ -30,7 +30,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             new Planet(2.34D, 0.122D, 0.066D, 0xD96642, 0x8B392E, 4.20F, -0.02D, 0xFF8064, 3.0F),
             new Planet(3.02D, 0.275D, 0.043D, 0xD8B076, 0xFFF0C2, 5.60F, 0.03D, 0xFFE0A3, 4.0F),
             new Planet(3.78D, 0.210D, 0.031D, 0x95B7D8, 0xE8D59A, 0.75F, -0.04D, 0xB6D7FF, 5.0F),
-            new Planet(4.52D, 0.165D, 0.023D, 0x75D3E8, 0xC7F5FF, 4.85F, 0.05D, 0x9DEFFF, 6.0F)
+            new Planet(4.52D, 0.165D, 0.023D, 0x75D3E8, 0xC7F5FF, 4.85F, 0.05D, 0x9DEFFF, 6.0F),
+            new Planet(5.05D, 0.150D, 0.018D, 0x466DFF, 0xB8D4FF, 2.10F, -0.03D, 0x89AFFF, 7.0F)
     };
 
     @Override
@@ -111,9 +112,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
             shellShader.setUniform1f("uTime", ticks);
             shellShader.setUniform1f("uPulse", pulse);
-            shellShader.setUniform3f("uShellColor", 0.003F, 0.006F, 0.026F);
-            shellShader.setUniform3f("uNebulaColor", 0.055F, 0.115F, 0.31F);
-            shellShader.setUniform3f("uStarColor", 0.82F, 0.90F, 1.0F);
+            shellShader.setUniform3f("uShellColor", 0.001F, 0.003F, 0.014F);
+            shellShader.setUniform3f("uNebulaColor", 0.040F, 0.090F, 0.250F);
+            shellShader.setUniform3f("uStarColor", 0.92F, 0.96F, 1.0F);
             drawShaderShellSphere(SHELL_RADIUS, SHADER_SHELL_LAT_SEGMENTS, SHADER_SHELL_LON_SEGMENTS);
 
             shellShader.end();
@@ -182,7 +183,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
     private void drawSolarSystem(float ticks, ShaderProgram bodyShader, ShaderProgram colorShader) {
         GlStateManager.pushMatrix();
-        GlStateManager.rotate(8.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(28.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(-13.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(ticks * 0.014F, 0.0F, 1.0F, 0.0F);
 
         drawSun(ticks, bodyShader);
@@ -226,7 +228,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     }
 
     private void drawPlanet(ShaderProgram bodyShader, Planet planet, float ticks) {
-        drawShaderBody(bodyShader, planet.radius, 1.0F, planet.style, planet.color, planet.accentColor, 0.98F, 0.88F,
+        drawShaderBody(bodyShader, planet.radius, 1.0F, planet.style, planet.color, planet.accentColor, 1.0F, 0.88F,
                 ticks, SHADER_BODY_LAT_SEGMENTS);
     }
 
@@ -239,7 +241,11 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         float[] base = RenderHelper.unpackRGB(baseColor);
         float[] accent = RenderHelper.unpackRGB(accentColor);
+        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
         try {
+            GlStateManager.enableCull();
+            GlStateManager.cullFace(GlStateManager.CullFace.BACK);
             bodyShader.setUniform1f("uTime", ticks * 0.035F);
             bodyShader.setUniform1f("uBodyType", bodyType);
             bodyShader.setUniform1f("uStyle", style);
@@ -252,6 +258,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             ShaderManager.disableShaders("micro universe body render failed: " + ex.getMessage());
         } finally {
             bodyShader.end();
+            restoreCullState(cullWasEnabled, previousCullFace);
         }
     }
 

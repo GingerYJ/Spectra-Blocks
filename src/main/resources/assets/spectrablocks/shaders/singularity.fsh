@@ -51,10 +51,10 @@ void main() {
     float radius = length(centered);
     float swirl = fbm(vec2(angle * 1.85 + uTime * (1.0 + uLayer * 0.22), radius * 15.0 - uTime * 1.35));
     float fine = fbm(vUv * (18.0 + uLayer * 7.0) + vec2(uTime * 0.8, -uTime * 0.45) + swirl);
-    float rings = 0.5 + 0.5 * sin(radius * (68.0 + uLayer * 22.0) - uTime * (3.2 + uLayer));
-    float gridLat = smoothstep(0.965, 1.0, abs(sin(vUv.y * 3.14159265 * (6.0 + uLayer * 2.0))));
-    float gridLon = smoothstep(0.974, 1.0, abs(sin(vUv.x * 6.2831853 * (8.0 + uLayer * 2.0) + uTime * 0.55)));
-    float grid = max(gridLat, gridLon) * (0.52 + 0.48 * uGridPulse);
+    float rings = 0.5 + 0.5 * sin(radius * (60.0 + uLayer * 15.0) - uTime * (2.6 + uLayer));
+    float filamentA = smoothstep(0.72, 0.96, fbm(vec2(angle * 2.4 + uTime * 0.85, radius * 18.0 + swirl * 2.0)));
+    float filamentB = smoothstep(0.78, 0.98, fbm(vec2(angle * -1.7 - uTime * 0.55, radius * 24.0 - fine * 2.5)));
+    float grid = (filamentA * 0.55 + filamentB * 0.35 + rings * 0.10) * (0.45 + 0.30 * uGridPulse);
 
     float isWhite = step(0.5, uMode);
     vec3 blackHalo = mix(uPrimaryColor * 0.78, uGridColor * 0.92, smoothstep(0.36, 0.92, swirl));
@@ -73,10 +73,10 @@ void main() {
         return;
     }
 
-    color += uGridColor * grid * uGridAlpha * (1.0 + isWhite * 0.35);
+    color += uGridColor * grid * uGridAlpha * (0.52 + isWhite * 0.22);
     float glow = rim * (0.38 + uLayer * 0.18) + swirl * 0.10 + rings * 0.055;
     float alpha = uAlpha * (0.62 + uPulse * 0.24 + glow);
-    alpha += grid * uGridAlpha * 0.55;
+    alpha += grid * uGridAlpha * 0.22;
     alpha *= mix(0.84, 1.08, isWhite);
 
     gl_FragColor = vec4(color, clamp(alpha, 0.0, 0.92));

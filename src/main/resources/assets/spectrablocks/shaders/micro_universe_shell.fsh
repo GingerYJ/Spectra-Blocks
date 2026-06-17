@@ -54,18 +54,21 @@ void main() {
     float filament = fbm(dir * 7.6 - drift.zxy + cloud * 0.62);
     float nebula = smoothstep(0.48, 0.88, cloud * 0.76 + filament * 0.26);
 
-    vec3 starCell = floor((dir * 0.5 + 0.5) * 34.0);
+    vec3 starCell = floor((dir * 0.5 + 0.5) * 46.0);
     float starSeed = hash(starCell);
-    float starShape = 1.0 - smoothstep(0.18, 0.42, length(fract((dir * 0.5 + 0.5) * 34.0) - 0.5));
-    float star = step(0.9865, starSeed) * starShape;
-    float twinkle = 0.82 + 0.18 * sin(uTime * 0.045 + starSeed * 48.0);
+    float starShape = 1.0 - smoothstep(0.14, 0.38, length(fract((dir * 0.5 + 0.5) * 46.0) - 0.5));
+    float star = step(0.981, starSeed) * starShape;
+    float twinkleWave = 0.5 + 0.5 * sin(uTime * 0.085 + starSeed * 72.0);
+    float twinkle = 0.56 + 0.62 * twinkleWave * twinkleWave;
+    float brightStar = step(0.995, starSeed) * starShape;
 
     vec3 viewDir = normalize(-vView);
     float rim = pow(1.0 - max(dot(normalize(vNormal), viewDir), 0.0), 2.2);
     vec3 color = mix(uShellColor, uNebulaColor, nebula);
-    color += uStarColor * star * twinkle * 1.25;
-    color += vec3(0.10, 0.18, 0.38) * rim * (0.22 + uPulse * 0.14);
+    color += uStarColor * star * twinkle * 1.85;
+    color += vec3(0.74, 0.86, 1.0) * brightStar * (0.75 + twinkleWave * 0.80);
+    color += vec3(0.08, 0.15, 0.32) * rim * (0.18 + uPulse * 0.12);
 
-    float alpha = clamp(0.40 + nebula * 0.12 + star * 0.24 + rim * 0.07, 0.0, 0.82);
+    float alpha = clamp(0.64 + nebula * 0.18 + star * 0.30 + brightStar * 0.34 + rim * 0.09, 0.0, 0.94);
     gl_FragColor = vec4(color, alpha);
 }
