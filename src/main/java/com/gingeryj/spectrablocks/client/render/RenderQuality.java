@@ -1,13 +1,14 @@
 package com.gingeryj.spectrablocks.client.render;
 
+import com.gingeryj.spectrablocks.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 
 final class RenderQuality {
 
     private static final ThreadLocal<Integer> QUALITY_LEVEL = ThreadLocal.withInitial(() -> 0);
-    private static final double MEDIUM_DISTANCE_SQUARED = 576.0D;
-    private static final double LOW_DISTANCE_SQUARED = 2304.0D;
+    private static final double[] MEDIUM_DISTANCE_SQUARED = new double[]{576.0D, 324.0D, 196.0D};
+    private static final double[] LOW_DISTANCE_SQUARED = new double[]{2304.0D, 1296.0D, 784.0D};
 
     private RenderQuality() {
     }
@@ -23,9 +24,10 @@ final class RenderQuality {
         double dy = view.posY - centerY;
         double dz = view.posZ - centerZ;
         double distanceSquared = dx * dx + dy * dy + dz * dz;
-        if (distanceSquared > LOW_DISTANCE_SQUARED) {
+        int mode = performanceMode();
+        if (distanceSquared > LOW_DISTANCE_SQUARED[mode]) {
             QUALITY_LEVEL.set(2);
-        } else if (distanceSquared > MEDIUM_DISTANCE_SQUARED) {
+        } else if (distanceSquared > MEDIUM_DISTANCE_SQUARED[mode]) {
             QUALITY_LEVEL.set(1);
         } else {
             QUALITY_LEVEL.set(0);
@@ -37,16 +39,16 @@ final class RenderQuality {
     }
 
     static boolean low() {
-        return level() >= 2;
+        return effectiveLevel() >= 2;
     }
 
     static boolean mediumOrLow() {
-        return level() >= 1;
+        return effectiveLevel() >= 1;
     }
 
     static int scaleSegments(int value, int min, int max) {
         int clamped = Math.max(min, Math.min(value, max));
-        int level = level();
+        int level = effectiveLevel();
         if (level == 1) {
             return Math.max(min, (int) Math.ceil(clamped * 0.58D));
         }
@@ -57,7 +59,7 @@ final class RenderQuality {
     }
 
     static int detailCount(int value, int min) {
-        int level = level();
+        int level = effectiveLevel();
         if (level == 1) {
             return Math.max(min, (int) Math.ceil(value * 0.62D));
         }
@@ -68,7 +70,7 @@ final class RenderQuality {
     }
 
     static int detailStride() {
-        int level = level();
+        int level = effectiveLevel();
         if (level == 1) {
             return 2;
         }
@@ -79,7 +81,7 @@ final class RenderQuality {
     }
 
     static float alphaMultiplier() {
-        int level = level();
+        int level = effectiveLevel();
         if (level == 1) {
             return 0.76F;
         }
@@ -87,5 +89,20 @@ final class RenderQuality {
             return 0.50F;
         }
         return 1.0F;
+    }
+
+    private static int effectiveLevel() {
+        return Math.min(2, level() + performanceMode());
+    }
+
+    private static int performanceMode() {
+        int mode = ModConfig.renderPerformanceMode();
+        if (mode < 0) {
+            return 0;
+        }
+        if (mode > 2) {
+            return 2;
+        }
+        return mode;
     }
 }

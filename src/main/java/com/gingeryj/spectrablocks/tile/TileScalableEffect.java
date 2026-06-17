@@ -13,7 +13,6 @@ public abstract class TileScalableEffect extends TileEntity {
 
     public static final String TAG_RENDER_SCALE = "RenderScale";
     private static final double BASE_RENDER_DISTANCE_SQUARED = 4096.0D;
-    private static final double MAX_RENDER_DISTANCE_SQUARED = 262144.0D;
 
     private boolean hasCustomRenderScale;
     private double customRenderScale = 1.0D;
@@ -32,7 +31,7 @@ public abstract class TileScalableEffect extends TileEntity {
     @Override
     public double getMaxRenderDistanceSquared() {
         double scale = Math.max(1.0D, renderScale(1.0D));
-        return Math.min(MAX_RENDER_DISTANCE_SQUARED, BASE_RENDER_DISTANCE_SQUARED * scale * scale);
+        return Math.min(ModConfig.maxEffectRenderDistanceSquared(), BASE_RENDER_DISTANCE_SQUARED * scale * scale);
     }
 
     @Override
