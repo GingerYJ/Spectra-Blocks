@@ -36,15 +36,10 @@ float fbm(vec2 p) {
     return value;
 }
 
-void main() {
-    vec3 normal = normalize(vNormal);
-    vec3 viewDir = normalize(-vWorld);
-    float facing = max(dot(normal, viewDir), 0.0);
-    float rim = pow(1.0 - facing, 2.0) * uRimIntensity;
-
-    vec2 flowUv = vUv;
+vec4 stellarColor(vec2 uv, float facing, float rim) {
+    vec2 flowUv = uv;
     flowUv.x += uTime * uNoiseSpeed * 0.090;
-    flowUv.y += sin(vUv.x * 20.0 + uTime * 0.65) * 0.030;
+    flowUv.y += sin(uv.x * 20.0 + uTime * 0.65) * 0.030;
     vec2 swirlUv = vec2(
         flowUv.x + sin(flowUv.y * 18.0 + uTime * 0.9) * 0.045,
         flowUv.y + cos(flowUv.x * 16.0 - uTime * 0.7) * 0.038
@@ -54,7 +49,7 @@ void main() {
     float filaments = smoothstep(0.42, 0.88, fineCells);
     float hotSpots = smoothstep(0.70, 0.97, fbm(swirlUv * 15.0 + cells * 4.5 + uTime * 0.38));
     float darkVeins = smoothstep(0.50, 0.83, fbm(swirlUv * 34.0 - cells * 2.0 - uTime * 0.16));
-    float bands = 0.5 + 0.5 * sin((vUv.y + cells * 0.24) * 42.0 + uTime * 2.3);
+    float bands = 0.5 + 0.5 * sin((uv.y + cells * 0.24) * 42.0 + uTime * 2.3);
 
     vec3 cyan = uBaseColor;
     vec3 deepCyan = vec3(0.015, 0.48, 0.64);
@@ -73,5 +68,21 @@ void main() {
             * uPulseAmount * pulse * limb;
     float alpha = 1.0;
 
-    gl_FragColor = vec4(plasma * energy, alpha);
+    return vec4(plasma * energy, alpha);
+}
+
+void main() {
+    vec3 normal = normalize(vNormal);
+    vec3 viewDir = normalize(-vWorld);
+    float facing = max(dot(normal, viewDir), 0.0);
+    float rim = pow(1.0 - facing, 2.0) * uRimIntensity;
+
+    vec4 color = stellarColor(vUv, facing, rim);
+
+    float edgeDistance = min(vUv.x, 1.0 - vUv.x);
+    float seamBlend = (1.0 - smoothstep(0.0, 0.070, edgeDistance)) * 0.5;
+    float wrapDirection = mix(1.0, -1.0, step(0.5, vUv.x));
+    vec4 wrappedColor = stellarColor(vUv + vec2(wrapDirection, 0.0), facing, rim);
+
+    gl_FragColor = mix(color, wrappedColor, seamBlend);
 }
