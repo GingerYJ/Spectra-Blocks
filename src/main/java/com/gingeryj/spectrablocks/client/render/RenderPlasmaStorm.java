@@ -145,6 +145,7 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
         );
 
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < STORM_PARTICLE_COUNT; i += stride) {
             double baseAngle = i * 2.399963229728653D;
             double angle = baseAngle + ticks * (PARTICLE_SPEED + (i % 7) * 0.004D);
@@ -159,10 +160,17 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
             float particleAlpha = 0.20F + (float) surge * 0.52F;
             int color = i % 5 == 0 ? 0xFFFFFF : (i % 2 == 0 ? 0x43F1FF : 0xBD6DFF);
 
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(x, y, z);
-            RenderHelper.drawSphere(size, color, particleAlpha, 6, 6);
-            GlStateManager.popMatrix();
+            if (points != null) {
+                points.add(x, y, z, color, particleAlpha * 1.08F);
+            } else {
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(x, y, z);
+                RenderHelper.drawSphere(size, color, particleAlpha, 6, 6);
+                GlStateManager.popMatrix();
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
 
         GlStateManager.tryBlendFuncSeparate(

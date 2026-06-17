@@ -45,6 +45,7 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
     private void drawNoiseNodes(float ticks) {
         useAlphaBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < CLOUD_NODE_COUNT; i += stride) {
             double band = (i + 0.5D) / CLOUD_NODE_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0035D + (i % 5) * 0.0007D);
@@ -61,7 +62,14 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
             float alpha = 0.055F + 0.075F * wave(ticks * 0.049D + i * 0.51D);
             int color = i % 7 == 0 ? 0xFFFFFF : (i % 4 == 0 ? 0xD1D4D2 : 0x8F9494);
 
-            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.18F);
+            } else {
+                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
     }
 

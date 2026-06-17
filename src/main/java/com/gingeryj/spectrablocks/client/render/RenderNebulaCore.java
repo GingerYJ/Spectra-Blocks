@@ -57,6 +57,7 @@ public class RenderNebulaCore extends RenderCelestialEffectBase<TileNebulaCore> 
     private void drawDust(float ticks) {
         useAdditiveBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < DUST_COUNT; i += stride) {
             double band = (i + 0.5D) / DUST_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0016D + (i % 6) * 0.00025D);
@@ -71,7 +72,14 @@ public class RenderNebulaCore extends RenderCelestialEffectBase<TileNebulaCore> 
             float alpha = 0.16F + 0.14F * wave(ticks * 0.031D + i);
             double size = 0.020D + (i % 5) * 0.004D;
 
-            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.10F);
+            } else {
+                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }

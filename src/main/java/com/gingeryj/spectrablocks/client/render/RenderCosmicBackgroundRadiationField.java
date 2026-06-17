@@ -74,6 +74,7 @@ public class RenderCosmicBackgroundRadiationField
     private void drawNoise(float ticks) {
         useAdditiveBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < NOISE_POINT_COUNT; i += stride) {
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0009D + (i % 7) * 0.00008D);
             double yNorm = -0.98D + (i % 53) * (1.96D / 52.0D);
@@ -95,7 +96,14 @@ public class RenderCosmicBackgroundRadiationField
 
             float alpha = 0.055F + 0.035F * wave(ticks * 0.011D + i * 0.43D);
             double size = 0.010D + (i % 4) * 0.003D;
-            drawSphereAt(x, y, z, size, color, alpha, 5, 5);
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.20F);
+            } else {
+                drawSphereAt(x, y, z, size, color, alpha, 5, 5);
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }

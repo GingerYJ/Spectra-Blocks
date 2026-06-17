@@ -83,6 +83,7 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
     private void drawFallingDust(float ticks) {
         useAdditiveBlend();
         int streamStride = RenderQuality.mediumOrLow() ? 2 : 1;
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < STREAM_COUNT; i += streamStride) {
             double progress = fract(ticks * 0.018D + i * 0.071D);
             double y = 1.18D - progress * 2.36D;
@@ -92,8 +93,13 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
             int color = progress < 0.52D ? TOP_COLOR : BOTTOM_COLOR;
             float alpha = 0.22F + 0.22F * wave(ticks * 0.055D + i);
 
-            drawSphereAt(Math.cos(angle) * radius, y, Math.sin(angle) * radius,
-                    0.026D + (i % 4) * 0.005D, color, alpha, 6, 6);
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.10F);
+            } else {
+                drawSphereAt(x, y, z, 0.026D + (i % 4) * 0.005D, color, alpha, 6, 6);
+            }
         }
 
         int dustStride = RenderQuality.detailStride();
@@ -107,8 +113,16 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
             int color = top > 0.0D ? TOP_COLOR : BOTTOM_COLOR;
             float alpha = 0.12F + 0.12F * wave(ticks * 0.046D + local);
 
-            drawSphereAt(Math.cos(angle) * radius, y, Math.sin(angle) * radius,
-                    0.018D + (local % 3) * 0.004D, color, alpha, 5, 5);
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.12F);
+            } else {
+                drawSphereAt(x, y, z, 0.018D + (local % 3) * 0.004D, color, alpha, 5, 5);
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }

@@ -85,6 +85,7 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
     private void drawPlankton(float ticks) {
         useAdditiveBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < PLANKTON_COUNT; i += stride) {
             double band = (i + 0.5D) / PLANKTON_COUNT;
             double yaw = i * GOLDEN_ANGLE + ticks * (CURRENT_SPEED + (i % 5) * 0.0007D);
@@ -99,13 +100,20 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
             int color = i % 7 == 0 ? 0xE9FFF8 : (i % 3 == 0 ? 0x48FFE2 : 0x2CC8FF);
             float alpha = 0.13F + 0.28F * wave(ticks * 0.036D + i);
 
-            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
-            if ((i & 15) == 0) {
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.08F);
+            } else {
+                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            }
+            if (points == null && (i & 15) == 0) {
                 GlStateManager.pushMatrix();
                 GlStateManager.translate(x, y, z);
                 RenderEnergyEffectHelper.drawSpark(size * 3.2D, color, alpha * 0.55F);
                 GlStateManager.popMatrix();
             }
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }

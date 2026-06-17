@@ -92,6 +92,7 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
     private void drawExpelledSparks(float ticks) {
         useAdditiveBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < SPARK_COUNT; i += stride) {
             double progress = fract(ticks * (0.006D + (i % 5) * 0.0009D) + i * 0.061D);
             double yaw = i * GOLDEN_ANGLE + ticks * (0.004D + (i % 3) * 0.001D);
@@ -106,7 +107,14 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
             float alpha = fade * (0.12F + 0.22F * wave(ticks * 0.064D + i));
             double size = 0.020D + fade * 0.046D;
 
-            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.12F);
+            } else {
+                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }

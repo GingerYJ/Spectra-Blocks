@@ -128,6 +128,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         );
 
         int stride = RenderQuality.mediumOrLow() ? 2 : 1;
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < PARTICLE_COUNT; i += stride) {
             double baseYaw = i * 2.399963229728653D;
             double y = -0.96D + (i % 32) * (1.92D / 31.0D);
@@ -146,10 +147,17 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             float alpha = (float) (0.18D + flutter * 0.24D + surge * 0.45D);
             int color = surge > 0.62D ? 0xFFFFFF : (i % 3 == 0 ? 0xDDFEFF : 0x3DE5FF);
 
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(particleX, particleY, particleZ);
-            RenderHelper.drawSphere(size, color, alpha, 5, 5);
-            GlStateManager.popMatrix();
+            if (points != null) {
+                points.add(particleX, particleY, particleZ, color, alpha * 1.08F);
+            } else {
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(particleX, particleY, particleZ);
+                RenderHelper.drawSphere(size, color, alpha, 5, 5);
+                GlStateManager.popMatrix();
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
 
         GlStateManager.tryBlendFuncSeparate(

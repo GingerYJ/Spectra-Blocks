@@ -48,7 +48,7 @@ public final class RenderHelper {
         SphereTable table = sphereTable(latSegs, lonSegs);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         for (int lat = 0; lat < latSegs; lat++) {
             double y0 = radius * table.latCos[lat];
             double y1 = radius * table.latCos[lat + 1];
@@ -60,13 +60,10 @@ public final class RenderHelper {
                 double cos1 = table.lonCos[lon + 1];
                 double sin1 = table.lonSin[lon + 1];
 
-                buffer.pos(h0 * cos0, y0, h0 * sin0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-                buffer.pos(h1 * cos0, y1, h1 * sin0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-                buffer.pos(h0 * cos1, y0, h0 * sin1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-
-                buffer.pos(h0 * cos1, y0, h0 * sin1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-                buffer.pos(h1 * cos0, y1, h1 * sin0).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-                buffer.pos(h1 * cos1, y1, h1 * sin1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+                addSphereVertex(buffer, h0 * cos0, y0, h0 * sin0, rgb, alpha);
+                addSphereVertex(buffer, h0 * cos1, y0, h0 * sin1, rgb, alpha);
+                addSphereVertex(buffer, h1 * cos1, y1, h1 * sin1, rgb, alpha);
+                addSphereVertex(buffer, h1 * cos0, y1, h1 * sin0, rgb, alpha);
             }
         }
         tessellator.draw();
@@ -84,30 +81,37 @@ public final class RenderHelper {
         SphereTable table = sphereTable(gridLat, gridLon);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
 
         for (int lat = 1; lat < gridLat; lat++) {
             double y = radius * table.latCos[lat];
             double horizontalRadius = radius * table.latSin[lat];
-            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-            for (int lon = 0; lon <= gridLon; lon++) {
+            for (int lon = 0; lon < gridLon; lon++) {
                 buffer.pos(horizontalRadius * table.lonCos[lon], y, horizontalRadius * table.lonSin[lon])
                         .color(rgb[0], rgb[1], rgb[2], alpha)
                         .endVertex();
+                buffer.pos(horizontalRadius * table.lonCos[lon + 1], y, horizontalRadius * table.lonSin[lon + 1])
+                        .color(rgb[0], rgb[1], rgb[2], alpha)
+                        .endVertex();
             }
-            tessellator.draw();
         }
 
         for (int lon = 0; lon < gridLon; lon++) {
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-            for (int lat = 0; lat <= gridLat; lat++) {
+            for (int lat = 0; lat < gridLat; lat++) {
                 buffer.pos(radius * table.latSin[lat] * table.lonCos[lon],
                                 radius * table.latCos[lat],
                                 radius * table.latSin[lat] * table.lonSin[lon])
                         .color(rgb[0], rgb[1], rgb[2], alpha)
                         .endVertex();
+                buffer.pos(radius * table.latSin[lat + 1] * table.lonCos[lon],
+                                radius * table.latCos[lat + 1],
+                                radius * table.latSin[lat + 1] * table.lonSin[lon])
+                        .color(rgb[0], rgb[1], rgb[2], alpha)
+                        .endVertex();
             }
-            tessellator.draw();
         }
+
+        tessellator.draw();
     }
 
     public static void drawCircle(double radius, int color, float alpha, int segments) {
@@ -144,7 +148,7 @@ public final class RenderHelper {
         SphereTable table = sphereTable(latSegs, lonSegs);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_COLOR);
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
         for (int lat = 0; lat < latSegs; lat++) {
             double y0 = radius * table.latCos[lat];
             double y1 = radius * table.latCos[lat + 1];
@@ -160,13 +164,10 @@ public final class RenderHelper {
                 double cos1 = table.lonCos[lon + 1];
                 double sin1 = table.lonSin[lon + 1];
 
-                buffer.pos(h0 * cos0, y0, h0 * sin0).tex(u0, v0).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-                buffer.pos(h0 * cos1, y0, h0 * sin1).tex(u1, v0).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-                buffer.pos(h1 * cos0, y1, h1 * sin0).tex(u0, v1).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-
-                buffer.pos(h0 * cos1, y0, h0 * sin1).tex(u1, v0).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-                buffer.pos(h1 * cos1, y1, h1 * sin1).tex(u1, v1).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
-                buffer.pos(h1 * cos0, y1, h1 * sin0).tex(u0, v1).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
+                addTexturedSphereVertex(buffer, h0 * cos0, y0, h0 * sin0, u0, v0, alpha);
+                addTexturedSphereVertex(buffer, h0 * cos1, y0, h0 * sin1, u1, v0, alpha);
+                addTexturedSphereVertex(buffer, h1 * cos1, y1, h1 * sin1, u1, v1, alpha);
+                addTexturedSphereVertex(buffer, h1 * cos0, y1, h1 * sin0, u0, v1, alpha);
             }
         }
         tessellator.draw();
@@ -191,6 +192,14 @@ public final class RenderHelper {
         tessellator.draw();
     }
 
+    public static PointBatch beginPointBatch(float pointSize) {
+        GL11.glPointSize(Math.max(1.0F, pointSize));
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_POINTS, DefaultVertexFormats.POSITION_COLOR);
+        return new PointBatch(tessellator, buffer, RenderQuality.alphaMultiplier());
+    }
+
     public static void resetLineWidth() {
         GlStateManager.glLineWidth(1.0F);
     }
@@ -212,6 +221,47 @@ public final class RenderHelper {
             SPHERE_TABLES.put(key, table);
         }
         return table;
+    }
+
+    private static void addSphereVertex(BufferBuilder buffer, double x, double y, double z,
+                                        float[] rgb, float alpha) {
+        buffer.pos(x, y, z).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+    }
+
+    private static void addTexturedSphereVertex(BufferBuilder buffer, double x, double y, double z,
+                                                double u, double v, float alpha) {
+        buffer.pos(x, y, z).tex(u, v).color(1.0F, 1.0F, 1.0F, alpha).endVertex();
+    }
+
+    public static final class PointBatch {
+        private final Tessellator tessellator;
+        private final BufferBuilder buffer;
+        private final float alphaMultiplier;
+
+        private PointBatch(Tessellator tessellator, BufferBuilder buffer, float alphaMultiplier) {
+            this.tessellator = tessellator;
+            this.buffer = buffer;
+            this.alphaMultiplier = alphaMultiplier;
+        }
+
+        public void add(double x, double y, double z, int color, float alpha) {
+            if (alpha <= 0.01F) {
+                return;
+            }
+
+            float[] rgb = unpackRGB(color);
+            float adjustedAlpha = alpha * alphaMultiplier;
+            if (adjustedAlpha <= 0.01F) {
+                return;
+            }
+
+            buffer.pos(x, y, z).color(rgb[0], rgb[1], rgb[2], adjustedAlpha).endVertex();
+        }
+
+        public void draw() {
+            tessellator.draw();
+            GL11.glPointSize(1.0F);
+        }
     }
 
     private static final class CircleTable {

@@ -6,12 +6,12 @@ import net.minecraft.entity.Entity;
 
 final class RenderQuality {
 
-    private static final ThreadLocal<Integer> QUALITY_LEVEL = ThreadLocal.withInitial(() -> 0);
-    private static final ThreadLocal<Boolean> FRAME_CROWDED = ThreadLocal.withInitial(() -> false);
-    private static final ThreadLocal<Double> DISTANCE_SQUARED = ThreadLocal.withInitial(() -> 0.0D);
     private static final double[] MEDIUM_DISTANCE_SQUARED = new double[]{576.0D, 324.0D, 196.0D};
     private static final double[] LOW_DISTANCE_SQUARED = new double[]{2304.0D, 1296.0D, 784.0D};
     private static final long FRAME_BUCKET_NANOS = 16666667L;
+    private static int qualityLevel;
+    private static boolean frameCrowded;
+    private static double distanceSquared;
     private static int lastFrameCount = -1;
     private static int renderedThisFrame;
 
@@ -26,32 +26,31 @@ final class RenderQuality {
             renderedThisFrame = 0;
         }
         renderedThisFrame++;
-        FRAME_CROWDED.set(renderedThisFrame > crowdedRenderThreshold());
+        frameCrowded = renderedThisFrame > crowdedRenderThreshold();
 
         Entity view = minecraft.getRenderViewEntity();
         if (view == null) {
-            QUALITY_LEVEL.set(0);
-            DISTANCE_SQUARED.set(0.0D);
+            qualityLevel = 0;
+            distanceSquared = 0.0D;
             return;
         }
 
         double dx = view.posX - centerX;
         double dy = view.posY - centerY;
         double dz = view.posZ - centerZ;
-        double distanceSquared = dx * dx + dy * dy + dz * dz;
-        DISTANCE_SQUARED.set(distanceSquared);
+        distanceSquared = dx * dx + dy * dy + dz * dz;
         int mode = performanceMode();
         if (distanceSquared > LOW_DISTANCE_SQUARED[mode]) {
-            QUALITY_LEVEL.set(2);
+            qualityLevel = 2;
         } else if (distanceSquared > MEDIUM_DISTANCE_SQUARED[mode]) {
-            QUALITY_LEVEL.set(1);
+            qualityLevel = 1;
         } else {
-            QUALITY_LEVEL.set(0);
+            qualityLevel = 0;
         }
     }
 
     static int level() {
-        return QUALITY_LEVEL.get();
+        return qualityLevel;
     }
 
     static boolean low() {
@@ -64,12 +63,12 @@ final class RenderQuality {
 
     static boolean shouldRender(double centerX, double centerY, double centerZ) {
         update(centerX, centerY, centerZ);
-        if (!low() || DISTANCE_SQUARED.get() < LOW_DISTANCE_SQUARED[performanceMode()] * 1.35D) {
+        if (!low() || distanceSquared < LOW_DISTANCE_SQUARED[performanceMode()] * 1.35D) {
             return true;
         }
 
         int mode = performanceMode();
-        int stride = mode >= 2 || FRAME_CROWDED.get() ? 3 : 2;
+        int stride = mode >= 2 || frameCrowded ? 3 : 2;
         if (stride <= 1) {
             return true;
         }
@@ -125,7 +124,7 @@ final class RenderQuality {
     }
 
     private static int effectiveLevel() {
-        int crowdedBonus = FRAME_CROWDED.get() ? 1 : 0;
+        int crowdedBonus = frameCrowded ? 1 : 0;
         return Math.min(2, level() + performanceMode() + crowdedBonus);
     }
 

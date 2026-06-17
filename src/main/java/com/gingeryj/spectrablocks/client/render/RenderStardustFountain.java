@@ -45,6 +45,7 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
     private void drawRisingStream(float ticks) {
         useAdditiveBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < STREAM_PARTICLE_COUNT; i += stride) {
             double progress = fract(ticks * STREAM_RISE_SPEED + i * 0.031D);
             double angle = i * 2.399963229728653D + ticks * 0.032D;
@@ -54,13 +55,22 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
             float fade = 0.28F + (float) Math.sin(Math.PI * progress) * 0.52F;
             int color = i % 7 == 0 ? 0xFFFFFF : (i % 2 == 0 ? 0xFFEFC2 : 0x95E7FF);
 
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
-            RenderHelper.drawSphere(size, color, fade, 6, 6);
-            if (i % 8 == 0) {
-                RenderEnergyEffectHelper.drawSpark(size * 3.0D, color, fade * 0.55F);
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            if (points != null) {
+                points.add(x, height, z, color, fade * 1.12F);
+            } else {
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(x, height, z);
+                RenderHelper.drawSphere(size, color, fade, 6, 6);
+                if (i % 8 == 0) {
+                    RenderEnergyEffectHelper.drawSpark(size * 3.0D, color, fade * 0.55F);
+                }
+                GlStateManager.popMatrix();
             }
-            GlStateManager.popMatrix();
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }
@@ -68,6 +78,7 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
     private void drawFallingStardust(float ticks) {
         useAdditiveBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < FALLING_PARTICLE_COUNT; i += stride) {
             double progress = fract(ticks * FALL_CYCLE_SPEED + i * 0.019D);
             double angle = i * 2.399963229728653D + ticks * (0.011D + (i % 5) * 0.001D);
@@ -78,13 +89,22 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
             float fade = 0.18F + (float) arc * 0.46F;
             int color = i % 5 == 0 ? 0xFFFFFF : (i % 2 == 0 ? 0xFFD68A : 0x78DFFF);
 
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
-            RenderHelper.drawSphere(size, color, fade, 6, 6);
-            if (i % 11 == 0) {
-                RenderEnergyEffectHelper.drawSpark(size * 2.4D, color, fade * 0.48F);
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            if (points != null) {
+                points.add(x, height, z, color, fade * 1.10F);
+            } else {
+                GlStateManager.pushMatrix();
+                GlStateManager.translate(x, height, z);
+                RenderHelper.drawSphere(size, color, fade, 6, 6);
+                if (i % 11 == 0) {
+                    RenderEnergyEffectHelper.drawSpark(size * 2.4D, color, fade * 0.48F);
+                }
+                GlStateManager.popMatrix();
             }
-            GlStateManager.popMatrix();
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }

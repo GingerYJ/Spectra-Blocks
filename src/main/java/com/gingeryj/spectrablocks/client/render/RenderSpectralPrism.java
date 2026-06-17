@@ -89,6 +89,7 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
     private void drawDust(float ticks) {
         useAdditiveBlend();
         int stride = RenderQuality.detailStride();
+        RenderHelper.PointBatch points = RenderQuality.low() ? RenderHelper.beginPointBatch(2.0F) : null;
         for (int i = 0; i < DUST_COUNT; i += stride) {
             double band = (i + 0.5D) / DUST_COUNT;
             double angle = i * GOLDEN_ANGLE + ticks * (0.006D + (i % 4) * 0.0005D);
@@ -100,7 +101,14 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
             float alpha = 0.16F + 0.16F * wave(ticks * 0.055D + i * 0.51D);
             double size = 0.018D + (i % 4) * 0.005D;
 
-            drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            if (points != null) {
+                points.add(x, y, z, color, alpha * 1.08F);
+            } else {
+                drawSphereAt(x, y, z, size, color, alpha, 6, 6);
+            }
+        }
+        if (points != null) {
+            points.draw();
         }
         useAlphaBlend();
     }
