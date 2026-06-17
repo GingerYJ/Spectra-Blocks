@@ -7,6 +7,7 @@ import com.gingeryj.spectrablocks.client.render.RenderArcaneStarRing;
 import com.gingeryj.spectrablocks.client.render.RenderAstralAltarCore;
 import com.gingeryj.spectrablocks.client.render.RenderAuroraVeil;
 import com.gingeryj.spectrablocks.client.render.RenderBioluminescentSpores;
+import com.gingeryj.spectrablocks.client.render.RenderChronoAnchor;
 import com.gingeryj.spectrablocks.client.render.RenderCollapsingStar;
 import com.gingeryj.spectrablocks.client.render.RenderCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.client.render.RenderCrystalRefractionField;
@@ -15,6 +16,7 @@ import com.gingeryj.spectrablocks.client.render.RenderDimensionalGate;
 import com.gingeryj.spectrablocks.client.render.RenderDreamShards;
 import com.gingeryj.spectrablocks.client.render.RenderEnergyNexus;
 import com.gingeryj.spectrablocks.client.render.RenderEntropyCloud;
+import com.gingeryj.spectrablocks.client.render.RenderFrostCrystalMist;
 import com.gingeryj.spectrablocks.client.render.RenderGravitationalLens;
 import com.gingeryj.spectrablocks.client.render.RenderHologramField;
 import com.gingeryj.spectrablocks.client.render.RenderImaginaryCube;
@@ -24,6 +26,7 @@ import com.gingeryj.spectrablocks.client.render.RenderMicroUniverse;
 import com.gingeryj.spectrablocks.client.render.RenderMicroWhiteHole;
 import com.gingeryj.spectrablocks.client.render.RenderMiniatureGalaxy;
 import com.gingeryj.spectrablocks.client.render.RenderNebulaCore;
+import com.gingeryj.spectrablocks.client.render.RenderNeonCircuitCore;
 import com.gingeryj.spectrablocks.client.render.RenderPlasmaStorm;
 import com.gingeryj.spectrablocks.client.render.RenderQuantumBubble;
 import com.gingeryj.spectrablocks.client.render.RenderRuneObelisk;
@@ -44,6 +47,7 @@ import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
 import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
 import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
+import com.gingeryj.spectrablocks.tile.TileChronoAnchor;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
@@ -52,6 +56,7 @@ import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
+import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
@@ -61,6 +66,7 @@ import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
 import com.gingeryj.spectrablocks.tile.TileMicroWhiteHole;
 import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
+import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
@@ -131,6 +137,9 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileRuneObelisk.class, new RenderRuneObelisk());
         ClientRegistry.bindTileEntitySpecialRenderer(TileBioluminescentSpores.class,
                 new RenderBioluminescentSpores());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileChronoAnchor.class, new RenderChronoAnchor());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileFrostCrystalMist.class, new RenderFrostCrystalMist());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileNeonCircuitCore.class, new RenderNeonCircuitCore());
     }
 
     @Override
@@ -176,6 +185,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.HOLOGRAM_FIELD);
         registerBlockItemModel(ModContent.RUNE_OBELISK);
         registerBlockItemModel(ModContent.BIOLUMINESCENT_SPORES);
+        registerBlockItemModel(ModContent.CHRONO_ANCHOR);
+        registerBlockItemModel(ModContent.FROST_CRYSTAL_MIST);
+        registerBlockItemModel(ModContent.NEON_CIRCUIT_CORE);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

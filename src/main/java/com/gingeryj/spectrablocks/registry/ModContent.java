@@ -6,6 +6,7 @@ import com.gingeryj.spectrablocks.block.BlockArcaneStarRing;
 import com.gingeryj.spectrablocks.block.BlockAstralAltarCore;
 import com.gingeryj.spectrablocks.block.BlockAuroraVeil;
 import com.gingeryj.spectrablocks.block.BlockBioluminescentSpores;
+import com.gingeryj.spectrablocks.block.BlockChronoAnchor;
 import com.gingeryj.spectrablocks.block.BlockCollapsingStar;
 import com.gingeryj.spectrablocks.block.BlockCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.block.BlockCrystalRefractionField;
@@ -14,6 +15,7 @@ import com.gingeryj.spectrablocks.block.BlockDimensionalGate;
 import com.gingeryj.spectrablocks.block.BlockDreamShards;
 import com.gingeryj.spectrablocks.block.BlockEnergyNexus;
 import com.gingeryj.spectrablocks.block.BlockEntropyCloud;
+import com.gingeryj.spectrablocks.block.BlockFrostCrystalMist;
 import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
@@ -23,6 +25,7 @@ import com.gingeryj.spectrablocks.block.BlockMicroUniverse;
 import com.gingeryj.spectrablocks.block.BlockMicroWhiteHole;
 import com.gingeryj.spectrablocks.block.BlockMiniatureGalaxy;
 import com.gingeryj.spectrablocks.block.BlockNebulaCore;
+import com.gingeryj.spectrablocks.block.BlockNeonCircuitCore;
 import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
 import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
 import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
@@ -43,6 +46,7 @@ import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
 import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
 import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
+import com.gingeryj.spectrablocks.tile.TileChronoAnchor;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
@@ -51,6 +55,7 @@ import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
 import com.gingeryj.spectrablocks.tile.TileDreamShards;
 import com.gingeryj.spectrablocks.tile.TileEnergyNexus;
 import com.gingeryj.spectrablocks.tile.TileEntropyCloud;
+import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
@@ -60,6 +65,7 @@ import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
 import com.gingeryj.spectrablocks.tile.TileMicroWhiteHole;
 import com.gingeryj.spectrablocks.tile.TileMiniatureGalaxy;
 import com.gingeryj.spectrablocks.tile.TileNebulaCore;
+import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
@@ -124,6 +130,9 @@ public final class ModContent {
     public static final BlockHologramField HOLOGRAM_FIELD = new BlockHologramField();
     public static final BlockRuneObelisk RUNE_OBELISK = new BlockRuneObelisk();
     public static final BlockBioluminescentSpores BIOLUMINESCENT_SPORES = new BlockBioluminescentSpores();
+    public static final BlockChronoAnchor CHRONO_ANCHOR = new BlockChronoAnchor();
+    public static final BlockFrostCrystalMist FROST_CRYSTAL_MIST = new BlockFrostCrystalMist();
+    public static final BlockNeonCircuitCore NEON_CIRCUIT_CORE = new BlockNeonCircuitCore();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -167,7 +176,10 @@ public final class ModContent {
                 ENERGY_NEXUS,
                 HOLOGRAM_FIELD,
                 RUNE_OBELISK,
-                BIOLUMINESCENT_SPORES
+                BIOLUMINESCENT_SPORES,
+                CHRONO_ANCHOR,
+                FROST_CRYSTAL_MIST,
+                NEON_CIRCUIT_CORE
         );
     }
 
@@ -210,6 +222,9 @@ public final class ModContent {
                 itemBlock(HOLOGRAM_FIELD),
                 itemBlock(RUNE_OBELISK),
                 itemBlock(BIOLUMINESCENT_SPORES),
+                itemBlock(CHRONO_ANCHOR),
+                itemBlock(FROST_CRYSTAL_MIST),
+                itemBlock(NEON_CIRCUIT_CORE),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -251,6 +266,9 @@ public final class ModContent {
         registerTileEntity(TileHologramField.class, "hologram_field");
         registerTileEntity(TileRuneObelisk.class, "rune_obelisk");
         registerTileEntity(TileBioluminescentSpores.class, "bioluminescent_spores");
+        registerTileEntity(TileChronoAnchor.class, "chrono_anchor");
+        registerTileEntity(TileFrostCrystalMist.class, "frost_crystal_mist");
+        registerTileEntity(TileNeonCircuitCore.class, "neon_circuit_core");
     }
 
     private static ItemBlock itemBlock(Block block) {

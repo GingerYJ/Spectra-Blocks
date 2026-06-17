@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "normal": {
+      "model": "spectrablocks:neon_circuit_core"
+    }
+  }
+}
