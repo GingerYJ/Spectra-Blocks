@@ -52,23 +52,27 @@ void main() {
     vec3 drift = vec3(uTime * 0.0045, -uTime * 0.0018, uTime * 0.0030);
     float cloud = fbm(dir * 3.2 + drift);
     float filament = fbm(dir * 7.6 - drift.zxy + cloud * 0.62);
-    float nebula = smoothstep(0.48, 0.88, cloud * 0.76 + filament * 0.26);
+    float nebula = smoothstep(0.55, 0.94, cloud * 0.70 + filament * 0.22);
 
-    vec3 starCell = floor((dir * 0.5 + 0.5) * 46.0);
+    vec3 starCell = floor((dir * 0.5 + 0.5) * 72.0);
     float starSeed = hash(starCell);
-    float starShape = 1.0 - smoothstep(0.14, 0.38, length(fract((dir * 0.5 + 0.5) * 46.0) - 0.5));
-    float star = step(0.981, starSeed) * starShape;
+    float starShape = 1.0 - smoothstep(0.12, 0.35, length(fract((dir * 0.5 + 0.5) * 72.0) - 0.5));
+    float star = step(0.962, starSeed) * starShape;
     float twinkleWave = 0.5 + 0.5 * sin(uTime * 0.085 + starSeed * 72.0);
     float twinkle = 0.56 + 0.62 * twinkleWave * twinkleWave;
     float brightStar = step(0.995, starSeed) * starShape;
+    float fineSeed = hash(floor((dir * 0.5 + 0.5) * 112.0) + vec3(17.0, 3.0, 29.0));
+    float fineStar = step(0.976, fineSeed) *
+            (1.0 - smoothstep(0.10, 0.32, length(fract((dir * 0.5 + 0.5) * 112.0) - 0.5)));
 
     vec3 viewDir = normalize(-vView);
     float rim = pow(1.0 - max(dot(normalize(vNormal), viewDir), 0.0), 2.2);
-    vec3 color = mix(uShellColor, uNebulaColor, nebula);
+    vec3 color = mix(uShellColor, uNebulaColor, nebula * 0.58);
     color += uStarColor * star * twinkle * 1.85;
+    color += uStarColor * fineStar * (0.55 + twinkleWave * 0.35);
     color += vec3(0.74, 0.86, 1.0) * brightStar * (0.75 + twinkleWave * 0.80);
-    color += vec3(0.08, 0.15, 0.32) * rim * (0.18 + uPulse * 0.12);
+    color += vec3(0.035, 0.070, 0.17) * rim * (0.12 + uPulse * 0.08);
 
-    float alpha = clamp(0.64 + nebula * 0.18 + star * 0.30 + brightStar * 0.34 + rim * 0.09, 0.0, 0.94);
+    float alpha = clamp(0.73 + nebula * 0.10 + star * 0.24 + fineStar * 0.16 + brightStar * 0.30 + rim * 0.06, 0.0, 0.96);
     gl_FragColor = vec4(color, alpha);
 }

@@ -61,16 +61,26 @@ vec3 planetColor(vec2 uv, float facing, float rim) {
     float land = smoothstep(0.46, 0.72, fbm(flow * 13.0 + vec2(style * 2.0, -style)));
     vec3 color = mix(uBaseColor * 0.62, uBaseColor, bands * 0.55 + clouds * 0.35);
     color = mix(color, uAccentColor, land * (0.22 + step(1.5, style) * 0.28));
-    color += uAccentColor * spots * 0.25;
-    color *= 0.48 + facing * 0.55 + rim * 0.12;
+    color += uAccentColor * spots * 0.34;
+    color *= 0.68 + facing * 0.50 + rim * 0.18;
+    color += uAccentColor * 0.055;
     return color * uBrightness;
 }
 
-vec3 meteorColor(float facing, float rim) {
-    float spark = fbm(vUv * 20.0 + vec2(uTime * 2.0, -uTime * 0.7));
+vec3 meteorColor(vec2 uv, float facing, float rim) {
+    float spark = fbm(uv * 20.0 + vec2(uTime * 2.0, -uTime * 0.7));
     vec3 color = mix(uBaseColor, uAccentColor, smoothstep(0.24, 0.86, spark));
     color *= 0.8 + pow(facing, 0.35) * 0.5 + rim * 0.5;
     return color * uBrightness;
+}
+
+vec3 bodyColor(vec2 uv, float facing, float rim) {
+    if (uBodyType < 0.5) {
+        return sunColor(uv, facing, rim);
+    } else if (uBodyType < 1.5) {
+        return planetColor(uv, facing, rim);
+    }
+    return meteorColor(uv, facing, rim);
 }
 
 void main() {
@@ -79,14 +89,12 @@ void main() {
     float facing = max(dot(normal, viewDir), 0.0);
     float rim = pow(1.0 - facing, 2.0);
 
-    vec3 color;
-    if (uBodyType < 0.5) {
-        color = sunColor(vUv, facing, rim);
-    } else if (uBodyType < 1.5) {
-        color = planetColor(vUv, facing, rim);
-    } else {
-        color = meteorColor(facing, rim);
-    }
+    vec3 color = bodyColor(vUv, facing, rim);
+    float edgeDistance = min(vUv.x, 1.0 - vUv.x);
+    float seamBlend = (1.0 - smoothstep(0.0, 0.075, edgeDistance)) * 0.5;
+    float wrapDirection = mix(1.0, -1.0, step(0.5, vUv.x));
+    vec3 wrappedColor = bodyColor(vUv + vec2(wrapDirection, 0.0), facing, rim);
+    color = mix(color, wrappedColor, seamBlend);
 
     float alpha = uAlpha * (0.88 + rim * 0.12);
     gl_FragColor = vec4(color, clamp(alpha, 0.0, 1.0));

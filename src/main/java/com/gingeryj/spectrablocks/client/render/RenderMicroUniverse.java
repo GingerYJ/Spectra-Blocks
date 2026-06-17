@@ -112,8 +112,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
             shellShader.setUniform1f("uTime", ticks);
             shellShader.setUniform1f("uPulse", pulse);
-            shellShader.setUniform3f("uShellColor", 0.001F, 0.003F, 0.014F);
-            shellShader.setUniform3f("uNebulaColor", 0.040F, 0.090F, 0.250F);
+            shellShader.setUniform3f("uShellColor", 0.000F, 0.001F, 0.006F);
+            shellShader.setUniform3f("uNebulaColor", 0.018F, 0.040F, 0.125F);
             shellShader.setUniform3f("uStarColor", 0.92F, 0.96F, 1.0F);
             drawShaderShellSphere(SHELL_RADIUS, SHADER_SHELL_LAT_SEGMENTS, SHADER_SHELL_LON_SEGMENTS);
 
@@ -183,8 +183,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
     private void drawSolarSystem(float ticks, ShaderProgram bodyShader, ShaderProgram colorShader) {
         GlStateManager.pushMatrix();
-        GlStateManager.rotate(28.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(-13.0F, 0.0F, 0.0F, 1.0F);
+        GlStateManager.rotate(10.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(-4.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(ticks * 0.014F, 0.0F, 1.0F, 0.0F);
 
         drawSun(ticks, bodyShader);
@@ -228,7 +228,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     }
 
     private void drawPlanet(ShaderProgram bodyShader, Planet planet, float ticks) {
-        drawShaderBody(bodyShader, planet.radius, 1.0F, planet.style, planet.color, planet.accentColor, 1.0F, 0.88F,
+        drawShaderBody(bodyShader, planet.radius, 1.0F, planet.style, planet.color, planet.accentColor, 1.0F, 1.18F,
                 ticks, SHADER_BODY_LAT_SEGMENTS);
     }
 
@@ -265,9 +265,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     private void drawGlowingOrbit(ShaderProgram colorShader, Planet planet, float ticks) {
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.018F + planet.phase);
         GlStateManager.glLineWidth(2.2F);
-        drawShaderCircle(colorShader, planet.orbitRadius, planet.orbitGlowColor, 0.070F + pulse * 0.020F, ORBIT_SEGMENTS);
+        drawShaderCircle(colorShader, planet.orbitRadius, planet.orbitGlowColor, 0.120F + pulse * 0.035F, ORBIT_SEGMENTS);
         GlStateManager.glLineWidth(1.0F);
-        drawShaderCircle(colorShader, planet.orbitRadius, 0xE2ECFF, 0.135F + pulse * 0.030F, ORBIT_SEGMENTS);
+        drawShaderCircle(colorShader, planet.orbitRadius, 0xF0F6FF, 0.205F + pulse * 0.045F, ORBIT_SEGMENTS);
         RenderHelper.resetLineWidth();
     }
 
