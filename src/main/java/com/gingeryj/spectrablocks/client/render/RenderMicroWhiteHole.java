@@ -134,4 +134,9 @@ public class RenderMicroWhiteHole extends RenderSingularityBase<TileMicroWhiteHo
     protected double defaultRenderScale() {
         return ModConfig.microWhiteHoleScale();
     }
+
+    @Override
+    protected float shaderMode() {
+        return 1.0F;
+    }
 }

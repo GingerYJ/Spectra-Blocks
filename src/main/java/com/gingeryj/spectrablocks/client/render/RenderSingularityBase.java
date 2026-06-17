@@ -1,8 +1,12 @@
 package com.gingeryj.spectrablocks.client.render;
 
-import com.gingeryj.spectrablocks.config.ModConfig;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import com.gingeryj.spectrablocks.tile.TileScalableEffect;
 import org.lwjgl.opengl.GL11;
 
@@ -12,10 +16,8 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
     private static final double INNER_HALO_BASE = 1.8D;
     private static final double OUTER_HALO_BASE = 2.8D;
 
-    private static final int LATITUDE_SEGMENTS = 16;
-    private static final int LONGITUDE_SEGMENTS = 16;
-    private static final int GRID_LAT = 6;
-    private static final int GRID_LON = 8;
+    private static final int SPHERE_LAT_SEGMENTS = 28;
+    private static final int SPHERE_LON_SEGMENTS = 28;
 
     private static final float BASE_ANIMATION_SPEED = 1.5F;
     private static final float INNER_ANIMATION_SPEED = 0.7F;
@@ -60,6 +62,7 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
         boolean lightingWasEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
         boolean depthMaskWasEnabled = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
         GlStateManager.depthMask(false);
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(
@@ -71,35 +74,36 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         GlStateManager.disableAlpha();
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
         GL11.glNormal3f(0.0F, 1.0F, 0.0F);
-        GlStateManager.disableCull();
+        GlStateManager.enableCull();
+        GlStateManager.cullFace(GlStateManager.CullFace.BACK);
 
+        ShaderProgram shader = ShaderManager.getProgram("singularity");
         try {
-            GlStateManager.pushMatrix();
-            GlStateManager.rotate(-outerTime * outerRotationSpeed(), 0.0F, 1.0F, 0.0F);
-            GlStateManager.rotate(12.0F, 0.5F, 0.0F, 1.0F);
-            RenderHelper.drawSphere(outerRadius, outerHaloColor(), outerAlpha,
-                    LATITUDE_SEGMENTS, LONGITUDE_SEGMENTS);
-            RenderHelper.drawWireframeSphere(outerRadius, outerGridColor(),
-                    outerGridAlpha() * (0.5F + 0.5F * outerGridEnergy), GRID_LAT, GRID_LON);
-            GlStateManager.popMatrix();
-
-            GlStateManager.pushMatrix();
-            GlStateManager.rotate(coreTime * innerRotationSpeed(), 0.0F, 1.0F, 0.0F);
-            GlStateManager.rotate(18.0F, 1.0F, 0.0F, 0.3F);
-            RenderHelper.drawSphere(innerRadius, innerHaloColor(), innerAlpha,
-                    LATITUDE_SEGMENTS, LONGITUDE_SEGMENTS);
-            RenderHelper.drawWireframeSphere(innerRadius, innerGridColor(),
-                    innerGridAlpha() * (0.5F + 0.5F * innerGridEnergy), GRID_LAT, GRID_LON);
-            GlStateManager.popMatrix();
-
-            RenderHelper.drawSphere(EVENT_HORIZON_RADIUS, coreColor(), coreAlpha(),
-                    LATITUDE_SEGMENTS, LONGITUDE_SEGMENTS);
+            if (shader != null && shader.begin()) {
+                drawShaderLayer(shader, outerRadius, 2.0F, outerHaloColor(), outerGridColor(),
+                        outerAlpha, outerGridAlpha(), outerBrightness, outerGridEnergy,
+                        ticks, -outerTime * outerRotationSpeed(), 12.0F, 0.5F, 0.0F, 1.0F);
+                drawShaderLayer(shader, innerRadius, 1.0F, innerHaloColor(), innerGridColor(),
+                        innerAlpha, innerGridAlpha(), innerBrightness, innerGridEnergy,
+                        ticks, coreTime * innerRotationSpeed(), 18.0F, 1.0F, 0.0F, 0.3F);
+                drawShaderLayer(shader, EVENT_HORIZON_RADIUS, 0.0F, coreColor(), innerGridColor(),
+                        coreAlpha(), 0.0F, innerBrightness, 0.0F,
+                        ticks, coreTime * 0.16F, 0.0F, 0.0F, 1.0F, 0.0F);
+            }
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("singularity render failed: " + ex.getMessage());
         } finally {
+            if (shader != null) {
+                shader.end();
+            }
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
             } else {
                 GlStateManager.disableCull();
             }
+            GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
+                    ? GlStateManager.CullFace.FRONT
+                    : GlStateManager.CullFace.BACK);
             GlStateManager.shadeModel(GL11.GL_FLAT);
             if (alphaWasEnabled) {
                 GlStateManager.enableAlpha();
@@ -129,6 +133,62 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         }
     }
 
+    private void drawShaderLayer(ShaderProgram shader, double radius, float layer, int primaryColor, int gridColor,
+                                 float alpha, float gridAlpha, float pulse, float gridPulse, float ticks,
+                                 float mainRotation, float tilt, float tiltX, float tiltY, float tiltZ) {
+        float[] primary = RenderHelper.unpackRGB(primaryColor);
+        float[] grid = RenderHelper.unpackRGB(gridColor);
+        shader.setUniform1f("uTime", ticks * 0.025F);
+        shader.setUniform1f("uLayer", layer);
+        shader.setUniform1f("uMode", shaderMode());
+        shader.setUniform1f("uAlpha", alpha);
+        shader.setUniform1f("uGridAlpha", gridAlpha);
+        shader.setUniform1f("uPulse", pulse);
+        shader.setUniform1f("uGridPulse", gridPulse);
+        shader.setUniform3f("uPrimaryColor", primary[0], primary[1], primary[2]);
+        shader.setUniform3f("uGridColor", grid[0], grid[1], grid[2]);
+
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(mainRotation, 0.0F, 1.0F, 0.0F);
+        if (tilt != 0.0F) {
+            GlStateManager.rotate(tilt, tiltX, tiltY, tiltZ);
+        }
+        drawShaderSphere(radius, SPHERE_LAT_SEGMENTS, SPHERE_LON_SEGMENTS);
+        GlStateManager.popMatrix();
+    }
+
+    private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int lat = 0; lat < latSegs; lat++) {
+            double theta0 = Math.PI * lat / latSegs;
+            double theta1 = Math.PI * (lat + 1) / latSegs;
+            for (int lon = 0; lon < lonSegs; lon++) {
+                double phi0 = 2.0D * Math.PI * lon / lonSegs;
+                double phi1 = 2.0D * Math.PI * (lon + 1) / lonSegs;
+                addShaderSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addShaderSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addShaderSphereVertex(buffer, radius, theta1, phi0, lon / (double) lonSegs, (lat + 1.0D) / latSegs);
+                addShaderSphereVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
+                addShaderSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addShaderSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+            }
+        }
+        tessellator.draw();
+    }
+
+    private static void addShaderSphereVertex(BufferBuilder buffer, double radius, double theta, double phi,
+                                              double u, double v) {
+        float normalX = (float) (Math.sin(theta) * Math.cos(phi));
+        float normalY = (float) Math.cos(theta);
+        float normalZ = (float) (Math.sin(theta) * Math.sin(phi));
+        buffer.pos(normalX * radius, normalY * radius, normalZ * radius)
+                .tex(u, v)
+                .normal(normalX, normalY, normalZ)
+                .endVertex();
+    }
+
     private static float smoothWave(float time) {
         float phase = wave(time);
         return phase * phase * (3.0F - 2.0F * phase);
@@ -155,6 +215,10 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
     protected abstract int outerGridColor();
 
     protected abstract double defaultRenderScale();
+
+    protected float shaderMode() {
+        return 0.0F;
+    }
 
     protected float baseAnimationSpeed() {
         return BASE_ANIMATION_SPEED;

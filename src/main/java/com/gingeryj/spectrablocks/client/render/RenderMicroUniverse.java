@@ -1,6 +1,5 @@
 package com.gingeryj.spectrablocks.client.render;
 
-import com.gingeryj.spectrablocks.Reference;
 import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
 import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.config.ModConfig;
@@ -10,34 +9,28 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniverse> {
 
     private static final double SHELL_RADIUS = 5.45D;
-    private static final int SHELL_LAT_SEGMENTS = 36;
-    private static final int SHELL_LON_SEGMENTS = 36;
     private static final int SHADER_SHELL_LAT_SEGMENTS = 48;
     private static final int SHADER_SHELL_LON_SEGMENTS = 48;
+    private static final int SHADER_BODY_LAT_SEGMENTS = 28;
+    private static final int SHADER_BODY_LON_SEGMENTS = 28;
     private static final int ORBIT_SEGMENTS = 96;
     private static final double ORBIT_SPEED_SCALE = 0.18D;
     private static final float METEOR_CYCLE_TICKS = 340.0F;
     private static final float METEOR_ACTIVE_TICKS = 86.0F;
-    private static final int STAR_COUNT = 64;
-    private static final RenderHelper.BillboardPoint[] STARS =
-            RenderHelper.createBillboardPoints(STAR_COUNT);
-    private static final ResourceLocation SUN_TEXTURE =
-            new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/sun.png");
 
     private static final Planet[] PLANETS = new Planet[]{
-            new Planet(1.00D, 0.085D, 0.135D, 0xA7B5C8, 1.25F, 0.02D, 0xA8C4FF, "mercury", 24),
-            new Planet(1.40D, 0.118D, 0.105D, 0xE8B36A, 2.35F, -0.03D, 0xFFD58A, "venus", 24),
-            new Planet(1.86D, 0.145D, 0.082D, 0x4AA3FF, 3.30F, 0.04D, 0x74B8FF, "earth", 28),
-            new Planet(2.34D, 0.122D, 0.066D, 0xD96642, 4.20F, -0.02D, 0xFF8064, "mars", 24),
-            new Planet(3.02D, 0.275D, 0.043D, 0xD8B076, 5.60F, 0.03D, 0xFFE0A3, "jupiter", 34),
-            new Planet(3.78D, 0.210D, 0.031D, 0x95B7D8, 0.75F, -0.04D, 0xB6D7FF, "saturn", 30),
-            new Planet(4.52D, 0.165D, 0.023D, 0x75D3E8, 4.85F, 0.05D, 0x9DEFFF, "uranus", 28)
+            new Planet(1.00D, 0.085D, 0.135D, 0xA7B5C8, 0x6D7A8B, 1.25F, 0.02D, 0xA8C4FF, 0.0F),
+            new Planet(1.40D, 0.118D, 0.105D, 0xE8B36A, 0xFFF0A8, 2.35F, -0.03D, 0xFFD58A, 1.0F),
+            new Planet(1.86D, 0.145D, 0.082D, 0x4AA3FF, 0x5AD470, 3.30F, 0.04D, 0x74B8FF, 2.0F),
+            new Planet(2.34D, 0.122D, 0.066D, 0xD96642, 0x8B392E, 4.20F, -0.02D, 0xFF8064, 3.0F),
+            new Planet(3.02D, 0.275D, 0.043D, 0xD8B076, 0xFFF0C2, 5.60F, 0.03D, 0xFFE0A3, 4.0F),
+            new Planet(3.78D, 0.210D, 0.031D, 0x95B7D8, 0xE8D59A, 0.75F, -0.04D, 0xB6D7FF, 5.0F),
+            new Planet(4.52D, 0.165D, 0.023D, 0x75D3E8, 0xC7F5FF, 4.85F, 0.05D, 0x9DEFFF, 6.0F)
     };
 
     @Override
@@ -69,9 +62,12 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         GlStateManager.disableCull();
 
         try {
-            drawUniverseShell(ticks);
-            drawSolarSystem(ticks);
-            drawMeteors(ticks);
+            ShaderProgram shellShader = ShaderManager.getProgram("micro_universe_shell");
+            ShaderProgram bodyShader = ShaderManager.getProgram("micro_universe_body");
+            ShaderProgram colorShader = ShaderManager.getProgram("basic");
+            drawUniverseShell(ticks, shellShader, colorShader);
+            drawSolarSystem(ticks, bodyShader, colorShader);
+            drawMeteors(ticks, bodyShader, colorShader);
         } finally {
             if (cullWasEnabled) {
                 GlStateManager.enableCull();
@@ -94,31 +90,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         }
     }
 
-    private void drawUniverseShell(float ticks) {
-        if (drawShaderUniverseShell(ticks)) {
+    private void drawUniverseShell(float ticks, ShaderProgram shellShader, ShaderProgram colorShader) {
+        if (shellShader == null || !shellShader.begin()) {
             return;
-        }
-
-        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.018F);
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(ticks * 0.07F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(16.0F, 1.0F, 0.0F, 0.2F);
-        drawCulledShellSphere(SHELL_RADIUS, 0x01020A, 0.48F + 0.06F * pulse,
-                SHELL_LAT_SEGMENTS, SHELL_LON_SEGMENTS);
-        RenderHelper.drawWireframeSphere(SHELL_RADIUS * 1.012D, 0x20305E, 0.06F + 0.04F * pulse, 9, 14);
-        GlStateManager.popMatrix();
-
-        drawStars(ticks);
-    }
-
-    private boolean drawShaderUniverseShell(float ticks) {
-        if (!ModConfig.enableShaderEffects()) {
-            return false;
-        }
-
-        ShaderProgram shader = ShaderManager.getProgram("micro_universe_shell");
-        if (shader == null) {
-            return false;
         }
 
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.018F);
@@ -135,26 +109,22 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             GlStateManager.enableCull();
             GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
 
-            if (!shader.begin()) {
-                return false;
-            }
-            shader.setUniform1f("uTime", ticks);
-            shader.setUniform1f("uPulse", pulse);
-            shader.setUniform3f("uShellColor", 0.003F, 0.006F, 0.026F);
-            shader.setUniform3f("uNebulaColor", 0.055F, 0.115F, 0.31F);
-            shader.setUniform3f("uStarColor", 0.82F, 0.90F, 1.0F);
+            shellShader.setUniform1f("uTime", ticks);
+            shellShader.setUniform1f("uPulse", pulse);
+            shellShader.setUniform3f("uShellColor", 0.003F, 0.006F, 0.026F);
+            shellShader.setUniform3f("uNebulaColor", 0.055F, 0.115F, 0.31F);
+            shellShader.setUniform3f("uStarColor", 0.82F, 0.90F, 1.0F);
             drawShaderShellSphere(SHELL_RADIUS, SHADER_SHELL_LAT_SEGMENTS, SHADER_SHELL_LON_SEGMENTS);
-            shader.end();
 
+            shellShader.end();
+            restoreCullState(cullWasEnabled, previousCullFace);
             GlStateManager.glLineWidth(1.0F);
-            RenderHelper.drawWireframeSphere(SHELL_RADIUS * 1.012D, 0x20305E, 0.045F + 0.035F * pulse, 9, 14);
+            drawShaderWireframeSphere(colorShader, SHELL_RADIUS * 1.012D, 0x20305E, 0.045F + 0.035F * pulse, 9, 14);
             RenderHelper.resetLineWidth();
-            return true;
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("micro universe shell render failed: " + ex.getMessage());
-            return false;
         } finally {
-            shader.end();
+            shellShader.end();
             if (matrixPushed) {
                 GlStateManager.popMatrix();
             }
@@ -164,18 +134,6 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             } else {
                 GlStateManager.disableTexture2D();
             }
-        }
-    }
-
-    private static void drawCulledShellSphere(double radius, int color, float alpha, int latSegs, int lonSegs) {
-        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
-        GlStateManager.enableCull();
-        GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        try {
-            RenderHelper.drawSphere(radius, color, alpha, latSegs, lonSegs);
-        } finally {
-            restoreCullState(cullWasEnabled, previousCullFace);
         }
     }
 
@@ -222,66 +180,44 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
                 .endVertex();
     }
 
-    private void drawStars(float ticks) {
-        for (int i = 0; i < STAR_COUNT; i++) {
-            double yaw = i * 2.399963229728653D + ticks * 0.002D;
-            double y = -0.92D + (i % 23) * 0.083D;
-            double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));
-            double radius = SHELL_RADIUS * 0.88D;
-            STARS[i].set(
-                    Math.cos(yaw) * horizontal * radius,
-                    y * radius,
-                    Math.sin(yaw) * horizontal * radius,
-                    0.050D + (i % 4) * 0.014D,
-                    0xDDE7FF,
-                    0.62F
-            );
-        }
-        RenderHelper.drawBillboardGlowPoints(STARS, STAR_COUNT);
-        RenderHelper.resetLineWidth();
-    }
-
-    private void drawSolarSystem(float ticks) {
+    private void drawSolarSystem(float ticks, ShaderProgram bodyShader, ShaderProgram colorShader) {
         GlStateManager.pushMatrix();
         GlStateManager.rotate(8.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(ticks * 0.014F, 0.0F, 1.0F, 0.0F);
 
-        drawSun(ticks);
+        drawSun(ticks, bodyShader);
 
         for (Planet planet : PLANETS) {
-            drawGlowingOrbit(planet);
+            drawGlowingOrbit(colorShader, planet, ticks);
             double angle = ticks * planet.speed + planet.phase;
             double planetX = Math.cos(angle) * planet.orbitRadius;
             double planetZ = Math.sin(angle) * planet.orbitRadius;
             GlStateManager.pushMatrix();
             GlStateManager.translate(planetX, planet.verticalOffset, planetZ);
-            GlStateManager.pushMatrix();
             GlStateManager.rotate(ticks * planet.selfRotationSpeed, 0.0F, 1.0F, 0.0F);
-            GlStateManager.enableTexture2D();
-            RenderHelper.drawTexturedSphere(planet.radius, planet.texture, 0.98F,
-                    planet.textureSegments, planet.textureSegments);
-            GlStateManager.disableTexture2D();
-            GlStateManager.popMatrix();
+            drawPlanet(bodyShader, planet, ticks);
+            if (planet.style == 5.0F) {
+                drawSaturnRing(colorShader, planet);
+            }
             GlStateManager.popMatrix();
         }
 
         GlStateManager.popMatrix();
     }
 
-    private void drawSun(float ticks) {
+    private void drawSun(float ticks, ShaderProgram bodyShader) {
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.045F);
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
-        GlStateManager.enableTexture2D();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.26F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(6.0F, 0.0F, 0.0F, 1.0F);
-        RenderHelper.drawTexturedSphere(0.42D, SUN_TEXTURE, 1.0F, 48, 48);
+        drawShaderBody(bodyShader, 0.42D, 0.0F, 0.0F, 0xFFE071, 0xFFFFFF, 1.0F, 1.08F + pulse * 0.12F,
+                ticks, 42);
         GlStateManager.popMatrix();
-        GlStateManager.disableTexture2D();
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
@@ -289,15 +225,57 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         );
     }
 
-    private void drawGlowingOrbit(Planet planet) {
+    private void drawPlanet(ShaderProgram bodyShader, Planet planet, float ticks) {
+        drawShaderBody(bodyShader, planet.radius, 1.0F, planet.style, planet.color, planet.accentColor, 0.98F, 0.88F,
+                ticks, SHADER_BODY_LAT_SEGMENTS);
+    }
+
+    private void drawShaderBody(ShaderProgram bodyShader, double radius, float bodyType, float style,
+                                int baseColor, int accentColor, float alpha, float brightness, float ticks,
+                                int segments) {
+        if (bodyShader == null || !bodyShader.begin()) {
+            return;
+        }
+
+        float[] base = RenderHelper.unpackRGB(baseColor);
+        float[] accent = RenderHelper.unpackRGB(accentColor);
+        try {
+            bodyShader.setUniform1f("uTime", ticks * 0.035F);
+            bodyShader.setUniform1f("uBodyType", bodyType);
+            bodyShader.setUniform1f("uStyle", style);
+            bodyShader.setUniform1f("uAlpha", alpha);
+            bodyShader.setUniform1f("uBrightness", brightness);
+            bodyShader.setUniform3f("uBaseColor", base[0], base[1], base[2]);
+            bodyShader.setUniform3f("uAccentColor", accent[0], accent[1], accent[2]);
+            drawShaderShellSphere(radius, segments, segments);
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("micro universe body render failed: " + ex.getMessage());
+        } finally {
+            bodyShader.end();
+        }
+    }
+
+    private void drawGlowingOrbit(ShaderProgram colorShader, Planet planet, float ticks) {
+        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.018F + planet.phase);
         GlStateManager.glLineWidth(2.2F);
-        RenderHelper.drawCircle(planet.orbitRadius, planet.orbitGlowColor, 0.080F, ORBIT_SEGMENTS);
+        drawShaderCircle(colorShader, planet.orbitRadius, planet.orbitGlowColor, 0.070F + pulse * 0.020F, ORBIT_SEGMENTS);
         GlStateManager.glLineWidth(1.0F);
-        RenderHelper.drawCircle(planet.orbitRadius, 0xE2ECFF, 0.155F, ORBIT_SEGMENTS);
+        drawShaderCircle(colorShader, planet.orbitRadius, 0xE2ECFF, 0.135F + pulse * 0.030F, ORBIT_SEGMENTS);
         RenderHelper.resetLineWidth();
     }
 
-    private void drawMeteors(float ticks) {
+    private void drawSaturnRing(ShaderProgram colorShader, Planet planet) {
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(22.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.glLineWidth(2.0F);
+        drawShaderCircle(colorShader, planet.radius * 1.75D, 0xE8D59A, 0.28F, 72);
+        GlStateManager.glLineWidth(1.0F);
+        drawShaderCircle(colorShader, planet.radius * 2.20D, 0xFFFFFF, 0.16F, 72);
+        RenderHelper.resetLineWidth();
+        GlStateManager.popMatrix();
+    }
+
+    private void drawMeteors(float ticks, ShaderProgram bodyShader, ShaderProgram colorShader) {
         float cycle = ticks % METEOR_CYCLE_TICKS;
         if (cycle < 0.0F) {
             cycle += METEOR_CYCLE_TICKS;
@@ -332,13 +310,13 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
         GlStateManager.glLineWidth(4.0F);
-        RenderHelper.drawLine(headX, headY, headZ, tailX, tailY, tailZ, 0x9CCBFF, 0.085F * fade);
+        drawShaderLine(colorShader, headX, headY, headZ, tailX, tailY, tailZ, 0x9CCBFF, 0.085F * fade);
         GlStateManager.glLineWidth(2.0F);
-        RenderHelper.drawLine(headX, headY, headZ, tailX, tailY, tailZ, 0xDDEBFF, 0.28F * fade);
+        drawShaderLine(colorShader, headX, headY, headZ, tailX, tailY, tailZ, 0xDDEBFF, 0.28F * fade);
         RenderHelper.resetLineWidth();
         GlStateManager.translate(headX, headY, headZ);
-        RenderHelper.drawSphere(0.064D, 0xFFFFFF, 0.72F * fade, 8, 8);
-        RenderHelper.drawSphere(0.120D, 0x75B8FF, 0.18F * fade, 8, 8);
+        drawShaderBody(bodyShader, 0.064D, 2.0F, 0.0F, 0xFFFFFF, 0x75B8FF, 0.72F * fade, 1.0F, ticks, 10);
+        drawShaderBody(bodyShader, 0.120D, 2.0F, 1.0F, 0x75B8FF, 0xFFFFFF, 0.18F * fade, 0.72F, ticks, 10);
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
@@ -354,31 +332,122 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         return progress * progress * (3.0F - 2.0F * progress);
     }
 
+    private static void drawShaderWireframeSphere(ShaderProgram colorShader, double radius, int color,
+                                                  float alpha, int gridLat, int gridLon) {
+        if (colorShader == null || !colorShader.begin()) {
+            return;
+        }
+
+        try {
+            setColorShaderUniforms(colorShader, alpha);
+            float[] rgb = RenderHelper.unpackRGB(color);
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+
+            for (int lat = 1; lat < gridLat; lat++) {
+                double theta = Math.PI * lat / gridLat;
+                double y = radius * Math.cos(theta);
+                double horizontalRadius = radius * Math.sin(theta);
+                buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
+                for (int lon = 0; lon <= gridLon; lon++) {
+                    double phi = 2.0D * Math.PI * lon / gridLon;
+                    buffer.pos(horizontalRadius * Math.cos(phi), y, horizontalRadius * Math.sin(phi))
+                            .color(rgb[0], rgb[1], rgb[2], 1.0F)
+                            .endVertex();
+                }
+                tessellator.draw();
+            }
+
+            for (int lon = 0; lon < gridLon; lon++) {
+                double phi = 2.0D * Math.PI * lon / gridLon;
+                buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+                for (int lat = 0; lat <= gridLat; lat++) {
+                    double theta = Math.PI * lat / gridLat;
+                    buffer.pos(radius * Math.sin(theta) * Math.cos(phi),
+                                    radius * Math.cos(theta),
+                                    radius * Math.sin(theta) * Math.sin(phi))
+                            .color(rgb[0], rgb[1], rgb[2], 1.0F)
+                            .endVertex();
+                }
+                tessellator.draw();
+            }
+        } finally {
+            colorShader.end();
+        }
+    }
+
+    private static void drawShaderCircle(ShaderProgram colorShader, double radius, int color, float alpha, int segments) {
+        if (colorShader == null || !colorShader.begin()) {
+            return;
+        }
+
+        try {
+            setColorShaderUniforms(colorShader, alpha);
+            float[] rgb = RenderHelper.unpackRGB(color);
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
+            for (int i = 0; i < segments; i++) {
+                double angle = 2.0D * Math.PI * i / segments;
+                buffer.pos(radius * Math.cos(angle), 0.0D, radius * Math.sin(angle))
+                        .color(rgb[0], rgb[1], rgb[2], 1.0F)
+                        .endVertex();
+            }
+            tessellator.draw();
+        } finally {
+            colorShader.end();
+        }
+    }
+
+    private static void drawShaderLine(ShaderProgram colorShader, double x1, double y1, double z1,
+                                       double x2, double y2, double z2, int color, float alpha) {
+        if (colorShader == null || !colorShader.begin()) {
+            return;
+        }
+
+        try {
+            setColorShaderUniforms(colorShader, alpha);
+            float[] rgb = RenderHelper.unpackRGB(color);
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+            buffer.pos(x1, y1, z1).color(rgb[0], rgb[1], rgb[2], 1.0F).endVertex();
+            buffer.pos(x2, y2, z2).color(rgb[0], rgb[1], rgb[2], 1.0F).endVertex();
+            tessellator.draw();
+        } finally {
+            colorShader.end();
+        }
+    }
+
+    private static void setColorShaderUniforms(ShaderProgram colorShader, float alpha) {
+        colorShader.setUniform1f("alpha", alpha);
+        colorShader.setUniform4f("tint", 1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
     private static final class Planet {
         private final double orbitRadius;
         private final double radius;
         private final double speed;
         private final int color;
+        private final int accentColor;
         private final float phase;
         private final double verticalOffset;
         private final int orbitGlowColor;
-        private final ResourceLocation texture;
         private final float selfRotationSpeed;
-        private final int textureSegments;
+        private final float style;
 
-        private Planet(double orbitRadius, double radius, double speed, int color,
-                       float phase, double verticalOffset, int orbitGlowColor, String textureName,
-                       int textureSegments) {
+        private Planet(double orbitRadius, double radius, double speed, int color, int accentColor,
+                       float phase, double verticalOffset, int orbitGlowColor, float style) {
             this.orbitRadius = orbitRadius;
             this.radius = radius;
             this.speed = speed * ORBIT_SPEED_SCALE;
             this.color = color;
+            this.accentColor = accentColor;
             this.phase = phase;
             this.verticalOffset = verticalOffset;
             this.orbitGlowColor = orbitGlowColor;
-            this.texture = new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/" + textureName + ".png");
             this.selfRotationSpeed = (float) (1.2D + speed * 10.0D);
-            this.textureSegments = textureSegments;
+            this.style = style;
         }
     }
 }
