@@ -1,11 +1,10 @@
 package com.gingeryj.spectrablocks.client.render;
 
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import org.lwjgl.opengl.GL11;
 
-public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneStarRing> {
+public class RenderArcaneStarRing extends RenderArcaneShaderTile<TileArcaneStarRing> {
 
     private static final double CORE_RADIUS = 0.46D;
     private static final double HALO_RADIUS = 1.34D;
@@ -20,153 +19,104 @@ public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneSt
     private static final float STAR_ORBIT_SPEED = 0.018F;
 
     @Override
-    public void render(TileArcaneStarRing te, double x, double y, double z,
-                       float partialTicks, int destroyStage, float alpha) {
-        double centerX = x + 0.5D;
-        double centerY = y + 0.5D;
-        double centerZ = z + 0.5D;
-        float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
-
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(centerX, centerY, centerZ);
-        double renderScale = te.renderScale(1.0D);
-        GlStateManager.scale(renderScale, renderScale, renderScale);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-
-        boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
-        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-        GlStateManager.depthMask(false);
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
-        GlStateManager.disableLighting();
-        GlStateManager.disableTexture2D();
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        GL11.glNormal3f(0.0F, 1.0F, 0.0F);
-        GlStateManager.disableCull();
-
-        try {
-            drawCore(ticks);
-            drawRuneRings(ticks);
-            drawOrbitStars(ticks);
-            drawStarLinks(ticks);
-        } finally {
-            if (cullWasEnabled) {
-                GlStateManager.enableCull();
-            } else {
-                GlStateManager.disableCull();
-            }
-            GlStateManager.shadeModel(GL11.GL_FLAT);
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableLighting();
-            GlStateManager.depthMask(true);
-            if (!blendWasEnabled) {
-                GlStateManager.disableBlend();
-            }
-            GlStateManager.tryBlendFuncSeparate(
-                    GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                    GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-            );
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderHelper.resetLineWidth();
-            GlStateManager.popMatrix();
-        }
+    protected void renderShaderLayers(TileArcaneStarRing te, float ticks, ShaderProgram shader) {
+        drawCore(shader, ticks);
+        drawRuneRings(shader, ticks);
+        drawOrbitStars(shader, ticks);
+        drawStarLinks(shader, ticks);
     }
 
-    private void drawCore(float ticks) {
-        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * CORE_PULSE_SPEED);
+    private void drawCore(ShaderProgram shader, float ticks) {
+        float pulse = wave(ticks * CORE_PULSE_SPEED);
 
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
-        RenderHelper.drawSphere(HALO_RADIUS + pulse * 0.12D, 0xFFE7A3, 0.110F + pulse * 0.050F, 24, 24);
-        RenderHelper.drawSphere(CORE_RADIUS + pulse * 0.045D, 0xFFF5CC, 0.75F, 22, 22);
-        RenderHelper.drawSphere(CORE_RADIUS * 0.55D, 0xFFFFFF, 0.56F + pulse * 0.18F, 18, 18);
+        useAdditiveBlend();
+        ArcaneShaderEffectRenderer.drawSphereLayer(shader, ticks,
+                HALO_RADIUS + pulse * 0.12D, 0xFFD176, 0xBFA2FF,
+                0.16F + pulse * 0.06F, 1.28F, 10.0F, 5.0F, pulse,
+                ArcaneShaderEffectRenderer.LAYER_AURA, 26, 26);
+        ArcaneShaderEffectRenderer.drawSphereLayer(shader, ticks,
+                CORE_RADIUS + pulse * 0.045D, 0xFFF5CC, 0xFFE7A3,
+                0.78F, 1.52F, 18.0F, 9.0F, pulse,
+                ArcaneShaderEffectRenderer.LAYER_CORE, 24, 24);
+        ArcaneShaderEffectRenderer.drawSphereLayer(shader, ticks,
+                CORE_RADIUS * 0.55D, 0xFFFFFF, 0xFFF2C1,
+                0.56F + pulse * 0.18F, 1.9F, 24.0F, 13.0F, pulse,
+                ArcaneShaderEffectRenderer.LAYER_CORE, 18, 18);
 
-        GlStateManager.glLineWidth(2.2F);
         GlStateManager.pushMatrix();
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        RenderEnergyEffectHelper.drawStarRays(0.34D, 1.05D + pulse * 0.12D, 8,
-                0xFFF2C1, 0.45F + pulse * 0.20F, ticks * 0.008D);
+        drawStarRays(shader, ticks, 0.34D, 1.05D + pulse * 0.12D, 8,
+                0xFFF2C1, 0xFFFFFF, 0.45F + pulse * 0.20F, 19.0F);
         GlStateManager.popMatrix();
-        RenderHelper.resetLineWidth();
-
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
+        useAlphaBlend();
     }
 
-    private void drawRuneRings(float ticks) {
-        drawRuneRing(ticks, INNER_RING_RADIUS, 42.0F, 0.0F, 1.0F, 0.16F,
-                0xEED28C, 0xFFF2C1, 14, 0.82F);
-        drawRuneRing(ticks, MIDDLE_RING_RADIUS, -27.0F, 1.0F, 0.0F, -0.11F,
-                0xBFA2FF, 0xF2E8FF, 20, -0.48F);
-        drawRuneRing(ticks, OUTER_RING_RADIUS, 68.0F, 0.35F, 1.0F, 0.07F,
-                0xFFD176, 0xFFF7D5, 28, 0.28F);
+    private void drawRuneRings(ShaderProgram shader, float ticks) {
+        drawRuneRing(shader, ticks, INNER_RING_RADIUS, 42.0F, 0.0F, 1.0F, 0.16F,
+                0xEED28C, 0xFFF2C1, 14, 0.82F, 23.0F);
+        drawRuneRing(shader, ticks, MIDDLE_RING_RADIUS, -27.0F, 1.0F, 0.0F, -0.11F,
+                0xBFA2FF, 0xF2E8FF, 20, -0.48F, 41.0F);
+        drawRuneRing(shader, ticks, OUTER_RING_RADIUS, 68.0F, 0.35F, 1.0F, 0.07F,
+                0xFFD176, 0xFFF7D5, 28, 0.28F, 61.0F);
     }
 
-    private void drawRuneRing(float ticks, double radius, float tilt, float axisX, float axisZ,
-                              float offsetY, int bandColor, int lineColor, int marks, float speedScale) {
-        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.037F + radius);
+    private void drawRuneRing(ShaderProgram shader, float ticks, double radius, float tilt,
+                              float axisX, float axisZ, float offsetY, int bandColor,
+                              int lineColor, int marks, float speedScale, float seed) {
+        float pulse = wave(ticks * 0.037F + radius);
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, offsetY, 0.0D);
         GlStateManager.rotate(tilt, axisX, 0.0F, axisZ);
         GlStateManager.rotate(ticks * RING_ROTATION_SPEED * speedScale, 0.0F, 1.0F, 0.0F);
-        RenderEnergyEffectHelper.drawFlatBand(radius, 0.032D, bandColor, 0.130F + pulse * 0.055F, RING_SEGMENTS);
+        ArcaneShaderEffectRenderer.drawCircleRibbonLayer(shader, ticks, radius,
+                0.065D, bandColor, lineColor, 0.19F + pulse * 0.08F,
+                1.10F, 16.0F, seed, pulse, RING_SEGMENTS);
+        useAdditiveBlend();
         GlStateManager.glLineWidth(2.0F);
-        RenderHelper.drawCircle(radius, lineColor, 0.27F + pulse * 0.12F, RING_SEGMENTS);
+        ArcaneShaderEffectRenderer.drawLatitudeCircleLayer(shader, ticks, radius, 0.0D,
+                lineColor, 0xFFFFFF, 0.28F + pulse * 0.12F,
+                1.30F, 21.0F, seed + 3.0F, pulse, RING_SEGMENTS);
+        ArcaneShaderEffectRenderer.drawRadialMarksLayer(shader, ticks, radius,
+                0.20D, 0.024D, marks, lineColor, 0xFFFFFF,
+                0.34F + pulse * 0.15F, 1.35F, 26.0F, seed + 7.0F, pulse);
+        if (marks >= 20) {
+            drawStarRays(shader, ticks, radius * 0.30D, radius * 0.82D,
+                    marks / 4, lineColor, 0xFFFFFF, 0.12F + pulse * 0.08F, seed + 11.0F);
+        }
         GlStateManager.glLineWidth(1.0F);
-        RenderEnergyEffectHelper.drawRuneMarks(radius, 0.20D, marks,
-                lineColor, 0.32F + pulse * 0.16F, ticks * 0.010D * speedScale);
-        RenderHelper.resetLineWidth();
+        useAlphaBlend();
         GlStateManager.popMatrix();
     }
 
-    private void drawOrbitStars(float ticks) {
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
-
+    private void drawOrbitStars(ShaderProgram shader, float ticks) {
+        useAdditiveBlend();
         for (int i = 0; i < STAR_COUNT; i++) {
-            double angle = i * 2.399963229728653D + ticks * (STAR_ORBIT_SPEED + (i % 5) * 0.0018D);
+            double angle = i * GOLDEN_ANGLE + ticks * (STAR_ORBIT_SPEED + (i % 5) * 0.0018D);
             double wave = Math.sin(ticks * 0.035D + i * 0.77D);
             double radius = 1.55D + (i % 11) * 0.135D + wave * 0.10D;
             double height = Math.sin(angle * 1.7D + i) * 0.52D;
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
+            double starX = Math.cos(angle) * radius;
+            double starZ = Math.sin(angle) * radius;
             double size = 0.028D + (i % 4) * 0.006D;
             float starAlpha = 0.32F + (float) (0.5D + 0.5D * wave) * 0.42F;
             int color = i % 6 == 0 ? 0xFFFFFF : (i % 2 == 0 ? 0xFFE6A3 : 0xD9C7FF);
 
             GlStateManager.pushMatrix();
-            GlStateManager.translate(x, height, z);
-            RenderHelper.drawSphere(size, color, starAlpha, 7, 7);
+            GlStateManager.translate(starX, height, starZ);
+            ArcaneShaderEffectRenderer.drawSphereLayer(shader, ticks, size,
+                    color, 0xFFFFFF, starAlpha, 1.6F, 12.0F, i * 17.0F, starAlpha,
+                    ArcaneShaderEffectRenderer.LAYER_MOTE, 7, 7);
             if (i % 9 == 0) {
-                GlStateManager.glLineWidth(1.0F);
-                RenderEnergyEffectHelper.drawSpark(size * 2.6D, color, starAlpha * 0.55F);
+                drawSpark(shader, ticks, size * 2.8D, color, starAlpha * 0.55F, i * 19.0F);
             }
             GlStateManager.popMatrix();
         }
-
-        RenderHelper.resetLineWidth();
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
+        useAlphaBlend();
     }
 
-    private void drawStarLinks(float ticks) {
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
-
+    private void drawStarLinks(ShaderProgram shader, float ticks) {
+        useAdditiveBlend();
         GlStateManager.glLineWidth(1.6F);
         for (int i = 0; i < STAR_LINK_COUNT; i++) {
             double angle = i * 0.947D + ticks * 0.014D;
@@ -175,17 +125,45 @@ public class RenderArcaneStarRing extends TileEntitySpecialRenderer<TileArcaneSt
             double radiusB = radiusA + 0.34D;
             double yA = Math.sin(ticks * 0.030D + i) * 0.34D;
             double yB = yA + Math.cos(ticks * 0.025D + i * 1.4D) * 0.18D;
-            float linkFade = 0.5F + 0.5F * (float) Math.sin(ticks * 0.075F + i * 0.9F);
+            float linkFade = wave(ticks * 0.075F + i * 0.9F);
 
-            RenderHelper.drawLine(Math.cos(angle) * radiusA, yA, Math.sin(angle) * radiusA,
+            ArcaneShaderEffectRenderer.drawLineLayer(shader, ticks,
+                    Math.cos(angle) * radiusA, yA, Math.sin(angle) * radiusA,
                     Math.cos(angleB) * radiusB, yB, Math.sin(angleB) * radiusB,
-                    i % 2 == 0 ? 0xFFF6CF : 0xDCCBFF, 0.16F + linkFade * 0.20F);
+                    i % 2 == 0 ? 0xFFF6CF : 0xDCCBFF, 0xFFFFFF,
+                    0.16F + linkFade * 0.20F, 1.25F, 18.0F, i * 29.0F, linkFade);
         }
-        RenderHelper.resetLineWidth();
+        GlStateManager.glLineWidth(1.0F);
+        useAlphaBlend();
+    }
 
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
+    private void drawSpark(ShaderProgram shader, float ticks, double radius,
+                           int color, float alpha, float seed) {
+        GlStateManager.glLineWidth(1.0F);
+        for (int i = 0; i < 4; i++) {
+            double angle = Math.PI * 0.25D * i;
+            ArcaneShaderEffectRenderer.drawLineLayer(shader, ticks,
+                    -Math.cos(angle) * radius, -Math.sin(angle) * radius, 0.0D,
+                    Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D,
+                    color, 0xFFFFFF, alpha, 1.35F, 20.0F, seed + i, alpha);
+        }
+    }
+
+    private void drawStarRays(ShaderProgram shader, float ticks, double innerRadius,
+                              double outerRadius, int rays, int color, int accentColor,
+                              float alpha, float seed) {
+        if (rays <= 0) {
+            return;
+        }
+
+        GlStateManager.glLineWidth(2.0F);
+        for (int i = 0; i < rays; i++) {
+            double angle = Math.PI * 2.0D * i / rays + ticks * 0.008D;
+            ArcaneShaderEffectRenderer.drawLineLayer(shader, ticks,
+                    Math.cos(angle) * innerRadius, 0.0D, Math.sin(angle) * innerRadius,
+                    Math.cos(angle) * outerRadius, 0.0D, Math.sin(angle) * outerRadius,
+                    color, accentColor, alpha, 1.5F, 18.0F, seed + i * 3.0F, alpha);
+        }
+        GlStateManager.glLineWidth(1.0F);
     }
 }

@@ -1,13 +1,10 @@
 package com.gingeryj.spectrablocks.client.render;
 
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import org.lwjgl.opengl.GL11;
 
-public class RenderSoulVortex extends RenderCelestialEffectBase<TileSoulVortex> {
+public class RenderSoulVortex extends RenderArcaneShaderTile<TileSoulVortex> {
 
     private static final double TWO_PI = Math.PI * 2.0D;
     private static final double VORTEX_HEIGHT = 2.18D;
@@ -22,45 +19,50 @@ public class RenderSoulVortex extends RenderCelestialEffectBase<TileSoulVortex> 
     private static final float CORE_PULSE_SPEED = 0.060F;
 
     @Override
-    protected void renderCelestialEffect(TileSoulVortex te, float ticks) {
-        drawBaseWell(ticks);
-        drawHelices(ticks);
-        drawSouls(ticks);
-        drawCenterColumn(ticks);
+    protected void renderShaderLayers(TileSoulVortex te, float ticks, ShaderProgram shader) {
+        drawBaseWell(shader, ticks);
+        drawHelices(shader, ticks);
+        drawSouls(shader, ticks);
+        drawCenterColumn(shader, ticks);
     }
 
-    private void drawBaseWell(float ticks) {
+    private void drawBaseWell(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.050F);
 
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, -0.04D, 0.0D);
-        RenderCelestialEffectBase.drawFlatRing(0.16D, BASE_RADIUS + pulse * 0.06D,
-                0x095C63, 0.12F + pulse * 0.050F, RING_SEGMENTS);
-        GlStateManager.glLineWidth(1.6F);
-        RenderHelper.drawCircle(BASE_RADIUS, 0x6AFFD2, 0.23F + pulse * 0.12F, RING_SEGMENTS);
-        RenderHelper.resetLineWidth();
+        ArcaneShaderEffectRenderer.drawFlatRingLayer(shader, ticks,
+                0.16D, BASE_RADIUS + pulse * 0.06D, 0x095C63, 0x6AFFD2,
+                0.16F + pulse * 0.06F, 1.18F, 13.0F, 11.0F, pulse, RING_SEGMENTS);
+        GlStateManager.glLineWidth(1.7F);
+        ArcaneShaderEffectRenderer.drawLatitudeCircleLayer(shader, ticks, BASE_RADIUS, 0.0D,
+                0x6AFFD2, 0xD6FFF5, 0.24F + pulse * 0.12F,
+                1.30F, 20.0F, 13.0F, pulse, RING_SEGMENTS);
+        GlStateManager.glLineWidth(1.0F);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawHelices(float ticks) {
+    private void drawHelices(ShaderProgram shader, float ticks) {
         useAdditiveBlend();
         for (int i = 0; i < HELIX_COUNT; i++) {
             double phase = TWO_PI * i / HELIX_COUNT + ticks * VORTEX_ROTATION_SPEED;
             int color = i % 2 == 0 ? 0x51FFD0 : 0x8CFBFF;
             GlStateManager.glLineWidth(i % 2 == 0 ? 2.2F : 1.4F);
-            drawHelix(phase, color, 0.24F);
+            ArcaneShaderEffectRenderer.drawHelixLayer(shader, ticks, phase,
+                    BASE_RADIUS, TOP_RADIUS, VORTEX_HEIGHT, 1.85D, HELIX_SEGMENTS,
+                    color, 0xD6FFF5, 0.25F, 1.45F, 18.0F, i * 23.0F, 0.8F);
         }
-        RenderHelper.resetLineWidth();
+        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
-    private void drawSouls(float ticks) {
+    private void drawSouls(ShaderProgram shader, float ticks) {
         useAdditiveBlend();
         for (int i = 0; i < SOUL_COUNT; i++) {
             double progress = fract(ticks * SOUL_RISE_SPEED + i * 0.023D);
-            double angle = i * 2.399963229728653D + progress * TWO_PI * 1.85D + ticks * VORTEX_ROTATION_SPEED;
+            double angle = i * GOLDEN_ANGLE + progress * TWO_PI * 1.85D + ticks * VORTEX_ROTATION_SPEED;
             double radius = lerp(BASE_RADIUS, TOP_RADIUS, progress) + Math.sin(ticks * 0.034D + i) * 0.045D;
             double height = progress * VORTEX_HEIGHT - 0.08D;
             double bob = Math.sin(ticks * 0.070D + i * 0.73D) * 0.035D;
@@ -70,43 +72,52 @@ public class RenderSoulVortex extends RenderCelestialEffectBase<TileSoulVortex> 
 
             GlStateManager.pushMatrix();
             GlStateManager.translate(Math.cos(angle) * radius, height + bob, Math.sin(angle) * radius);
-            RenderHelper.drawSphere(size, color, fade, 6, 6);
+            ArcaneShaderEffectRenderer.drawSphereLayer(shader, ticks, size,
+                    color, 0xFFFFFF, fade, 1.55F, 12.0F, i * 7.0F, (float) progress,
+                    ArcaneShaderEffectRenderer.LAYER_MOTE, 6, 6);
             if (i % 9 == 0) {
-                RenderEnergyEffectHelper.drawSpark(size * 2.6D, color, fade * 0.55F);
+                drawSpark(shader, ticks, size * 2.6D, color, fade * 0.55F, i * 17.0F);
             }
             GlStateManager.popMatrix();
         }
         useAlphaBlend();
     }
 
-    private void drawCenterColumn(float ticks) {
+    private void drawCenterColumn(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * CORE_PULSE_SPEED);
 
         useAdditiveBlend();
-        RenderHelper.drawSphere(0.54D + pulse * 0.08D, 0x1DE6C2, 0.12F + pulse * 0.055F, 20, 20);
-        drawSphereAt(0.0D, 1.12D, 0.0D, 0.28D + pulse * 0.035D, 0xBFFFF2, 0.22F + pulse * 0.12F, 16, 16);
+        ArcaneShaderEffectRenderer.drawSphereLayer(shader, ticks,
+                0.54D + pulse * 0.08D, 0x1DE6C2, 0x8CFBFF,
+                0.15F + pulse * 0.06F, 1.20F, 12.0F, 71.0F, pulse,
+                ArcaneShaderEffectRenderer.LAYER_AURA, 20, 20);
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(0.0D, 1.12D, 0.0D);
+        ArcaneShaderEffectRenderer.drawSphereLayer(shader, ticks,
+                0.28D + pulse * 0.035D, 0xBFFFF2, 0xFFFFFF,
+                0.24F + pulse * 0.12F, 1.45F, 16.0F, 73.0F, pulse,
+                ArcaneShaderEffectRenderer.LAYER_CORE, 16, 16);
+        GlStateManager.popMatrix();
         GlStateManager.glLineWidth(1.3F);
-        RenderCelestialEffectBase.drawLatitudeCircle(1.02D, -0.22D + pulse * 0.06D, 0x4DFFD0, 0.20F, RING_SEGMENTS);
-        RenderCelestialEffectBase.drawLatitudeCircle(0.82D, 0.34D, 0x8CFBFF, 0.16F + pulse * 0.08F, RING_SEGMENTS);
-        RenderHelper.resetLineWidth();
+        ArcaneShaderEffectRenderer.drawLatitudeCircleLayer(shader, ticks, 1.02D,
+                -0.22D + pulse * 0.06D, 0x4DFFD0, 0xD6FFF5,
+                0.20F, 1.2F, 15.0F, 79.0F, pulse, RING_SEGMENTS);
+        ArcaneShaderEffectRenderer.drawLatitudeCircleLayer(shader, ticks, 0.82D,
+                0.34D, 0x8CFBFF, 0xFFFFFF,
+                0.17F + pulse * 0.08F, 1.2F, 15.0F, 83.0F, pulse, RING_SEGMENTS);
+        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
-    private void drawHelix(double phase, int color, float alpha) {
-        float[] rgb = RenderHelper.unpackRGB(color);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i <= HELIX_SEGMENTS; i++) {
-            double progress = (double) i / HELIX_SEGMENTS;
-            double angle = phase + progress * TWO_PI * 1.85D;
-            double radius = lerp(BASE_RADIUS, TOP_RADIUS, progress);
-            double height = progress * VORTEX_HEIGHT - 0.08D;
-            float pointAlpha = alpha * (0.20F + 0.80F * (float) Math.sin(Math.PI * progress));
-            buffer.pos(Math.cos(angle) * radius, height, Math.sin(angle) * radius)
-                    .color(rgb[0], rgb[1], rgb[2], pointAlpha)
-                    .endVertex();
+    private void drawSpark(ShaderProgram shader, float ticks, double radius,
+                           int color, float alpha, float seed) {
+        GlStateManager.glLineWidth(1.0F);
+        for (int i = 0; i < 4; i++) {
+            double angle = Math.PI * 0.25D * i;
+            ArcaneShaderEffectRenderer.drawLineLayer(shader, ticks,
+                    -Math.cos(angle) * radius, -Math.sin(angle) * radius, 0.0D,
+                    Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D,
+                    color, 0xFFFFFF, alpha, 1.3F, 18.0F, seed + i, alpha);
         }
-        tessellator.draw();
     }
 }
