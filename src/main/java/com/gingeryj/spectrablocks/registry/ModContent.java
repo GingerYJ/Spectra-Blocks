@@ -9,6 +9,7 @@ import com.gingeryj.spectrablocks.block.BlockBioluminescentSpores;
 import com.gingeryj.spectrablocks.block.BlockChronoAnchor;
 import com.gingeryj.spectrablocks.block.BlockCollapsingStar;
 import com.gingeryj.spectrablocks.block.BlockCosmicBackgroundRadiationField;
+import com.gingeryj.spectrablocks.block.BlockCrystalHarmonicResonator;
 import com.gingeryj.spectrablocks.block.BlockCrystalRefractionField;
 import com.gingeryj.spectrablocks.block.BlockDataStreamMatrix;
 import com.gingeryj.spectrablocks.block.BlockDimensionalGate;
@@ -22,6 +23,7 @@ import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
 import com.gingeryj.spectrablocks.block.BlockGravityWell;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
+import com.gingeryj.spectrablocks.block.BlockLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.block.BlockMagneticFluxCage;
 import com.gingeryj.spectrablocks.block.BlockMicroSingularity;
 import com.gingeryj.spectrablocks.block.BlockMicroStellarSource;
@@ -35,6 +37,7 @@ import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
 import com.gingeryj.spectrablocks.block.BlockPrismaticRainfall;
 import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
 import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
+import com.gingeryj.spectrablocks.block.BlockShadowFlameLantern;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
 import com.gingeryj.spectrablocks.block.BlockSoulVortex;
 import com.gingeryj.spectrablocks.block.BlockSpatialRift;
@@ -55,6 +58,7 @@ import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
 import com.gingeryj.spectrablocks.tile.TileChronoAnchor;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
+import com.gingeryj.spectrablocks.tile.TileCrystalHarmonicResonator;
 import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import com.gingeryj.spectrablocks.tile.TileDataStreamMatrix;
 import com.gingeryj.spectrablocks.tile.TileDimensionalGate;
@@ -68,6 +72,7 @@ import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
+import com.gingeryj.spectrablocks.tile.TileLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.tile.TileMagneticFluxCage;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
@@ -81,6 +86,7 @@ import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
+import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
 import com.gingeryj.spectrablocks.tile.TileSpatialRift;
@@ -151,6 +157,10 @@ public final class ModContent {
     public static final BlockEchoingVoidBell ECHOING_VOID_BELL = new BlockEchoingVoidBell();
     public static final BlockPrismaticRainfall PRISMATIC_RAINFALL = new BlockPrismaticRainfall();
     public static final BlockMagneticFluxCage MAGNETIC_FLUX_CAGE = new BlockMagneticFluxCage();
+    public static final BlockShadowFlameLantern SHADOW_FLAME_LANTERN = new BlockShadowFlameLantern();
+    public static final BlockLunarPhaseOrrery LUNAR_PHASE_ORRERY = new BlockLunarPhaseOrrery();
+    public static final BlockCrystalHarmonicResonator CRYSTAL_HARMONIC_RESONATOR =
+            new BlockCrystalHarmonicResonator();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -203,7 +213,10 @@ public final class ModContent {
                 GRAVITY_WELL,
                 ECHOING_VOID_BELL,
                 PRISMATIC_RAINFALL,
-                MAGNETIC_FLUX_CAGE
+                MAGNETIC_FLUX_CAGE,
+                SHADOW_FLAME_LANTERN,
+                LUNAR_PHASE_ORRERY,
+                CRYSTAL_HARMONIC_RESONATOR
         );
     }
 
@@ -255,6 +268,9 @@ public final class ModContent {
                 itemBlock(ECHOING_VOID_BELL),
                 itemBlock(PRISMATIC_RAINFALL),
                 itemBlock(MAGNETIC_FLUX_CAGE),
+                itemBlock(SHADOW_FLAME_LANTERN),
+                itemBlock(LUNAR_PHASE_ORRERY),
+                itemBlock(CRYSTAL_HARMONIC_RESONATOR),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -305,6 +321,9 @@ public final class ModContent {
         registerTileEntity(TileEchoingVoidBell.class, "echoing_void_bell");
         registerTileEntity(TilePrismaticRainfall.class, "prismatic_rainfall");
         registerTileEntity(TileMagneticFluxCage.class, "magnetic_flux_cage");
+        registerTileEntity(TileShadowFlameLantern.class, "shadow_flame_lantern");
+        registerTileEntity(TileLunarPhaseOrrery.class, "lunar_phase_orrery");
+        registerTileEntity(TileCrystalHarmonicResonator.class, "crystal_harmonic_resonator");
     }
 
     private static ItemBlock itemBlock(Block block) {

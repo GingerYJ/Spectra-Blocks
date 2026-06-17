@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "normal": {
+      "model": "spectrablocks:crystal_harmonic_resonator"
+    }
+  }
+}
