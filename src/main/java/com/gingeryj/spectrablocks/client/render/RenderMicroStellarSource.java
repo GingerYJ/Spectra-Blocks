@@ -14,7 +14,8 @@ import org.lwjgl.opengl.GL11;
 public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicroStellarSource> {
 
     private static final double SHELL_RADIUS = 5.45D;
-    private static final int PARTICLE_COUNT = 180;
+    private static final double OUTER_HALO_RADIUS = 5.88D;
+    private static final int PARTICLE_COUNT = 220;
     private static final int FLARE_COUNT = 48;
     private static final int PROMINENCE_COUNT = 12;
     private static final int PROMINENCE_POINTS_PER_ARC = 10;
@@ -54,6 +55,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
 
         try {
             drawCore(ticks);
+            drawOuterRadiance(ticks);
             drawProminences(ticks);
             drawActiveParticles(ticks);
         } finally {
@@ -78,6 +80,26 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         }
     }
 
+    private void drawOuterRadiance(float ticks) {
+        float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.028F);
+
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
+        GlStateManager.enableCull();
+        GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
+        RenderHelper.drawSphere(SHELL_RADIUS * 1.012D + 0.020D * pulse, 0xDFFFFF, 0.060F + 0.030F * pulse, 28, 28);
+        RenderHelper.drawSphere(OUTER_HALO_RADIUS - 0.26D + 0.070D * pulse, 0x58F6FF, 0.070F + 0.040F * pulse, 30, 30);
+        GlStateManager.cullFace(GlStateManager.CullFace.BACK);
+        GlStateManager.disableCull();
+
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
+    }
+
     private void drawCore(float ticks) {
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.05F);
 
@@ -90,7 +112,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         GlStateManager.rotate(9.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
-        GlStateManager.depthMask(true);
+        GlStateManager.depthMask(false);
         GlStateManager.disableTexture2D();
         drawShaderShell(ticks, pulse);
         GlStateManager.depthMask(false);
@@ -108,10 +130,10 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         try {
             GlStateManager.disableTexture2D();
             program.setUniform1f("uTime", ticks * 0.045F);
-            program.setUniform3f("uBaseColor", 0.10F, 0.88F, 1.0F);
-            program.setUniform1f("uRimIntensity", 1.08F);
-            program.setUniform1f("uPulseAmount", 1.02F + pulse * 0.16F);
-            program.setUniform1f("uNoiseSpeed", 0.74F);
+            program.setUniform3f("uBaseColor", 0.18F, 0.82F, 1.0F);
+            program.setUniform1f("uRimIntensity", 0.92F);
+            program.setUniform1f("uPulseAmount", 0.92F + pulse * 0.12F);
+            program.setUniform1f("uNoiseSpeed", 0.62F);
             drawShaderSphere(SHELL_RADIUS + 0.035D * pulse, SHADER_SPHERE_LAT_SEGS, SHADER_SPHERE_LON_SEGS);
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("stellar_source render failed: " + ex.getMessage());
@@ -211,21 +233,22 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
 
         int pointCount = 0;
         for (int i = 0; i < PARTICLE_COUNT; i++) {
-            double yaw = i * 2.399963229728653D + ticks * 0.004D + Math.sin(i * 1.91D) * 0.18D;
-            double yUnit = -0.94D + (i % 53) * (1.88D / 52.0D);
-            double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - yUnit * yUnit));
-            double wave = 0.5D + 0.5D * Math.sin(ticks * (0.045D + (i % 7) * 0.004D) + i * 1.713D);
-            double burst = Math.max(0.0D, Math.sin(ticks * (0.038D + (i % 5) * 0.005D) + i * 2.031D));
-            burst = burst * burst * burst;
-            double lift = wave * 0.030D + burst * (0.055D + (i % 4) * 0.018D);
-            double radius = SHELL_RADIUS * (1.006D + lift);
-            double radialWobble = Math.sin(ticks * 0.085D + i * 0.73D) * (0.010D + burst * 0.018D);
-            double particleX = Math.cos(yaw + radialWobble) * horizontal * radius;
-            double particleY = yUnit * radius + Math.sin(ticks * 0.070D + i) * (0.025D + burst * 0.050D);
-            double particleZ = Math.sin(yaw + radialWobble) * horizontal * radius;
-            double size = 0.020D + wave * 0.020D + burst * 0.070D;
-            float alpha = (float) (0.10D + wave * 0.16D + burst * 0.52D);
-            int color = burst > 0.62D ? 0xF4FFFF : (i % 4 == 0 ? 0xAFFFFF : (i % 3 == 0 ? 0x5AF2FF : 0x1DD7FF));
+            double baseYaw = i * 2.399963229728653D;
+            double y = -0.96D + (i % 45) * (1.92D / 44.0D);
+            double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));
+            double flutter = 0.5D + 0.5D * Math.sin(ticks * (0.090D + (i % 9) * 0.011D) + i * 1.731D);
+            double surge = Math.max(0.0D, Math.sin(ticks * (0.052D + (i % 6) * 0.006D) + i * 0.91D));
+            surge = surge * surge * surge;
+            double wobbleA = Math.sin(ticks * 0.115D + i * 2.17D) * 0.070D;
+            double wobbleB = Math.cos(ticks * 0.093D + i * 1.37D) * 0.055D;
+            double radius = SHELL_RADIUS * (1.004D + flutter * 0.026D + surge * 0.072D) + wobbleB;
+            double yaw = baseYaw + ticks * (0.015D + (i % 7) * 0.002D) + wobbleA;
+            double particleX = Math.cos(yaw) * horizontal * radius;
+            double particleY = y * radius + Math.sin(ticks * 0.120D + i) * (0.070D + surge * 0.120D);
+            double particleZ = Math.sin(yaw) * horizontal * radius;
+            double size = 0.026D + flutter * 0.036D + surge * 0.060D;
+            float alpha = (float) (0.14D + flutter * 0.20D + surge * 0.32D);
+            int color = surge > 0.70D ? 0xF4FFFF : (i % 5 == 0 ? 0x9CFFFF : (i % 3 == 0 ? 0x5BEAFF : 0x18CFFF));
 
             PARTICLES[pointCount++].set(particleX, particleY, particleZ, size, color, alpha);
         }
@@ -240,13 +263,13 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             double baseYaw = i * 2.399963229728653D + ticks * (0.030D + (i % 5) * 0.004D);
             double y = -0.88D + (i % 12) * (1.76D / 11.0D);
             double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - y * y));
-            double radius = SHELL_RADIUS * (1.012D + pulse * 0.145D);
+            double radius = SHELL_RADIUS * (1.045D + pulse * 0.090D);
             double particleX = Math.cos(baseYaw) * horizontal * radius;
             double particleY = y * radius + Math.sin(ticks * 0.160D + i * 0.7D) * 0.13D;
             double particleZ = Math.sin(baseYaw) * horizontal * radius;
-            double size = 0.046D + pulse * 0.105D;
-            float alpha = (float) (0.20D + pulse * 0.58D);
-            int color = i % 3 == 0 ? 0xFFFFFF : 0x7BFFFF;
+            double size = 0.060D + pulse * 0.080D;
+            float alpha = (float) (0.22D + pulse * 0.46D);
+            int color = i % 3 == 0 ? 0xDFFFFF : 0x63EFFF;
 
             PARTICLES[pointCount++].set(particleX, particleY, particleZ, size, color, alpha);
         }

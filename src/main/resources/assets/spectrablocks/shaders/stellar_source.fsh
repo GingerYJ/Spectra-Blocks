@@ -54,47 +54,42 @@ void main() {
     vec3 local = normalize(vLocal);
     vec3 viewDir = normalize(-vWorld);
     float facing = max(dot(normal, viewDir), 0.0);
-    float rim = pow(1.0 - facing, 1.75) * uRimIntensity;
+    float rim = pow(1.0 - facing, 2.15) * uRimIntensity;
 
     float t = uTime * uNoiseSpeed;
     vec3 flowA = local + vec3(
-        sin(local.y * 7.8 + t * 0.85),
-        cos(local.z * 6.4 - t * 0.64),
-        sin(local.x * 7.2 + t * 0.58)
-    ) * 0.095;
-    vec3 flowB = local + vec3(t * 0.042, -t * 0.031, t * 0.036);
-    vec3 flowC = normalize(mix(flowA, flowB, 0.38));
+        sin(local.y * 6.0 + t * 0.55),
+        cos(local.z * 5.2 - t * 0.42),
+        sin(local.x * 6.8 + t * 0.36)
+    ) * 0.055;
+    vec3 flowB = local + vec3(t * 0.030, -t * 0.021, t * 0.026);
+    vec3 flowC = normalize(mix(flowA, flowB, 0.45));
 
-    float cells = seamlessFbm(flowC + vec3(t * 0.026, -t * 0.017, t * 0.020), 3.4);
-    float midCells = seamlessFbm(flowC + cells * 0.48 + vec3(-t * 0.030, t * 0.021, -t * 0.019), 7.8);
-    float fineCells = seamlessFbm(flowC + midCells * 0.58 + vec3(t * 0.018, t * 0.025, -t * 0.015), 17.5);
-    float filamentNoise = seamlessFbm(flowC + cells * 0.76 + fineCells * 0.22 + vec3(t * 0.020, -t * 0.016, t * 0.013), 23.0);
-    float hotNoise = seamlessFbm(flowC + fineCells * 0.62 + vec3(-t * 0.040, t * 0.035, t * 0.028), 9.6);
-    float veinNoise = seamlessFbm(flowC - cells * 0.42 + vec3(t * 0.023, -t * 0.026, t * 0.016), 15.0);
-    float flowBandA = 0.5 + 0.5 * sin((local.y + cells * 0.34 + midCells * 0.18) * 24.0 + t * 2.45);
-    float flowBandB = 0.5 + 0.5 * sin((local.x * 0.65 + local.z * 0.78 + midCells * 0.42) * 20.0 - t * 2.05);
-    float filaments = smoothstep(0.36, 0.76, filamentNoise * 0.58 + flowBandA * 0.36 + flowBandB * 0.28);
-    float hotSpots = smoothstep(0.60, 0.90, hotNoise + filaments * 0.24);
-    float darkVeins = smoothstep(0.60, 0.88, veinNoise) * (1.0 - hotSpots * 0.55);
-    float bands = clamp(flowBandA * 0.62 + flowBandB * 0.38, 0.0, 1.0);
+    float cells = seamlessFbm(flowC + vec3(t * 0.018, -t * 0.012, t * 0.015), 4.2);
+    float fineCells = seamlessFbm(flowC + cells * 0.32 + vec3(-t * 0.020, t * 0.016, -t * 0.014), 10.5);
+    float filamentNoise = seamlessFbm(flowC + cells * 0.52 + vec3(t * 0.012, t * 0.018, -t * 0.011), 18.0);
+    float hotNoise = seamlessFbm(flowC + fineCells * 0.45 + vec3(-t * 0.026, t * 0.024, t * 0.018), 7.2);
+    float veinNoise = seamlessFbm(flowC - cells * 0.26 + vec3(t * 0.015, -t * 0.018, t * 0.010), 15.5);
+    float filaments = smoothstep(0.48, 0.82, filamentNoise);
+    float hotSpots = smoothstep(0.72, 0.95, hotNoise);
+    float darkVeins = smoothstep(0.56, 0.86, veinNoise);
+    float latitudeFlow = sin((local.y + cells * 0.18) * 18.0 + t * 1.55);
+    float bands = 0.5 + 0.5 * latitudeFlow;
 
     vec3 cyan = uBaseColor;
-    vec3 deepCyan = vec3(0.00, 0.32, 0.46);
-    vec3 brightCyan = vec3(0.10, 0.96, 1.00);
-    vec3 whiteHot = vec3(0.96, 1.00, 0.96);
-    vec3 warmCore = vec3(1.00, 0.92, 0.55);
-    vec3 plasma = mix(deepCyan, brightCyan, smoothstep(0.18, 0.76, cells + midCells * 0.32));
-    plasma = mix(plasma, whiteHot, filaments * (0.52 + bands * 0.34));
-    plasma = mix(plasma, warmCore, hotSpots * 0.38);
-    plasma = mix(plasma, vec3(1.0, 1.0, 1.0), hotSpots * 0.42);
-    plasma *= 1.0 - darkVeins * 0.18;
+    vec3 deepCyan = vec3(0.015, 0.48, 0.64);
+    vec3 whiteHot = vec3(1.0, 0.98, 0.82);
+    vec3 flare = vec3(1.0, 0.67, 0.20);
+    vec3 plasma = mix(deepCyan, cyan, smoothstep(0.20, 0.82, cells));
+    plasma = mix(plasma, whiteHot, smoothstep(0.48, 0.96, fineCells) * 0.72);
+    plasma = mix(plasma, flare, filaments * (0.16 + bands * 0.34));
+    plasma = mix(plasma, vec3(1.0, 1.0, 0.94), hotSpots * 0.78);
+    plasma *= 1.0 - darkVeins * 0.10 * (1.0 - hotSpots);
 
-    float pulse = 0.92 + 0.08 * sin(uTime * 1.90 + cells * 1.4);
-    float limb = 0.84 + pow(facing, 0.58) * 0.22;
-    float corona = rim * (0.62 + filaments * 0.42 + hotSpots * 0.25);
-    float surface = 0.74 + cells * 0.30 + midCells * 0.28 + fineCells * 0.22
-            + filaments * 0.90 + hotSpots * 1.08 - darkVeins * 0.18;
-    float energy = (surface + corona)
+    float pulse = 0.94 + 0.06 * sin(uTime * 1.65);
+    float limb = 0.78 + pow(facing, 0.45) * 0.30;
+    float corona = rim * (0.52 + filaments * 0.35 + hotSpots * 0.28);
+    float energy = (0.58 + cells * 0.42 + fineCells * 0.36 + filaments * 0.58 + hotSpots * 0.78 + corona)
             * uPulseAmount * pulse * limb;
     float alpha = 1.0;
 
