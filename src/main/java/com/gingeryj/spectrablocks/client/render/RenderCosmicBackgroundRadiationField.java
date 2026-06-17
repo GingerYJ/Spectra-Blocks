@@ -1,7 +1,10 @@
 package com.gingeryj.spectrablocks.client.render;
 
+import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
 import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
 
 public class RenderCosmicBackgroundRadiationField
         extends RenderCelestialEffectBase<TileCosmicBackgroundRadiationField> {
@@ -12,36 +15,56 @@ public class RenderCosmicBackgroundRadiationField
     private static final int CONTOUR_COUNT = 13;
     private static final double GOLDEN_ANGLE = 2.399963229728653D;
     private static final float DRIFT_SPEED = 0.006F;
+    private static final float EFFECT_BACKGROUND_RADIATION = 3.0F;
 
     @Override
     protected void renderCelestialEffect(TileCosmicBackgroundRadiationField te, float ticks) {
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(ticks * DRIFT_SPEED, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(11.0F + ticks * 0.002F, 1.0F, 0.0F, 0.25F);
-        drawFieldShell(ticks);
-        drawContours(ticks);
-        drawNoise(ticks);
-        GlStateManager.popMatrix();
+        ShaderProgram shader = ShaderManager.getProgram("celestial_effect");
+        if (shader == null) {
+            return;
+        }
+
+        try {
+            GlStateManager.pushMatrix();
+            try {
+                GlStateManager.rotate(ticks * DRIFT_SPEED, 0.0F, 1.0F, 0.0F);
+                GlStateManager.rotate(11.0F + ticks * 0.002F, 1.0F, 0.0F, 0.25F);
+                drawFieldShell(shader, ticks);
+                drawContours(shader, ticks);
+                drawNoise(shader, ticks);
+            } finally {
+                GlStateManager.popMatrix();
+            }
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("cosmic background radiation field render failed: " + ex.getMessage());
+        } finally {
+            shader.end();
+            useAlphaBlend();
+            GL11.glLineWidth(1.0F);
+        }
     }
 
-    private void drawFieldShell(float ticks) {
+    private void drawFieldShell(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.008D);
+        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
 
         useAlphaBlend();
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        RenderHelper.drawSphere(FIELD_RADIUS, 0xC9DEFF, 0.050F + pulse * 0.018F,
-                SHELL_SEGMENTS, SHELL_SEGMENTS);
-        GlStateManager.cullFace(GlStateManager.CullFace.BACK);
-        GlStateManager.disableCull();
+        RenderMiniatureGalaxy.drawShaderSphere(shader, FIELD_RADIUS, ticks,
+                EFFECT_BACKGROUND_RADIATION, 0.0F, 0xC9DEFF, 0xFFD6AC,
+                0.050F + pulse * 0.018F, 0.86F, 0.0F, SHELL_SEGMENTS);
+        restoreCullState(cullWasEnabled, previousCullFace);
 
         useAdditiveBlend();
-        RenderHelper.drawWireframeSphere(FIELD_RADIUS * 1.004D, 0xEAF4FF,
-                0.025F + pulse * 0.014F, 10, 18);
+        RenderMiniatureGalaxy.drawShaderSphere(shader, FIELD_RADIUS * 1.004D, ticks,
+                EFFECT_BACKGROUND_RADIATION, 1.0F, 0xEAF4FF, 0xBFD8FF,
+                0.025F + pulse * 0.014F, 0.76F, 0.31F, 18);
         useAlphaBlend();
     }
 
-    private void drawContours(float ticks) {
+    private void drawContours(ShaderProgram shader, float ticks) {
         useAdditiveBlend();
         for (int i = 0; i < CONTOUR_COUNT; i++) {
             double band = -0.82D + i * (1.64D / (CONTOUR_COUNT - 1));
@@ -50,9 +73,9 @@ public class RenderCosmicBackgroundRadiationField
             float alpha = 0.045F + 0.026F * wave(ticks * 0.010D + i * 0.61D);
 
             GlStateManager.glLineWidth(i % 4 == 0 ? 2.0F : 1.0F);
-            drawLatitudeCircle(FIELD_RADIUS * (0.990D + (i % 2) * 0.004D), y,
-                    color, alpha, 160);
-            RenderHelper.resetLineWidth();
+            RenderMiniatureGalaxy.drawShaderLatitudeCircle(shader, FIELD_RADIUS * (0.990D + (i % 2) * 0.004D), y,
+                    ticks, EFFECT_BACKGROUND_RADIATION, 3.0F, color, 0xFFFFFF, alpha,
+                    0.92F, i * 0.07F, 160);
         }
 
         for (int i = 0; i < 8; i++) {
@@ -61,15 +84,15 @@ public class RenderCosmicBackgroundRadiationField
             int color = i % 2 == 0 ? 0xF3E9FF : 0xBEE9FF;
 
             GlStateManager.glLineWidth(1.2F);
-            drawSphericalArc(FIELD_RADIUS * 1.006D, startYaw, Math.PI * 1.18D,
-                    basePitch, 0.050D, ticks * 0.006D + i,
-                    color, 0.060F, 64);
-            RenderHelper.resetLineWidth();
+            RenderMiniatureGalaxy.drawShaderArc(shader, FIELD_RADIUS * 1.006D, startYaw, Math.PI * 1.18D,
+                    basePitch, 0.050D, ticks * 0.006D + i, ticks, EFFECT_BACKGROUND_RADIATION,
+                    4.0F, color, 0xFFD6AC, 0.060F, 1.06F, 0.35F + i * 0.09F, 64);
         }
+        GL11.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
-    private void drawNoise(float ticks) {
+    private void drawNoise(ShaderProgram shader, float ticks) {
         useAdditiveBlend();
         for (int i = 0; i < NOISE_POINT_COUNT; i++) {
             double yaw = i * GOLDEN_ANGLE + ticks * (0.0009D + (i % 7) * 0.00008D);
@@ -92,8 +115,23 @@ public class RenderCosmicBackgroundRadiationField
 
             float alpha = 0.055F + 0.035F * wave(ticks * 0.011D + i * 0.43D);
             double size = 0.010D + (i % 4) * 0.003D;
-            drawSphereAt(x, y, z, size, color, alpha, 5, 5);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(x, y, z);
+            RenderMiniatureGalaxy.drawShaderSphere(shader, size, ticks, EFFECT_BACKGROUND_RADIATION, 6.0F,
+                    color, 0xFFFFFF, alpha, 1.18F, i * 0.053F, 6);
+            GlStateManager.popMatrix();
         }
         useAlphaBlend();
+    }
+
+    private static void restoreCullState(boolean cullWasEnabled, int previousCullFace) {
+        GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
+                ? GlStateManager.CullFace.FRONT
+                : GlStateManager.CullFace.BACK);
+        if (cullWasEnabled) {
+            GlStateManager.enableCull();
+        } else {
+            GlStateManager.disableCull();
+        }
     }
 }
