@@ -1,5 +1,7 @@
 package com.gingeryj.spectrablocks.client.render;
 
+import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
+import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.tile.TileCrystalRefractionField;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -22,22 +24,37 @@ public class RenderCrystalRefractionField extends RenderCelestialEffectBase<Tile
 
     @Override
     protected void renderCelestialEffect(TileCrystalRefractionField te, float ticks) {
-        drawCore(ticks);
-        drawPlanes(ticks);
-        drawFacetEdges(ticks);
-        drawCaustics(ticks);
+        ShaderProgram shader = ShaderManager.getProgram("tech_effect");
+        if (shader == null || !shader.begin()) {
+            return;
+        }
+
+        try {
+            drawCore(shader, ticks);
+            drawPlanes(shader, ticks);
+            drawFacetEdges(shader, ticks);
+            drawCaustics(shader, ticks);
+        } catch (RuntimeException ex) {
+            ShaderManager.disableShaders("crystal refraction field shader render failed: " + ex.getMessage());
+        } finally {
+            shader.end();
+        }
     }
 
-    private void drawCore(float ticks) {
+    private void drawCore(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.044D);
 
         useAdditiveBlend();
-        RenderHelper.drawSphere(0.54D + pulse * 0.04D, 0xFFFFFF, 0.24F, 18, 18);
-        RenderHelper.drawSphere(0.96D + pulse * 0.07D, 0xBDFBFF, 0.13F, 18, 18);
+        setTechUniforms(shader, ticks, 4.0F, 0.0F, 0xFFFFFF, 0xBDFBFF, 0xFFE2F8,
+                0.24F, 1.20F, 0.54F);
+        drawShaderSphere(0.54D + pulse * 0.04D, 20, 20);
+        setTechUniforms(shader, ticks, 4.0F, 1.0F, 0xBDFBFF, 0xC2B9FF, 0xFFFFFF,
+                0.13F, 0.95F, 0.96F);
+        drawShaderSphere(0.96D + pulse * 0.07D, 20, 20);
         useAlphaBlend();
     }
 
-    private void drawPlanes(float ticks) {
+    private void drawPlanes(ShaderProgram shader, float ticks) {
         useAlphaBlend();
         for (int i = 0; i < PLANE_COUNT; i++) {
             double angle = TWO_PI * i / PLANE_COUNT + ticks * PLANE_ROTATION_SPEED * (i % 2 == 0 ? 1.0D : -0.65D);
@@ -48,15 +65,18 @@ public class RenderCrystalRefractionField extends RenderCelestialEffectBase<Tile
             int color = PLANE_COLORS[i % PLANE_COLORS.length];
             float alpha = 0.090F + 0.052F * wave(ticks * 0.036D + i * 0.61D);
 
+            setTechUniforms(shader, ticks, 4.0F, 2.0F + i * 0.08F, color,
+                    PLANE_COLORS[(i + 1) % PLANE_COLORS.length], 0xFFFFFF,
+                    alpha, 1.14F, (float) farRadius);
             GlStateManager.pushMatrix();
             GlStateManager.rotate((float) Math.toDegrees(angle), 0.0F, 1.0F, 0.0F);
             GlStateManager.rotate((float) Math.toDegrees(tilt), 0.0F, 0.0F, 1.0F);
-            drawFacetPlane(radius, farRadius, PLANE_HEIGHT, yShift, 0.34D + (i % 3) * 0.08D, color, alpha);
+            drawFacetPlane(radius, farRadius, PLANE_HEIGHT, yShift, 0.34D + (i % 3) * 0.08D);
             GlStateManager.popMatrix();
         }
     }
 
-    private void drawFacetEdges(float ticks) {
+    private void drawFacetEdges(ShaderProgram shader, float ticks) {
         useAdditiveBlend();
         for (int i = 0; i < EDGE_COUNT; i++) {
             double angle = TWO_PI * i / EDGE_COUNT - ticks * 0.012D;
@@ -66,20 +86,25 @@ public class RenderCrystalRefractionField extends RenderCelestialEffectBase<Tile
             int color = PLANE_COLORS[(i + 1) % PLANE_COLORS.length];
             float alpha = 0.18F + 0.08F * wave(ticks * 0.050D + i);
 
+            setTechUniforms(shader, ticks, 4.0F, 3.0F, color, 0xFFFFFF, 0xD8FFFF,
+                    alpha, 1.35F, (float) radius);
             GlStateManager.glLineWidth(2.1F);
-            RenderHelper.drawLine(Math.cos(angle) * radius, y0, Math.sin(angle) * radius,
+            drawShaderLine(Math.cos(angle) * radius, y0, Math.sin(angle) * radius,
                     Math.cos(angle + 0.42D) * (radius * 0.66D), y1,
-                    Math.sin(angle + 0.42D) * (radius * 0.66D), color, alpha);
+                    Math.sin(angle + 0.42D) * (radius * 0.66D));
+
+            setTechUniforms(shader, ticks, 4.0F, 3.0F, 0xFFFFFF, color, 0xD8FFFF,
+                    alpha * 0.52F, 1.45F, (float) radius);
             GlStateManager.glLineWidth(1.0F);
-            RenderHelper.drawLine(Math.cos(angle) * radius, y0, Math.sin(angle) * radius,
+            drawShaderLine(Math.cos(angle) * radius, y0, Math.sin(angle) * radius,
                     Math.cos(angle + 0.42D) * (radius * 0.66D), y1,
-                    Math.sin(angle + 0.42D) * (radius * 0.66D), 0xFFFFFF, alpha * 0.52F);
-            RenderHelper.resetLineWidth();
+                    Math.sin(angle + 0.42D) * (radius * 0.66D));
         }
+        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
-    private void drawCaustics(float ticks) {
+    private void drawCaustics(ShaderProgram shader, float ticks) {
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
@@ -87,35 +112,108 @@ public class RenderCrystalRefractionField extends RenderCelestialEffectBase<Tile
         for (int i = 0; i < 4; i++) {
             double radius = 1.25D + i * 0.46D;
             float alpha = 0.075F + 0.035F * wave(ticks * 0.042D + i);
+            setTechUniforms(shader, ticks, 4.0F, 4.0F + i * 0.1F,
+                    PLANE_COLORS[i % PLANE_COLORS.length], 0xFFFFFF, 0x9EF5FF,
+                    alpha, 1.12F, (float) radius);
             GlStateManager.glLineWidth(1.0F + i * 0.25F);
-            RenderHelper.drawCircle(radius, PLANE_COLORS[i % PLANE_COLORS.length], alpha, 80);
+            drawShaderCircle(radius, 80);
         }
-        RenderHelper.resetLineWidth();
+        GlStateManager.glLineWidth(1.0F);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
     private static void drawFacetPlane(double innerRadius, double outerRadius, double height,
-                                       double yShift, double halfWidth, int color, float alpha) {
-        if (alpha <= 0.01F) {
-            return;
-        }
-
-        float[] rgb = RenderHelper.unpackRGB(color);
+                                       double yShift, double halfWidth) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-        addVertex(buffer, innerRadius, yShift - height * 0.30D, -halfWidth, rgb, alpha * 0.48F);
-        addVertex(buffer, outerRadius, yShift + height * 0.22D, 0.0D, rgb, alpha);
-        addVertex(buffer, innerRadius, yShift + height * 0.48D, halfWidth, rgb, alpha * 0.56F);
-        addVertex(buffer, -innerRadius * 0.26D, yShift + height * 0.18D, halfWidth * 0.52D, rgb, alpha * 0.32F);
-        addVertex(buffer, innerRadius, yShift - height * 0.30D, -halfWidth, rgb, alpha * 0.45F);
-        addVertex(buffer, innerRadius, yShift + height * 0.48D, halfWidth, rgb, alpha * 0.52F);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        addPosition(buffer, innerRadius, yShift - height * 0.30D, -halfWidth, 0.0D, 0.0D);
+        addPosition(buffer, outerRadius, yShift + height * 0.22D, 0.0D, 1.0D, 0.5D);
+        addPosition(buffer, innerRadius, yShift + height * 0.48D, halfWidth, 0.0D, 1.0D);
+        addPosition(buffer, -innerRadius * 0.26D, yShift + height * 0.18D, halfWidth * 0.52D, 0.35D, 0.85D);
+        addPosition(buffer, innerRadius, yShift - height * 0.30D, -halfWidth, 0.0D, 0.0D);
+        addPosition(buffer, innerRadius, yShift + height * 0.48D, halfWidth, 0.0D, 1.0D);
         tessellator.draw();
     }
 
-    private static void addVertex(BufferBuilder buffer, double x, double y, double z,
-                                  float[] rgb, float alpha) {
-        buffer.pos(x, y, z).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+    private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
+        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
+        tessellator.draw();
+    }
+
+    private static void drawShaderCircle(double radius, int segments) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i < segments; i++) {
+            double progress = i / (double) segments;
+            double angle = TWO_PI * progress;
+            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
+        }
+        tessellator.draw();
+    }
+
+    private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int lat = 0; lat < latSegs; lat++) {
+            double theta0 = Math.PI * lat / latSegs;
+            double theta1 = Math.PI * (lat + 1) / latSegs;
+            for (int lon = 0; lon < lonSegs; lon++) {
+                double phi0 = TWO_PI * lon / lonSegs;
+                double phi1 = TWO_PI * (lon + 1) / lonSegs;
+                addSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addSphereVertex(buffer, radius, theta1, phi0, lon / (double) lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta0, phi0, lon / (double) lonSegs, lat / (double) latSegs);
+                addSphereVertex(buffer, radius, theta1, phi1, (lon + 1.0D) / lonSegs, (lat + 1.0D) / latSegs);
+                addSphereVertex(buffer, radius, theta0, phi1, (lon + 1.0D) / lonSegs, lat / (double) latSegs);
+            }
+        }
+        tessellator.draw();
+    }
+
+    private static void addSphereVertex(BufferBuilder buffer, double radius, double theta, double phi, double u, double v) {
+        float normalX = (float) (Math.sin(theta) * Math.cos(phi));
+        float normalY = (float) Math.cos(theta);
+        float normalZ = (float) (Math.sin(theta) * Math.sin(phi));
+        buffer.pos(normalX * radius, normalY * radius, normalZ * radius)
+                .tex(u, v)
+                .normal(normalX, normalY, normalZ)
+                .endVertex();
+    }
+
+    private static void addPosition(BufferBuilder buffer, double x, double y, double z, double u, double v) {
+        buffer.pos(x, y, z)
+                .tex(u, v)
+                .normal(0.0F, 1.0F, 0.0F)
+                .endVertex();
+    }
+
+    private static void setTechUniforms(ShaderProgram shader, float ticks, float effect, float layer,
+                                        int primary, int secondary, int tertiary,
+                                        float alpha, float intensity, float scale) {
+        shader.setUniform1f("uTime", ticks * 0.040F);
+        shader.setUniform1f("uEffect", effect);
+        shader.setUniform1f("uLayer", layer);
+        shader.setUniform1f("uAlpha", alpha);
+        shader.setUniform1f("uIntensity", intensity);
+        shader.setUniform1f("uScale", scale);
+        setColor(shader, "uPrimaryColor", primary);
+        setColor(shader, "uSecondaryColor", secondary);
+        setColor(shader, "uTertiaryColor", tertiary);
+    }
+
+    private static void setColor(ShaderProgram shader, String uniform, int color) {
+        shader.setUniform3f(uniform,
+                ((color >> 16) & 255) / 255.0F,
+                ((color >> 8) & 255) / 255.0F,
+                (color & 255) / 255.0F);
     }
 }
