@@ -4,9 +4,11 @@ import com.gingeryj.spectrablocks.client.render.shader.ShaderManager;
 import com.gingeryj.spectrablocks.client.render.shader.ShaderProgram;
 import com.gingeryj.spectrablocks.config.ModConfig;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import org.lwjgl.opengl.GL11;
@@ -19,12 +21,21 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
     private static final int FLARE_COUNT = 48;
     private static final int PROMINENCE_COUNT = 12;
     private static final int PROMINENCE_POINTS_PER_ARC = 10;
-    private static final RenderHelper.BillboardPoint[] PARTICLES =
-            RenderHelper.createBillboardPoints(PARTICLE_COUNT + FLARE_COUNT);
-    private static final RenderHelper.BillboardPoint[] PROMINENCE_POINTS =
-            RenderHelper.createBillboardPoints(PROMINENCE_COUNT * PROMINENCE_POINTS_PER_ARC);
+    private static final int BILLBOARD_SEGMENTS = 8;
+    private static final double[] BILLBOARD_COS = new double[BILLBOARD_SEGMENTS];
+    private static final double[] BILLBOARD_SIN = new double[BILLBOARD_SEGMENTS];
+    private static final StellarPoint[] PARTICLES = createPoints(PARTICLE_COUNT + FLARE_COUNT);
+    private static final StellarPoint[] PROMINENCE_POINTS = createPoints(PROMINENCE_COUNT * PROMINENCE_POINTS_PER_ARC);
     private static final int SHADER_SPHERE_LAT_SEGS = 56;
     private static final int SHADER_SPHERE_LON_SEGS = 56;
+
+    static {
+        for (int i = 0; i < BILLBOARD_SEGMENTS; i++) {
+            double angle = Math.PI * 2.0D * i / BILLBOARD_SEGMENTS;
+            BILLBOARD_COS[i] = Math.cos(angle);
+            BILLBOARD_SIN[i] = Math.sin(angle);
+        }
+    }
 
     @Override
     public void render(TileMicroStellarSource te, double x, double y, double z,
@@ -75,13 +86,17 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
                     GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                     GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
             );
-            RenderHelper.resetLineWidth();
+            GlStateManager.glLineWidth(1.0F);
             GlStateManager.popMatrix();
         }
     }
 
     private void drawOuterRadiance(float ticks) {
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.028F);
+        ShaderProgram shader = ShaderManager.getProgram("natural_effect");
+        if (shader == null) {
+            return;
+        }
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
@@ -89,9 +104,15 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         );
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        RenderHelper.drawSphere(SHELL_RADIUS * 1.018D + 0.030D * pulse, 0xFFFFFF, 0.085F + 0.035F * pulse, 30, 30);
-        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.120D * pulse, 0xDDFEFF, 0.145F + 0.055F * pulse, 34, 34);
-        RenderHelper.drawSphere(OUTER_HALO_RADIUS + 0.38D + 0.160D * pulse, 0x62EFFF, 0.055F + 0.035F * pulse, 28, 28);
+        RenderNaturalShaderHelper.drawNaturalSphere(shader, SHELL_RADIUS * 1.018D + 0.030D * pulse,
+                RenderNaturalShaderHelper.MODE_SOLAR, 1.6F, 0xFFFFFF, 0xBFFFFF, 0xF7FFFF,
+                0.085F + 0.035F * pulse, pulse, 0.62F, ticks * 0.040F, 211.0F, 30, 30);
+        RenderNaturalShaderHelper.drawNaturalSphere(shader, OUTER_HALO_RADIUS + 0.120D * pulse,
+                RenderNaturalShaderHelper.MODE_SOLAR, 2.2F, 0xDDFEFF, 0x62EFFF, 0xFFFFFF,
+                0.145F + 0.055F * pulse, pulse, 0.78F, ticks * 0.036F, 227.0F, 34, 34);
+        RenderNaturalShaderHelper.drawNaturalSphere(shader, OUTER_HALO_RADIUS + 0.38D + 0.160D * pulse,
+                RenderNaturalShaderHelper.MODE_SOLAR, 2.8F, 0x62EFFF, 0x2DBDFF, 0xF7FFFF,
+                0.055F + 0.035F * pulse, pulse, 0.54F, ticks * 0.032F, 241.0F, 28, 28);
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         GlStateManager.disableCull();
 
@@ -218,7 +239,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             }
         }
 
-        RenderHelper.drawBillboardGlowPoints(PROMINENCE_POINTS, pointCount);
+        drawShaderBillboardGlowPoints(ShaderManager.getProgram("basic"), PROMINENCE_POINTS, pointCount);
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
@@ -275,12 +296,106 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             PARTICLES[pointCount++].set(particleX, particleY, particleZ, size, color, alpha);
         }
 
-        RenderHelper.drawBillboardGlowPoints(PARTICLES, pointCount);
+        drawShaderBillboardGlowPoints(ShaderManager.getProgram("basic"), PARTICLES, pointCount);
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                 GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
         );
-        RenderHelper.resetLineWidth();
+        GlStateManager.glLineWidth(1.0F);
+    }
+
+    private static StellarPoint[] createPoints(int count) {
+        StellarPoint[] points = new StellarPoint[count];
+        for (int i = 0; i < count; i++) {
+            points[i] = new StellarPoint();
+        }
+        return points;
+    }
+
+    private static void drawShaderBillboardGlowPoints(ShaderProgram shader, StellarPoint[] points, int count) {
+        if (shader == null || count <= 0 || !shader.begin()) {
+            return;
+        }
+
+        try {
+            shader.setUniform1f("alpha", 1.0F);
+            shader.setUniform4f("tint", 1.0F, 1.0F, 1.0F, 1.0F);
+
+            RenderManager renderManager = Minecraft.getMinecraft().getRenderManager();
+            double yaw = Math.toRadians(renderManager.playerViewY);
+            double pitch = Math.toRadians(renderManager.playerViewX);
+            if (Minecraft.getMinecraft().gameSettings.thirdPersonView == 2) {
+                pitch = -pitch;
+            }
+
+            double rightX = Math.cos(yaw);
+            double rightZ = -Math.sin(yaw);
+            double upX = Math.sin(yaw) * Math.sin(pitch);
+            double upY = Math.cos(pitch);
+            double upZ = Math.cos(yaw) * Math.sin(pitch);
+
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+            for (int i = 0; i < count; i++) {
+                StellarPoint point = points[i];
+                if (point.alpha <= 0.01F || point.size <= 0.0D) {
+                    continue;
+                }
+                addBillboardGlowPoint(buffer, point, rightX, rightZ, upX, upY, upZ);
+            }
+            tessellator.draw();
+        } finally {
+            shader.end();
+        }
+    }
+
+    private static void addBillboardGlowPoint(BufferBuilder buffer, StellarPoint point,
+                                              double rightX, double rightZ,
+                                              double upX, double upY, double upZ) {
+        float red = ((point.color >> 16) & 0xFF) / 255.0F;
+        float green = ((point.color >> 8) & 0xFF) / 255.0F;
+        float blue = (point.color & 0xFF) / 255.0F;
+        double size = point.size;
+
+        for (int i = 0; i < BILLBOARD_SEGMENTS; i++) {
+            int next = (i + 1) % BILLBOARD_SEGMENTS;
+            addGlowTriangle(buffer, point,
+                    point.x + (rightX * BILLBOARD_COS[i] + upX * BILLBOARD_SIN[i]) * size,
+                    point.y + upY * BILLBOARD_SIN[i] * size,
+                    point.z + (rightZ * BILLBOARD_COS[i] + upZ * BILLBOARD_SIN[i]) * size,
+                    point.x + (rightX * BILLBOARD_COS[next] + upX * BILLBOARD_SIN[next]) * size,
+                    point.y + upY * BILLBOARD_SIN[next] * size,
+                    point.z + (rightZ * BILLBOARD_COS[next] + upZ * BILLBOARD_SIN[next]) * size,
+                    red, green, blue);
+        }
+    }
+
+    private static void addGlowTriangle(BufferBuilder buffer, StellarPoint point,
+                                        double ax, double ay, double az,
+                                        double bx, double by, double bz,
+                                        float red, float green, float blue) {
+        buffer.pos(point.x, point.y, point.z).color(red, green, blue, point.alpha).endVertex();
+        buffer.pos(ax, ay, az).color(red, green, blue, 0.0F).endVertex();
+        buffer.pos(bx, by, bz).color(red, green, blue, 0.0F).endVertex();
+    }
+
+    private static final class StellarPoint {
+        private double x;
+        private double y;
+        private double z;
+        private double size;
+        private int color;
+        private float alpha;
+
+        private void set(double x, double y, double z, double size, int color, float alpha) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.size = size;
+            this.color = color;
+            this.alpha = alpha;
+        }
     }
 }
