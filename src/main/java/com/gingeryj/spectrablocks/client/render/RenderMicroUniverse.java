@@ -13,22 +13,24 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     private static final double SHELL_RADIUS = 5.45D;
     private static final int SHELL_LAT_SEGMENTS = 36;
     private static final int SHELL_LON_SEGMENTS = 36;
-    private static final int ORBIT_SEGMENTS = 192;
+    private static final int ORBIT_SEGMENTS = 128;
     private static final double ORBIT_SPEED_SCALE = 0.28D;
     private static final int STAR_COUNT = 64;
     private static final RenderHelper.BillboardPoint[] STARS =
             RenderHelper.createBillboardPoints(STAR_COUNT);
+    private static final RenderHelper.BillboardPoint[] PLANET_GLOWS =
+            RenderHelper.createBillboardPoints(7);
     private static final ResourceLocation SUN_TEXTURE =
             new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/sun.png");
 
     private static final Planet[] PLANETS = new Planet[]{
-            new Planet(1.00D, 0.085D, 0.135D, 0xA7B5C8, 1.25F, 0.02D, 0xA8C4FF, "mercury"),
-            new Planet(1.40D, 0.118D, 0.105D, 0xE8B36A, 2.35F, -0.03D, 0xFFD58A, "venus"),
-            new Planet(1.86D, 0.145D, 0.082D, 0x4AA3FF, 3.30F, 0.04D, 0x74B8FF, "earth"),
-            new Planet(2.34D, 0.122D, 0.066D, 0xD96642, 4.20F, -0.02D, 0xFF8064, "mars"),
-            new Planet(3.02D, 0.275D, 0.043D, 0xD8B076, 5.60F, 0.03D, 0xFFE0A3, "jupiter"),
-            new Planet(3.78D, 0.210D, 0.031D, 0x95B7D8, 0.75F, -0.04D, 0xB6D7FF, "saturn"),
-            new Planet(4.52D, 0.165D, 0.023D, 0x75D3E8, 4.85F, 0.05D, 0x9DEFFF, "uranus")
+            new Planet(1.00D, 0.085D, 0.135D, 0xA7B5C8, 1.25F, 0.02D, 0xA8C4FF, "mercury", 24),
+            new Planet(1.40D, 0.118D, 0.105D, 0xE8B36A, 2.35F, -0.03D, 0xFFD58A, "venus", 24),
+            new Planet(1.86D, 0.145D, 0.082D, 0x4AA3FF, 3.30F, 0.04D, 0x74B8FF, "earth", 28),
+            new Planet(2.34D, 0.122D, 0.066D, 0xD96642, 4.20F, -0.02D, 0xFF8064, "mars", 24),
+            new Planet(3.02D, 0.275D, 0.043D, 0xD8B076, 5.60F, 0.03D, 0xFFE0A3, "jupiter", 34),
+            new Planet(3.78D, 0.210D, 0.031D, 0x95B7D8, 0.75F, -0.04D, 0xB6D7FF, "saturn", 30),
+            new Planet(4.52D, 0.165D, 0.023D, 0x75D3E8, 4.85F, 0.05D, 0x9DEFFF, "uranus", 28)
     };
 
     @Override
@@ -124,22 +126,32 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         drawSun(ticks);
 
+        int glowCount = 0;
         for (Planet planet : PLANETS) {
             drawGlowingOrbit(planet);
             double angle = ticks * planet.speed + planet.phase;
             double planetX = Math.cos(angle) * planet.orbitRadius;
             double planetZ = Math.sin(angle) * planet.orbitRadius;
+            PLANET_GLOWS[glowCount++].set(
+                    planetX,
+                    planet.verticalOffset,
+                    planetZ,
+                    planet.radius * 1.55D,
+                    planet.orbitGlowColor,
+                    0.16F
+            );
             GlStateManager.pushMatrix();
             GlStateManager.translate(planetX, planet.verticalOffset, planetZ);
-            RenderHelper.drawSphere(planet.radius * 1.65D, planet.orbitGlowColor, 0.13F, 10, 10);
             GlStateManager.pushMatrix();
             GlStateManager.rotate(ticks * planet.selfRotationSpeed, 0.0F, 1.0F, 0.0F);
             GlStateManager.enableTexture2D();
-            RenderHelper.drawTexturedSphere(planet.radius, planet.texture, 0.98F, 40, 40);
+            RenderHelper.drawTexturedSphere(planet.radius, planet.texture, 0.98F,
+                    planet.textureSegments, planet.textureSegments);
             GlStateManager.disableTexture2D();
             GlStateManager.popMatrix();
             GlStateManager.popMatrix();
         }
+        RenderHelper.drawBillboardGlowPoints(PLANET_GLOWS, glowCount);
 
         GlStateManager.popMatrix();
     }
@@ -228,9 +240,11 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         private final int orbitGlowColor;
         private final ResourceLocation texture;
         private final float selfRotationSpeed;
+        private final int textureSegments;
 
         private Planet(double orbitRadius, double radius, double speed, int color,
-                       float phase, double verticalOffset, int orbitGlowColor, String textureName) {
+                       float phase, double verticalOffset, int orbitGlowColor, String textureName,
+                       int textureSegments) {
             this.orbitRadius = orbitRadius;
             this.radius = radius;
             this.speed = speed * ORBIT_SPEED_SCALE;
@@ -240,6 +254,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             this.orbitGlowColor = orbitGlowColor;
             this.texture = new ResourceLocation(Reference.MOD_ID, "textures/effects/planets/" + textureName + ".png");
             this.selfRotationSpeed = (float) (1.2D + speed * 10.0D);
+            this.textureSegments = textureSegments;
         }
     }
 }
