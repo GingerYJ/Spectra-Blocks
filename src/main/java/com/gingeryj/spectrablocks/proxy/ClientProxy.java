@@ -10,6 +10,7 @@ import com.gingeryj.spectrablocks.client.render.RenderAuroraVeil;
 import com.gingeryj.spectrablocks.client.render.RenderBioluminescentSpores;
 import com.gingeryj.spectrablocks.client.render.RenderCelestialCompassCore;
 import com.gingeryj.spectrablocks.client.render.RenderChronoAnchor;
+import com.gingeryj.spectrablocks.client.render.RenderChromaticVortex;
 import com.gingeryj.spectrablocks.client.render.RenderCollapsingStar;
 import com.gingeryj.spectrablocks.client.render.RenderCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.client.render.RenderCrystalHarmonicResonator;
@@ -25,6 +26,7 @@ import com.gingeryj.spectrablocks.client.render.RenderEtherReactorCore;
 import com.gingeryj.spectrablocks.client.render.RenderEventHorizonMirror;
 import com.gingeryj.spectrablocks.client.render.RenderFrostCrystalMist;
 import com.gingeryj.spectrablocks.client.render.RenderGravitationalLens;
+import com.gingeryj.spectrablocks.client.render.RenderGravityTideEngine;
 import com.gingeryj.spectrablocks.client.render.RenderGravityWell;
 import com.gingeryj.spectrablocks.client.render.RenderHologramField;
 import com.gingeryj.spectrablocks.client.render.RenderImaginaryCube;
@@ -52,6 +54,7 @@ import com.gingeryj.spectrablocks.client.render.RenderRadiantSigilField;
 import com.gingeryj.spectrablocks.client.render.RenderRuneObelisk;
 import com.gingeryj.spectrablocks.client.render.RenderRiftAnchorSpire;
 import com.gingeryj.spectrablocks.client.render.RenderShadowFlameLantern;
+import com.gingeryj.spectrablocks.client.render.RenderSilentObelisk;
 import com.gingeryj.spectrablocks.client.render.RenderSingularityLattice;
 import com.gingeryj.spectrablocks.client.render.RenderSolarCoronaBurst;
 import com.gingeryj.spectrablocks.client.render.RenderSoulVortex;
@@ -77,6 +80,7 @@ import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
 import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
 import com.gingeryj.spectrablocks.tile.TileCelestialCompassCore;
 import com.gingeryj.spectrablocks.tile.TileChronoAnchor;
+import com.gingeryj.spectrablocks.tile.TileChromaticVortex;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.tile.TileCrystalHarmonicResonator;
@@ -92,6 +96,7 @@ import com.gingeryj.spectrablocks.tile.TileEtherReactorCore;
 import com.gingeryj.spectrablocks.tile.TileEventHorizonMirror;
 import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
+import com.gingeryj.spectrablocks.tile.TileGravityTideEngine;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
@@ -119,6 +124,7 @@ import com.gingeryj.spectrablocks.tile.TileRadiantSigilField;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileRiftAnchorSpire;
 import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
+import com.gingeryj.spectrablocks.tile.TileSilentObelisk;
 import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
@@ -225,6 +231,9 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileMemoryCrystalArray.class, new RenderMemoryCrystalArray());
         ClientRegistry.bindTileEntitySpecialRenderer(TileIonCascade.class, new RenderIonCascade());
         ClientRegistry.bindTileEntitySpecialRenderer(TileRiftAnchorSpire.class, new RenderRiftAnchorSpire());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileGravityTideEngine.class, new RenderGravityTideEngine());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileChromaticVortex.class, new RenderChromaticVortex());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileSilentObelisk.class, new RenderSilentObelisk());
     }
 
     @Override
@@ -300,6 +309,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.MEMORY_CRYSTAL_ARRAY);
         registerBlockItemModel(ModContent.ION_CASCADE);
         registerBlockItemModel(ModContent.RIFT_ANCHOR_SPIRE);
+        registerBlockItemModel(ModContent.GRAVITY_TIDE_ENGINE);
+        registerBlockItemModel(ModContent.CHROMATIC_VORTEX);
+        registerBlockItemModel(ModContent.SILENT_OBELISK);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

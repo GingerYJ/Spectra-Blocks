@@ -9,6 +9,7 @@ import com.gingeryj.spectrablocks.block.BlockAuroraVeil;
 import com.gingeryj.spectrablocks.block.BlockBioluminescentSpores;
 import com.gingeryj.spectrablocks.block.BlockCelestialCompassCore;
 import com.gingeryj.spectrablocks.block.BlockChronoAnchor;
+import com.gingeryj.spectrablocks.block.BlockChromaticVortex;
 import com.gingeryj.spectrablocks.block.BlockCollapsingStar;
 import com.gingeryj.spectrablocks.block.BlockCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.block.BlockCrystalHarmonicResonator;
@@ -24,6 +25,7 @@ import com.gingeryj.spectrablocks.block.BlockEtherReactorCore;
 import com.gingeryj.spectrablocks.block.BlockEventHorizonMirror;
 import com.gingeryj.spectrablocks.block.BlockFrostCrystalMist;
 import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
+import com.gingeryj.spectrablocks.block.BlockGravityTideEngine;
 import com.gingeryj.spectrablocks.block.BlockGravityWell;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
@@ -51,6 +53,7 @@ import com.gingeryj.spectrablocks.block.BlockRadiantSigilField;
 import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
 import com.gingeryj.spectrablocks.block.BlockRiftAnchorSpire;
 import com.gingeryj.spectrablocks.block.BlockShadowFlameLantern;
+import com.gingeryj.spectrablocks.block.BlockSilentObelisk;
 import com.gingeryj.spectrablocks.block.BlockSingularityLattice;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
 import com.gingeryj.spectrablocks.block.BlockSoulVortex;
@@ -76,6 +79,7 @@ import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
 import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
 import com.gingeryj.spectrablocks.tile.TileCelestialCompassCore;
 import com.gingeryj.spectrablocks.tile.TileChronoAnchor;
+import com.gingeryj.spectrablocks.tile.TileChromaticVortex;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
 import com.gingeryj.spectrablocks.tile.TileCrystalHarmonicResonator;
@@ -91,6 +95,7 @@ import com.gingeryj.spectrablocks.tile.TileEtherReactorCore;
 import com.gingeryj.spectrablocks.tile.TileEventHorizonMirror;
 import com.gingeryj.spectrablocks.tile.TileFrostCrystalMist;
 import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
+import com.gingeryj.spectrablocks.tile.TileGravityTideEngine;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
@@ -118,6 +123,7 @@ import com.gingeryj.spectrablocks.tile.TileRadiantSigilField;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileRiftAnchorSpire;
 import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
+import com.gingeryj.spectrablocks.tile.TileSilentObelisk;
 import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
@@ -216,6 +222,9 @@ public final class ModContent {
     public static final BlockMemoryCrystalArray MEMORY_CRYSTAL_ARRAY = new BlockMemoryCrystalArray();
     public static final BlockIonCascade ION_CASCADE = new BlockIonCascade();
     public static final BlockRiftAnchorSpire RIFT_ANCHOR_SPIRE = new BlockRiftAnchorSpire();
+    public static final BlockGravityTideEngine GRAVITY_TIDE_ENGINE = new BlockGravityTideEngine();
+    public static final BlockChromaticVortex CHROMATIC_VORTEX = new BlockChromaticVortex();
+    public static final BlockSilentObelisk SILENT_OBELISK = new BlockSilentObelisk();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -289,7 +298,10 @@ public final class ModContent {
                 INK_MIRAGE_BASIN,
                 MEMORY_CRYSTAL_ARRAY,
                 ION_CASCADE,
-                RIFT_ANCHOR_SPIRE
+                RIFT_ANCHOR_SPIRE,
+                GRAVITY_TIDE_ENGINE,
+                CHROMATIC_VORTEX,
+                SILENT_OBELISK
         );
     }
 
@@ -362,6 +374,9 @@ public final class ModContent {
                 itemBlock(MEMORY_CRYSTAL_ARRAY),
                 itemBlock(ION_CASCADE),
                 itemBlock(RIFT_ANCHOR_SPIRE),
+                itemBlock(GRAVITY_TIDE_ENGINE),
+                itemBlock(CHROMATIC_VORTEX),
+                itemBlock(SILENT_OBELISK),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -433,6 +448,9 @@ public final class ModContent {
         registerTileEntity(TileMemoryCrystalArray.class, "memory_crystal_array");
         registerTileEntity(TileIonCascade.class, "ion_cascade");
         registerTileEntity(TileRiftAnchorSpire.class, "rift_anchor_spire");
+        registerTileEntity(TileGravityTideEngine.class, "gravity_tide_engine");
+        registerTileEntity(TileChromaticVortex.class, "chromatic_vortex");
+        registerTileEntity(TileSilentObelisk.class, "silent_obelisk");
     }
 
     private static ItemBlock itemBlock(Block block) {
