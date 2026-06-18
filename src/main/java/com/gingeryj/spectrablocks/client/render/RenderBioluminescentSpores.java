@@ -25,18 +25,17 @@ public class RenderBioluminescentSpores extends RenderCelestialEffectBase<TileBi
     @Override
     protected void renderCelestialEffect(TileBioluminescentSpores te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawBreathingCloud(ticks, naturalShader, colorShader);
-        drawSpiralWisps(ticks, colorShader);
+        drawBreathingCloud(ticks, naturalShader);
+        drawSpiralWisps(ticks, naturalShader);
         drawFloatingSpores(ticks, naturalShader);
         drawLivingCore(ticks, naturalShader);
     }
 
-    private void drawBreathingCloud(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawBreathingCloud(float ticks, ShaderProgram naturalShader) {
         float breath = wave(ticks * 0.035D);
 
         useAdditiveBlend();
@@ -75,24 +74,17 @@ public class RenderBioluminescentSpores extends RenderCelestialEffectBase<TileBi
                 0.100F + breath * 0.035F, breath, 0.55F, ticks * 0.014F, 113.0F, 24);
         GlStateManager.popMatrix();
 
-        if (colorShader != null) {
-            GlStateManager.glLineWidth(1.2F);
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, 0.96D + breath * 0.04D,
-                    0x72FFC0, 0.12F + breath * 0.05F, RING_SEGMENTS);
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, 1.30D + breath * 0.07D,
-                    0x8EFFE9, 0.060F + breath * 0.035F, RING_SEGMENTS);
-            RenderHelper.resetLineWidth();
-        }
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 0.96D + breath * 0.04D,
+                RenderNaturalShaderHelper.MODE_AURORA, 3.6F, 0x72FFC0, 0x58FFE3, 0xF4FFF7,
+                0.12F + breath * 0.05F, breath, 0.95F, ticks * 0.024F, 137.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 1.30D + breath * 0.07D,
+                RenderNaturalShaderHelper.MODE_AURORA, 3.9F, 0x8EFFE9, 0x72FFC0, 0xF4FFF7,
+                0.060F + breath * 0.035F, breath, 0.86F, ticks * 0.020F, 151.0F, RING_SEGMENTS);
         useAlphaBlend();
     }
 
-    private void drawSpiralWisps(float ticks, ShaderProgram colorShader) {
-        if (colorShader == null) {
-            return;
-        }
-
+    private void drawSpiralWisps(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.5F);
         for (int i = 0; i < WISP_COUNT; i++) {
             double phase = i * TWO_PI / WISP_COUNT + ticks * (0.009D + i * 0.0008D);
             double startRadius = 0.32D + (i % 3) * 0.055D;
@@ -104,11 +96,13 @@ public class RenderBioluminescentSpores extends RenderCelestialEffectBase<TileBi
             GlStateManager.pushMatrix();
             GlStateManager.translate(0.0D, -0.30D + i * 0.17D, 0.0D);
             GlStateManager.rotate((float) (ticks * 0.28D + i * 51.0D), 0.0F, 1.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicSpiralRibbon(colorShader, startRadius, endRadius,
-                    phase, sweep, 0.018D + (i % 2) * 0.006D, color, alpha, 34);
+            RenderNaturalShaderHelper.drawShaderSpiralRibbon(naturalShader, startRadius, endRadius,
+                    phase, sweep, 0.018D + (i % 2) * 0.006D,
+                    RenderNaturalShaderHelper.MODE_AURORA, 4.2F + i * 0.11F,
+                    color, SPORE_COLORS[(i + 2) % SPORE_COLORS.length], 0xF4FFF7,
+                    alpha, wave(ticks * 0.040D + i), 1.02F, ticks * 0.026F, 177.0F + i * 13.0F, 34);
             GlStateManager.popMatrix();
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 

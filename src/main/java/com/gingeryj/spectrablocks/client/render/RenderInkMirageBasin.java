@@ -14,18 +14,17 @@ public class RenderInkMirageBasin extends RenderCelestialEffectBase<TileInkMirag
     protected void renderCelestialEffect(TileInkMirageBasin te, float ticks) {
         ShaderProgram natural = ShaderManager.getProgram("natural_effect");
         ShaderProgram arcane = ShaderManager.getProgram("arcane_effect");
-        ShaderProgram basic = ShaderManager.getProgram("basic");
-        if (natural == null || arcane == null || basic == null) {
+        if (natural == null || arcane == null) {
             return;
         }
 
-        drawInkSurface(natural, basic, ticks);
+        drawInkSurface(natural, ticks);
         drawFoldedMirages(natural, ticks);
-        drawBrushStrokes(basic, ticks);
+        drawBrushStrokes(natural, ticks);
         drawInkDrops(arcane, ticks);
     }
 
-    private void drawInkSurface(ShaderProgram natural, ShaderProgram basic, float ticks) {
+    private void drawInkSurface(ShaderProgram natural, float ticks) {
         float pulse = wave(ticks * 0.024D);
 
         useAlphaBlend();
@@ -44,9 +43,13 @@ public class RenderInkMirageBasin extends RenderCelestialEffectBase<TileInkMirag
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, -0.40D, 0.0D);
         GlStateManager.rotate((float) (ticks * 0.055D), 0.0F, 1.0F, 0.0F);
-        RenderNaturalShaderHelper.drawBasicSpiralRibbon(basic, 0.28D, 1.46D, ticks * 0.010D,
-                TWO_PI * 1.82D, 0.060D, 0x9AF8E8, 0.22F + pulse * 0.10F, 72);
-        RenderNaturalShaderHelper.drawBasicFlatRing(basic, 1.18D, 1.50D, 0x214B55, 0.14F, 96);
+        RenderNaturalShaderHelper.drawShaderSpiralRibbon(natural, 0.28D, 1.46D, ticks * 0.010D,
+                TWO_PI * 1.82D, 0.060D, RenderNaturalShaderHelper.MODE_ABYSSAL, 3.4F,
+                0x9AF8E8, 0x214B55, 0xD8FFF4, 0.22F + pulse * 0.10F,
+                pulse, 1.05F, ticks * 0.030F, 241.0F, 72);
+        RenderNaturalShaderHelper.drawShaderRing(natural, 1.18D, 1.50D,
+                RenderNaturalShaderHelper.MODE_ABYSSAL, 3.8F, 0x214B55, 0x103943, 0x9AF8E8,
+                0.14F, pulse, 0.82F, ticks * 0.024F, 263.0F, 96);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -79,9 +82,12 @@ public class RenderInkMirageBasin extends RenderCelestialEffectBase<TileInkMirag
             GlStateManager.pushMatrix();
             GlStateManager.translate(0.0D, -0.22D + i * 0.035D, 0.0D);
             GlStateManager.rotate(12.0F + i * 17.0F, 1.0F, 0.0F, 0.36F);
-            RenderNaturalShaderHelper.drawBasicSpiralRibbon(shader, inner, outer, start,
+            RenderNaturalShaderHelper.drawShaderSpiralRibbon(shader, inner, outer, start,
                     1.45D + i * 0.10D, 0.050D + (i % 3) * 0.008D,
-                    i % 2 == 0 ? 0xD8FFF4 : 0x75DACC, alpha, 26);
+                    RenderNaturalShaderHelper.MODE_ABYSSAL, 4.2F + i * 0.12F,
+                    i % 2 == 0 ? 0xD8FFF4 : 0x75DACC, 0x145A66, 0xFFFFFF,
+                    alpha, (float) Math.sin(phase * Math.PI), 1.05F, ticks * 0.026F,
+                    281.0F + i * 17.0F, 26);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();

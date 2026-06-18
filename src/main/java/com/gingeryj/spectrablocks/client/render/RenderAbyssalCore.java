@@ -20,14 +20,13 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
     @Override
     protected void renderCelestialEffect(TileAbyssalCore te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
         drawCore(ticks, naturalShader);
-        drawWaterShell(ticks, naturalShader, colorShader);
-        drawWaveRings(ticks, colorShader);
+        drawWaterShell(ticks, naturalShader);
+        drawWaveRings(ticks, naturalShader);
         drawPlankton(ticks, naturalShader);
         drawRisingBubbles(ticks, naturalShader);
     }
@@ -48,7 +47,7 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
         useAlphaBlend();
     }
 
-    private void drawWaterShell(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawWaterShell(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.022D);
 
         useAlphaBlend();
@@ -62,14 +61,14 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
         RenderNaturalShaderHelper.drawNaturalSphere(naturalShader, WATER_SHELL_RADIUS * 0.76D,
                 RenderNaturalShaderHelper.MODE_ABYSSAL, 1.4F, 0x1DCDC1, 0x2AA9FF, 0xE9FFF8,
                 0.070F + pulse * 0.025F, pulse, 0.86F, ticks * 0.026F, 89.0F, 26);
-        GlStateManager.glLineWidth(1.3F);
-        RenderNaturalShaderHelper.drawBasicWireSphere(colorShader, WATER_SHELL_RADIUS * 0.98D,
-                0x57FFF0, 0.075F + pulse * 0.030F, 9, 16);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderWireSphere(naturalShader, WATER_SHELL_RADIUS * 0.98D,
+                RenderNaturalShaderHelper.MODE_ABYSSAL, 1.8F,
+                0x57FFF0, 0x2AA9FF, 0xE9FFF8, 0.075F + pulse * 0.030F,
+                pulse, 0.82F, ticks * 0.024F, 101.0F, 9, 16);
         GlStateManager.popMatrix();
     }
 
-    private void drawWaveRings(float ticks, ShaderProgram colorShader) {
+    private void drawWaveRings(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         for (int i = 0; i < WAVE_RING_COUNT; i++) {
             double progress = (i + 1.0D) / WAVE_RING_COUNT;
@@ -83,13 +82,15 @@ public class RenderAbyssalCore extends RenderCelestialEffectBase<TileAbyssalCore
             GlStateManager.translate(0.0D, y, 0.0D);
             GlStateManager.rotate(7.0F + i * 9.0F, 1.0F, 0.0F, 0.25F);
             GlStateManager.rotate(ticks * (0.035F + i * 0.006F), 0.0F, 1.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicFlatRing(colorShader,
+            RenderNaturalShaderHelper.drawShaderRing(naturalShader,
                     baseRadius - 0.035D, baseRadius + 0.035D + pulse * 0.025D,
-                    color, alpha * 0.44F, RING_SEGMENTS);
-            GlStateManager.glLineWidth(1.6F);
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, baseRadius + pulse * 0.045D,
-                    color, alpha, RING_SEGMENTS);
-            RenderHelper.resetLineWidth();
+                    RenderNaturalShaderHelper.MODE_ABYSSAL, 3.0F + i * 0.12F,
+                    color, 0x2AA9FF, 0xE9FFF8, alpha * 0.44F, pulse,
+                    0.92F, ticks * 0.030F, 131.0F + i * 13.0F, RING_SEGMENTS);
+            RenderNaturalShaderHelper.drawShaderCircle(naturalShader, baseRadius + pulse * 0.045D,
+                    RenderNaturalShaderHelper.MODE_ABYSSAL, 3.5F + i * 0.11F,
+                    color, 0x2AA9FF, 0xE9FFF8, alpha, pulse,
+                    1.05F, ticks * 0.034F, 173.0F + i * 17.0F, RING_SEGMENTS);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();

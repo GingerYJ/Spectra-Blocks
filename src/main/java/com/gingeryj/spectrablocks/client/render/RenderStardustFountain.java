@@ -20,18 +20,17 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
     @Override
     protected void renderCelestialEffect(TileStardustFountain te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawBasin(ticks, naturalShader, colorShader);
+        drawBasin(ticks, naturalShader);
         drawRisingStream(ticks, naturalShader);
         drawFallingStardust(ticks, naturalShader);
         drawFountainCore(ticks, naturalShader);
     }
 
-    private void drawBasin(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawBasin(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.048F);
 
         useAdditiveBlend();
@@ -47,12 +46,14 @@ public class RenderStardustFountain extends RenderCelestialEffectBase<TileStardu
                 RenderNaturalShaderHelper.MODE_STARDUST, 0.0F, 0x285A91, 0x9AE8FF, 0xFFF4C6,
                 0.18F + pulse * 0.05F, pulse, 0.95F, ticks * 0.024F, 7.0F, 30);
         GlStateManager.popMatrix();
-        GlStateManager.glLineWidth(1.8F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, BASIN_RADIUS, 0x9AE8FF,
-                0.27F + pulse * 0.12F, RING_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.32D, BASIN_RADIUS * 0.92D, 10,
-                0xFFF4C6, 0.16F + pulse * 0.08F, ticks * 0.010D);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, BASIN_RADIUS,
+                RenderNaturalShaderHelper.MODE_STARDUST, 4.6F,
+                0x9AE8FF, 0x285A91, 0xFFF4C6, 0.27F + pulse * 0.12F,
+                pulse, 1.04F, ticks * 0.030F, 193.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.32D, BASIN_RADIUS * 0.92D, 10,
+                RenderNaturalShaderHelper.MODE_STARDUST, 4.9F,
+                0xFFF4C6, 0x9AE8FF, 0xFFFFFF, 0.16F + pulse * 0.08F,
+                pulse, 1.12F, ticks * 0.032F, 211.0F, ticks * 0.010D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }

@@ -24,18 +24,17 @@ public class RenderAuroraVeil extends RenderCelestialEffectBase<TileAuroraVeil> 
     @Override
     protected void renderCelestialEffect(TileAuroraVeil te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawBaseGlow(ticks, naturalShader, colorShader);
+        drawBaseGlow(ticks, naturalShader);
         drawVeilLayers(ticks, naturalShader);
-        drawVerticalRays(ticks, colorShader);
+        drawVerticalRays(ticks, naturalShader);
         drawMotes(ticks, naturalShader);
     }
 
-    private void drawBaseGlow(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawBaseGlow(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.040D);
 
         useAdditiveBlend();
@@ -51,10 +50,10 @@ public class RenderAuroraVeil extends RenderCelestialEffectBase<TileAuroraVeil> 
         RenderNaturalShaderHelper.drawNaturalSphere(naturalShader, 0.38D + pulse * 0.05D,
                 RenderNaturalShaderHelper.MODE_AURORA, 0.4F, 0xFFFFFF, 0x69F5FF, 0xFF8FD8,
                 0.23F + pulse * 0.06F, pulse, 1.05F, ticks * 0.040F, 17.0F, 18);
-        GlStateManager.glLineWidth(1.4F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, 1.92D + pulse * 0.12D,
-                0x56FFE0, 0.15F + pulse * 0.04F, 128);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 1.92D + pulse * 0.12D,
+                RenderNaturalShaderHelper.MODE_AURORA, 2.0F,
+                0x56FFE0, 0x946DFF, 0xFFFFFF, 0.15F + pulse * 0.04F,
+                pulse, 0.92F, ticks * 0.030F, 31.0F, 128);
         useAlphaBlend();
     }
 
@@ -80,9 +79,8 @@ public class RenderAuroraVeil extends RenderCelestialEffectBase<TileAuroraVeil> 
         useAlphaBlend();
     }
 
-    private void drawVerticalRays(float ticks, ShaderProgram colorShader) {
+    private void drawVerticalRays(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
-        GlStateManager.glLineWidth(2.2F);
         for (int i = 0; i < RAY_COUNT; i++) {
             double progress = (double) i / (RAY_COUNT - 1);
             double x = (progress - 0.5D) * (VEIL_WIDTH * 0.92D);
@@ -92,10 +90,13 @@ public class RenderAuroraVeil extends RenderCelestialEffectBase<TileAuroraVeil> 
             int color = VEIL_COLORS[i % VEIL_COLORS.length];
             float alpha = 0.065F + 0.055F * wave(ticks * 0.031D + i);
 
-            RenderNaturalShaderHelper.drawBasicLine(colorShader, x, VEIL_BASE_Y + 0.05D, z * 0.20D,
-                    x + Math.sin(phase * 0.9D) * 0.14D, VEIL_BASE_Y + height, z, color, alpha);
+            RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_AURORA,
+                    2.6F + i * 0.05F,
+                    x, VEIL_BASE_Y + 0.05D, z * 0.20D,
+                    x + Math.sin(phase * 0.9D) * 0.14D, VEIL_BASE_Y + height, z,
+                    color, VEIL_COLORS[(i + 1) % VEIL_COLORS.length], 0xFFFFFF,
+                    alpha, wave(phase), 1.05F, ticks * 0.032F, 53.0F + i * 7.0F, 0.022D);
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 
