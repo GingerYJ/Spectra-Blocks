@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "normal": {
+      "model": "spectrablocks:thermal_distortion_field"
+    }
+  }
+}

@@ -2,6 +2,7 @@ package com.gingeryj.spectrablocks.proxy;
 
 import com.gingeryj.spectrablocks.Reference;
 import com.gingeryj.spectrablocks.client.gui.GuiEffectConfigurator;
+import com.gingeryj.spectrablocks.client.render.RenderAlchemyTransmutationRing;
 import com.gingeryj.spectrablocks.client.render.RenderAbyssalCore;
 import com.gingeryj.spectrablocks.client.render.RenderArcaneStarRing;
 import com.gingeryj.spectrablocks.client.render.RenderAstralAltarCore;
@@ -49,6 +50,7 @@ import com.gingeryj.spectrablocks.client.render.RenderShadowFlameLantern;
 import com.gingeryj.spectrablocks.client.render.RenderSingularityLattice;
 import com.gingeryj.spectrablocks.client.render.RenderSolarCoronaBurst;
 import com.gingeryj.spectrablocks.client.render.RenderSoulVortex;
+import com.gingeryj.spectrablocks.client.render.RenderSoundwaveResonator;
 import com.gingeryj.spectrablocks.client.render.RenderSpatialRift;
 import com.gingeryj.spectrablocks.client.render.RenderSpectralPrism;
 import com.gingeryj.spectrablocks.client.render.RenderSpectralHourglassGate;
@@ -56,10 +58,12 @@ import com.gingeryj.spectrablocks.client.render.RenderStardustFountain;
 import com.gingeryj.spectrablocks.client.render.RenderStellarHourglass;
 import com.gingeryj.spectrablocks.client.render.RenderStormCore;
 import com.gingeryj.spectrablocks.client.render.RenderTemporalRift;
+import com.gingeryj.spectrablocks.client.render.RenderThermalDistortionField;
 import com.gingeryj.spectrablocks.client.render.RenderVoidCrystal;
 import com.gingeryj.spectrablocks.client.render.RenderVoidLotus;
 import com.gingeryj.spectrablocks.client.render.RenderWormhole;
 import com.gingeryj.spectrablocks.registry.ModContent;
+import com.gingeryj.spectrablocks.tile.TileAlchemyTransmutationRing;
 import com.gingeryj.spectrablocks.tile.TileAbyssalCore;
 import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
@@ -107,6 +111,7 @@ import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
 import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
+import com.gingeryj.spectrablocks.tile.TileSoundwaveResonator;
 import com.gingeryj.spectrablocks.tile.TileSpatialRift;
 import com.gingeryj.spectrablocks.tile.TileSpectralPrism;
 import com.gingeryj.spectrablocks.tile.TileSpectralHourglassGate;
@@ -114,6 +119,7 @@ import com.gingeryj.spectrablocks.tile.TileStardustFountain;
 import com.gingeryj.spectrablocks.tile.TileStellarHourglass;
 import com.gingeryj.spectrablocks.tile.TileStormCore;
 import com.gingeryj.spectrablocks.tile.TileTemporalRift;
+import com.gingeryj.spectrablocks.tile.TileThermalDistortionField;
 import com.gingeryj.spectrablocks.tile.TileVoidCrystal;
 import com.gingeryj.spectrablocks.tile.TileVoidLotus;
 import com.gingeryj.spectrablocks.tile.TileWormhole;
@@ -196,6 +202,11 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileSpectralHourglassGate.class,
                 new RenderSpectralHourglassGate());
         ClientRegistry.bindTileEntitySpecialRenderer(TileCelestialCompassCore.class, new RenderCelestialCompassCore());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileSoundwaveResonator.class, new RenderSoundwaveResonator());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileThermalDistortionField.class,
+                new RenderThermalDistortionField());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileAlchemyTransmutationRing.class,
+                new RenderAlchemyTransmutationRing());
     }
 
     @Override
@@ -262,6 +273,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.SINGULARITY_LATTICE);
         registerBlockItemModel(ModContent.SPECTRAL_HOURGLASS_GATE);
         registerBlockItemModel(ModContent.CELESTIAL_COMPASS_CORE);
+        registerBlockItemModel(ModContent.SOUNDWAVE_RESONATOR);
+        registerBlockItemModel(ModContent.THERMAL_DISTORTION_FIELD);
+        registerBlockItemModel(ModContent.ALCHEMY_TRANSMUTATION_RING);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

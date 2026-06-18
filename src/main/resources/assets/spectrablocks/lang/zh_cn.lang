@@ -63,3 +63,6 @@ tile.spectrablocks.event_horizon_mirror.name=事件视界镜
 tile.spectrablocks.singularity_lattice.name=奇点晶格
 tile.spectrablocks.spectral_hourglass_gate.name=光谱沙漏门
 tile.spectrablocks.celestial_compass_core.name=天体罗盘核心
+tile.spectrablocks.soundwave_resonator.name=声波共振器
+tile.spectrablocks.thermal_distortion_field.name=热扰动场
+tile.spectrablocks.alchemy_transmutation_ring.name=炼金转化环

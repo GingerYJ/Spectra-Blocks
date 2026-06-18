@@ -1,0 +1,6 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "spectrablocks:blocks/thermal_distortion_field"
+  }
+}

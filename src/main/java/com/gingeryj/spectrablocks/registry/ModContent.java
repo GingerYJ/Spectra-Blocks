@@ -1,6 +1,7 @@
 package com.gingeryj.spectrablocks.registry;
 
 import com.gingeryj.spectrablocks.Reference;
+import com.gingeryj.spectrablocks.block.BlockAlchemyTransmutationRing;
 import com.gingeryj.spectrablocks.block.BlockAbyssalCore;
 import com.gingeryj.spectrablocks.block.BlockArcaneStarRing;
 import com.gingeryj.spectrablocks.block.BlockAstralAltarCore;
@@ -48,6 +49,7 @@ import com.gingeryj.spectrablocks.block.BlockShadowFlameLantern;
 import com.gingeryj.spectrablocks.block.BlockSingularityLattice;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
 import com.gingeryj.spectrablocks.block.BlockSoulVortex;
+import com.gingeryj.spectrablocks.block.BlockSoundwaveResonator;
 import com.gingeryj.spectrablocks.block.BlockSpatialRift;
 import com.gingeryj.spectrablocks.block.BlockSpectralPrism;
 import com.gingeryj.spectrablocks.block.BlockSpectralHourglassGate;
@@ -55,10 +57,12 @@ import com.gingeryj.spectrablocks.block.BlockStardustFountain;
 import com.gingeryj.spectrablocks.block.BlockStellarHourglass;
 import com.gingeryj.spectrablocks.block.BlockStormCore;
 import com.gingeryj.spectrablocks.block.BlockTemporalRift;
+import com.gingeryj.spectrablocks.block.BlockThermalDistortionField;
 import com.gingeryj.spectrablocks.block.BlockVoidCrystal;
 import com.gingeryj.spectrablocks.block.BlockVoidLotus;
 import com.gingeryj.spectrablocks.block.BlockWormhole;
 import com.gingeryj.spectrablocks.item.ItemEffectConfigurator;
+import com.gingeryj.spectrablocks.tile.TileAlchemyTransmutationRing;
 import com.gingeryj.spectrablocks.tile.TileAbyssalCore;
 import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
@@ -106,6 +110,7 @@ import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
 import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
+import com.gingeryj.spectrablocks.tile.TileSoundwaveResonator;
 import com.gingeryj.spectrablocks.tile.TileSpatialRift;
 import com.gingeryj.spectrablocks.tile.TileSpectralPrism;
 import com.gingeryj.spectrablocks.tile.TileSpectralHourglassGate;
@@ -113,6 +118,7 @@ import com.gingeryj.spectrablocks.tile.TileStardustFountain;
 import com.gingeryj.spectrablocks.tile.TileStellarHourglass;
 import com.gingeryj.spectrablocks.tile.TileStormCore;
 import com.gingeryj.spectrablocks.tile.TileTemporalRift;
+import com.gingeryj.spectrablocks.tile.TileThermalDistortionField;
 import com.gingeryj.spectrablocks.tile.TileVoidCrystal;
 import com.gingeryj.spectrablocks.tile.TileVoidLotus;
 import com.gingeryj.spectrablocks.tile.TileWormhole;
@@ -188,6 +194,10 @@ public final class ModContent {
     public static final BlockSingularityLattice SINGULARITY_LATTICE = new BlockSingularityLattice();
     public static final BlockSpectralHourglassGate SPECTRAL_HOURGLASS_GATE = new BlockSpectralHourglassGate();
     public static final BlockCelestialCompassCore CELESTIAL_COMPASS_CORE = new BlockCelestialCompassCore();
+    public static final BlockSoundwaveResonator SOUNDWAVE_RESONATOR = new BlockSoundwaveResonator();
+    public static final BlockThermalDistortionField THERMAL_DISTORTION_FIELD = new BlockThermalDistortionField();
+    public static final BlockAlchemyTransmutationRing ALCHEMY_TRANSMUTATION_RING =
+            new BlockAlchemyTransmutationRing();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -252,7 +262,10 @@ public final class ModContent {
                 EVENT_HORIZON_MIRROR,
                 SINGULARITY_LATTICE,
                 SPECTRAL_HOURGLASS_GATE,
-                CELESTIAL_COMPASS_CORE
+                CELESTIAL_COMPASS_CORE,
+                SOUNDWAVE_RESONATOR,
+                THERMAL_DISTORTION_FIELD,
+                ALCHEMY_TRANSMUTATION_RING
         );
     }
 
@@ -316,6 +329,9 @@ public final class ModContent {
                 itemBlock(SINGULARITY_LATTICE),
                 itemBlock(SPECTRAL_HOURGLASS_GATE),
                 itemBlock(CELESTIAL_COMPASS_CORE),
+                itemBlock(SOUNDWAVE_RESONATOR),
+                itemBlock(THERMAL_DISTORTION_FIELD),
+                itemBlock(ALCHEMY_TRANSMUTATION_RING),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -378,6 +394,9 @@ public final class ModContent {
         registerTileEntity(TileSingularityLattice.class, "singularity_lattice");
         registerTileEntity(TileSpectralHourglassGate.class, "spectral_hourglass_gate");
         registerTileEntity(TileCelestialCompassCore.class, "celestial_compass_core");
+        registerTileEntity(TileSoundwaveResonator.class, "soundwave_resonator");
+        registerTileEntity(TileThermalDistortionField.class, "thermal_distortion_field");
+        registerTileEntity(TileAlchemyTransmutationRing.class, "alchemy_transmutation_ring");
     }
 
     private static ItemBlock itemBlock(Block block) {
