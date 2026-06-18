@@ -87,7 +87,6 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
                 GlStateManager.disableBlend();
             }
             useAlphaBlend();
-            GlStateManager.glLineWidth(1.0F);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
@@ -124,9 +123,7 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
             GlStateManager.rotate(ticks * (ROTATION_SPEED + i * 0.11F) + i * 21.0F, 0.0F, 1.0F, 0.0F);
             GlStateManager.rotate(12.0F + i * 17.0F + (float) Math.sin(ticks * 0.018F + i) * 6.0F,
                     1.0F, 0.0F, 0.0F);
-            GlStateManager.glLineWidth(i == 1 ? 2.8F : 1.3F);
-            drawCubeEdges(size);
-            GlStateManager.glLineWidth(1.0F);
+            drawCubeEdges(size, i == 1 ? 0.034D : 0.018D);
             GlStateManager.popMatrix();
         }
 
@@ -135,8 +132,7 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
         GlStateManager.pushMatrix();
         GlStateManager.rotate(-ticks * ROTATION_SPEED * 0.72F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(45.0F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.glLineWidth(1.0F);
-        drawCubeEdges(OUTER_HALF_SIZE);
+        drawCubeEdges(OUTER_HALF_SIZE, 0.014D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -147,8 +143,7 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
                 GHOST_ALPHA, 1.18F, (float) OUTER_HALF_SIZE);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        GlStateManager.glLineWidth(1.0F);
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
         for (int i = 0; i < CROSS_LINE_COUNT; i++) {
             double phase = TWO_PI * i / CROSS_LINE_COUNT;
             double pulse = Math.max(0.0D, Math.sin(ticks * 0.075D + i * 0.83D));
@@ -158,13 +153,12 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
             double a = OUTER_HALF_SIZE * (0.56D + 0.24D * Math.sin(ticks * 0.021D + i));
             double b = OUTER_HALF_SIZE * (0.56D + 0.24D * Math.cos(ticks * 0.026D + i));
 
-            addPosition(buffer, Math.cos(phase) * a, Math.sin(phase * 1.7D) * b, -OUTER_HALF_SIZE,
-                    i / (double) CROSS_LINE_COUNT, 0.0D);
-            addPosition(buffer, -Math.sin(phase) * b, Math.cos(phase * 1.3D) * a, OUTER_HALF_SIZE,
-                    i / (double) CROSS_LINE_COUNT, 1.0D);
+            RenderHelper.addTexturedLine(buffer,
+                    Math.cos(phase) * a, Math.sin(phase * 1.7D) * b, -OUTER_HALF_SIZE,
+                    -Math.sin(phase) * b, Math.cos(phase * 1.3D) * a, OUTER_HALF_SIZE,
+                    0.012D);
         }
         tessellator.draw();
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -193,7 +187,7 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
             GlStateManager.pushMatrix();
             GlStateManager.translate(px, py, pz);
             drawShaderSphere(sparkSize, 7, 7);
-            drawSpark(sparkSize * 2.4D);
+            drawSpark(sparkSize * 2.4D, 0.008D + blink * 0.006D);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();
@@ -221,45 +215,44 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
         buffer.pos(x0, y1, z1).tex(0.0D, 1.0D).normal((float) normalX, (float) normalY, (float) normalZ).endVertex();
     }
 
-    private static void drawCubeEdges(double halfSize) {
+    private static void drawCubeEdges(double halfSize, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
         for (int x = -1; x <= 1; x += 2) {
             for (int y = -1; y <= 1; y += 2) {
                 addLine(buffer, x * halfSize, y * halfSize, -halfSize,
-                        x * halfSize, y * halfSize, halfSize);
+                        x * halfSize, y * halfSize, halfSize, width);
             }
         }
         for (int x = -1; x <= 1; x += 2) {
             for (int z = -1; z <= 1; z += 2) {
                 addLine(buffer, x * halfSize, -halfSize, z * halfSize,
-                        x * halfSize, halfSize, z * halfSize);
+                        x * halfSize, halfSize, z * halfSize, width);
             }
         }
         for (int y = -1; y <= 1; y += 2) {
             for (int z = -1; z <= 1; z += 2) {
                 addLine(buffer, -halfSize, y * halfSize, z * halfSize,
-                        halfSize, y * halfSize, z * halfSize);
+                        halfSize, y * halfSize, z * halfSize, width);
             }
         }
         tessellator.draw();
     }
 
-    private static void drawSpark(double size) {
+    private static void drawSpark(double size, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addLine(buffer, -size, 0.0D, 0.0D, size, 0.0D, 0.0D);
-        addLine(buffer, 0.0D, -size, 0.0D, 0.0D, size, 0.0D);
-        addLine(buffer, 0.0D, 0.0D, -size, 0.0D, 0.0D, size);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        addLine(buffer, -size, 0.0D, 0.0D, size, 0.0D, 0.0D, width);
+        addLine(buffer, 0.0D, -size, 0.0D, 0.0D, size, 0.0D, width);
+        addLine(buffer, 0.0D, 0.0D, -size, 0.0D, 0.0D, size, width);
         tessellator.draw();
     }
 
     private static void addLine(BufferBuilder buffer, double x0, double y0, double z0,
-                                double x1, double y1, double z1) {
-        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
-        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
+                                double x1, double y1, double z1, double width) {
+        RenderHelper.addTexturedLine(buffer, x0, y0, z0, x1, y1, z1, width);
     }
 
     private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {

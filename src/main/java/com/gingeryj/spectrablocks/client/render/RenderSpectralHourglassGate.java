@@ -143,11 +143,9 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
         }
 
         useAdditiveBlend();
-        GlStateManager.glLineWidth(2.8F);
         drawGateArc(colorShader, -1.0D, ticks, CYAN, 0.28F);
         drawGateArc(colorShader, 1.0D, ticks + 17.0F, ROSE, 0.25F);
 
-        GlStateManager.glLineWidth(1.2F);
         drawInnerArc(colorShader, -1.0D, ticks + 31.0F, MINT, 0.15F);
         drawInnerArc(colorShader, 1.0D, ticks + 47.0F, VIOLET, 0.15F);
 
@@ -160,7 +158,6 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
                     side * (ARC_RADIUS - 0.22D - pulse * 0.04D), y + 0.08D * (i % 3 - 1), 0.0D,
                     spectralColor(i), 0.10F + (float) pulse * 0.10F);
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 
@@ -180,24 +177,32 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
 
         try {
             setBasicUniforms(shader);
-            float[] rgb = unpackRGB(color);
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-            for (int i = 0; i <= ARC_SEGMENTS; i++) {
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+            ArcPoint previous = verticalArcPoint(side, radius, height, ticks, zOffset, 0.0D, alpha);
+            for (int i = 1; i <= ARC_SEGMENTS; i++) {
                 double progress = (double) i / ARC_SEGMENTS;
-                double arch = Math.sin(Math.PI * progress);
-                double y = (progress - 0.5D) * height * 2.0D;
-                double x = side * (radius - arch * 0.30D);
-                double z = zOffset * Math.sin(Math.PI * progress * 2.0D)
-                        + Math.sin(ticks * 0.024D + progress * Math.PI * 3.0D) * 0.035D;
-                float fade = (float) (0.24D + 0.76D * arch);
-                buffer.pos(x, y, z).color(rgb[0], rgb[1], rgb[2], alpha * fade).endVertex();
+                ArcPoint current = verticalArcPoint(side, radius, height, ticks, zOffset, progress, alpha);
+                RenderHelper.addColorLine(buffer, previous.x, previous.y, previous.z,
+                        current.x, current.y, current.z, 0.030D, color, previous.alpha, current.alpha);
+                previous = current;
             }
             tessellator.draw();
         } finally {
             shader.end();
         }
+    }
+
+    private static ArcPoint verticalArcPoint(double side, double radius, double height,
+                                             float ticks, double zOffset, double progress, float alpha) {
+        double arch = Math.sin(Math.PI * progress);
+        double y = (progress - 0.5D) * height * 2.0D;
+        double x = side * (radius - arch * 0.30D);
+        double z = zOffset * Math.sin(Math.PI * progress * 2.0D)
+                + Math.sin(ticks * 0.024D + progress * Math.PI * 3.0D) * 0.035D;
+        float fade = (float) (0.24D + 0.76D * arch);
+        return new ArcPoint(x, y, z, alpha * fade);
     }
 
     private static void drawFunnelGeometry(double direction, double twist) {
@@ -284,5 +289,19 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
                 ((color >> 8) & 255) / 255.0F,
                 (color & 255) / 255.0F
         };
+    }
+
+    private static final class ArcPoint {
+        private final double x;
+        private final double y;
+        private final double z;
+        private final float alpha;
+
+        private ArcPoint(double x, double y, double z, float alpha) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.alpha = alpha;
+        }
     }
 }

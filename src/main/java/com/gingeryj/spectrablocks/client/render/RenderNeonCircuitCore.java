@@ -20,6 +20,10 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
     private static final int MAGENTA = 0xFF4DFF;
     private static final int WHITE = 0xF5FFFF;
     private static final int NODE_COUNT = 12;
+    private static final double RIBBON_THIN = 0.014D;
+    private static final double RIBBON_NORMAL = 0.020D;
+    private static final double RIBBON_MEDIUM = 0.026D;
+    private static final double RIBBON_BOLD = 0.038D;
 
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
@@ -61,11 +65,9 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
         GlStateManager.rotate(62.0F, 1.0F, 0.0F, 0.0F);
         setTechUniforms(shader, ticks, 9.0F, 0.4F, WHITE, CYAN, MAGENTA,
                 0.16F + pulse * 0.08F, 1.26F, 0.56F);
-        GlStateManager.glLineWidth(1.35F);
-        drawShaderCircle(0.56D + pulse * 0.04D, 64);
+        drawShaderCircle(0.56D + pulse * 0.04D, 64, RIBBON_NORMAL);
         GlStateManager.popMatrix();
 
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -82,16 +84,13 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
             GlStateManager.rotate(45.0F + i * 22.5F + ticks * (0.018F - i * 0.002F), 0.0F, 1.0F, 0.0F);
             setTechUniforms(shader, ticks, 9.0F, 1.0F + i * 0.12F, color, BLUE, WHITE,
                     0.13F + pulse * 0.05F, 1.10F, (float) radius);
-            GlStateManager.glLineWidth(1.2F + i * 0.12F);
-            drawSquareFrame(radius);
+            drawSquareFrame(radius, RIBBON_NORMAL + i * 0.003D);
 
             setTechUniforms(shader, ticks, 9.0F, 1.6F + i * 0.12F, WHITE, color, MAGENTA,
                     0.08F + pulse * 0.05F, 1.20F, (float) radius);
-            GlStateManager.glLineWidth(0.9F);
-            drawCornerTicks(radius, 0.17D + i * 0.015D);
+            drawCornerTicks(radius, 0.17D + i * 0.015D, RIBBON_THIN);
             GlStateManager.popMatrix();
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -107,16 +106,15 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
             GlStateManager.rotate(45.0F + ring * 30.0F, 0.0F, 1.0F, 0.0F);
             setTechUniforms(shader, ticks, 9.0F, 2.0F + ring * 0.20F, color, WHITE, BLUE,
                     0.15F, 1.34F, (float) radius);
-            GlStateManager.glLineWidth(2.0F);
-            drawFlowPacketsOnSquare(radius, ticks * (0.020D + ring * 0.004D) + ring * 0.19D, 6);
+            drawFlowPacketsOnSquare(radius, ticks * (0.020D + ring * 0.004D) + ring * 0.19D, 6,
+                    RIBBON_BOLD);
 
             setTechUniforms(shader, ticks, 9.0F, 2.7F + ring * 0.20F, WHITE, color, MAGENTA,
                     0.10F, 1.24F, (float) radius);
-            GlStateManager.glLineWidth(1.0F);
-            drawFlowPacketsOnSquare(radius * 0.82D, -ticks * (0.017D + ring * 0.003D), 4);
+            drawFlowPacketsOnSquare(radius * 0.82D, -ticks * (0.017D + ring * 0.003D), 4,
+                    RIBBON_NORMAL);
             GlStateManager.popMatrix();
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -137,11 +135,9 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
             drawShaderSphere(size, 7, 8);
             setTechUniforms(shader, ticks, 9.0F, 3.2F, color, WHITE, BLUE,
                     0.08F + pulse * 0.08F, 1.18F, 0.18F);
-            GlStateManager.glLineWidth(0.9F);
-            drawNodePin(0.18D);
+            drawNodePin(0.18D, RIBBON_THIN);
             GlStateManager.popMatrix();
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -153,69 +149,62 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
         GlStateManager.rotate(45.0F - ticks * 0.020F, 0.0F, 1.0F, 0.0F);
         setTechUniforms(shader, ticks, 9.0F, 4.0F, CYAN, MAGENTA, WHITE,
                 0.055F + pulse * 0.035F, 1.08F, 1.18F);
-        GlStateManager.glLineWidth(1.05F);
-        drawVerticalCircuitCage(1.18D, 1.10D);
+        drawVerticalCircuitCage(1.18D, 1.10D, RIBBON_NORMAL);
 
         setTechUniforms(shader, ticks, 9.0F, 4.4F, WHITE, CYAN, MAGENTA,
                 0.11F + pulse * 0.06F, 1.30F, 0.90F);
-        GlStateManager.glLineWidth(1.4F);
-        drawRisingScanDiamond(0.90D + pulse * 0.06D, ticks * 0.012D);
+        drawRisingScanDiamond(0.90D + pulse * 0.06D, ticks * 0.012D, RIBBON_MEDIUM);
         GlStateManager.popMatrix();
 
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
-    private static void drawSquareFrame(double radius) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addPosition(buffer, -radius, 0.0D, -radius, 0.0D, 0.0D);
-        addPosition(buffer, radius, 0.0D, -radius, 1.0D, 0.0D);
-        addPosition(buffer, radius, 0.0D, radius, 1.0D, 1.0D);
-        addPosition(buffer, -radius, 0.0D, radius, 0.0D, 1.0D);
-        tessellator.draw();
+    private static void drawSquareFrame(double radius, double width) {
+        drawShaderLine(-radius, 0.0D, -radius, radius, 0.0D, -radius, width);
+        drawShaderLine(radius, 0.0D, -radius, radius, 0.0D, radius, width);
+        drawShaderLine(radius, 0.0D, radius, -radius, 0.0D, radius, width);
+        drawShaderLine(-radius, 0.0D, radius, -radius, 0.0D, -radius, width);
     }
 
-    private static void drawCornerTicks(double radius, double length) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+    private static void drawCornerTicks(double radius, double length, double width) {
         for (int corner = 0; corner < 4; corner++) {
             double sx = corner < 2 ? 1.0D : -1.0D;
             double sz = corner == 0 || corner == 3 ? 1.0D : -1.0D;
-            addLine(buffer, sx * radius, 0.0D, sz * (radius - length), sx * radius, 0.0D, sz * radius);
-            addLine(buffer, sx * (radius - length), 0.0D, sz * radius, sx * radius, 0.0D, sz * radius);
+            drawShaderLine(sx * radius, 0.0D, sz * (radius - length), sx * radius, 0.0D, sz * radius,
+                    width);
+            drawShaderLine(sx * (radius - length), 0.0D, sz * radius, sx * radius, 0.0D, sz * radius,
+                    width);
         }
-        tessellator.draw();
     }
 
-    private static void drawFlowPacketsOnSquare(double radius, double phase, int count) {
+    private static void drawFlowPacketsOnSquare(double radius, double phase, int count, double width) {
         for (int i = 0; i < count; i++) {
             double progress = fract(phase + i / (double) count);
             double end = fract(progress + 0.075D);
-            drawSquarePathSegment(radius, progress, end);
+            drawSquarePathSegment(radius, progress, end, width);
         }
     }
 
-    private static void drawSquarePathSegment(double radius, double start, double end) {
+    private static void drawSquarePathSegment(double radius, double start, double end, double width) {
         int steps = end < start ? 2 : 1;
         double segmentStart = start;
         for (int i = 0; i < steps; i++) {
             double segmentEnd = i == 0 && end < start ? 1.0D : end;
-            drawSquarePathStrip(radius, segmentStart, segmentEnd, 4);
+            drawSquarePathStrip(radius, segmentStart, segmentEnd, 4, width);
             segmentStart = 0.0D;
         }
     }
 
-    private static void drawSquarePathStrip(double radius, double start, double end, int segments) {
+    private static void drawSquarePathStrip(double radius, double start, double end, int segments, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
         for (int i = 0; i <= segments; i++) {
             double progress = lerp(start, end, i / (double) segments);
             double[] point = squarePoint(radius, progress);
-            addPosition(buffer, point[0], 0.0D, point[1], i / (double) segments, 0.5D);
+            double[] tangent = squareTangent(progress);
+            addFlatRibbonVertexPair(buffer, point[0], 0.0D, point[1], tangent[0], tangent[1],
+                    width, i / (double) segments);
         }
         tessellator.draw();
     }
@@ -236,47 +225,65 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
         return new double[]{-radius, lerp(radius, -radius, local)};
     }
 
-    private static void drawNodePin(double radius) {
-        drawShaderLine(-radius, 0.0D, 0.0D, radius, 0.0D, 0.0D);
-        drawShaderLine(0.0D, 0.0D, -radius, 0.0D, 0.0D, radius);
+    private static double[] squareTangent(double progress) {
+        double side = fract(progress) * 4.0D;
+        int edge = (int) Math.floor(side);
+        if (edge == 0) {
+            return new double[]{1.0D, 0.0D};
+        }
+        if (edge == 1) {
+            return new double[]{0.0D, 1.0D};
+        }
+        if (edge == 2) {
+            return new double[]{-1.0D, 0.0D};
+        }
+        return new double[]{0.0D, -1.0D};
     }
 
-    private static void drawVerticalCircuitCage(double radius, double halfHeight) {
+    private static void drawNodePin(double radius, double width) {
+        drawShaderLine(-radius, 0.0D, 0.0D, radius, 0.0D, 0.0D, width);
+        drawShaderLine(0.0D, 0.0D, -radius, 0.0D, 0.0D, radius, width);
+    }
+
+    private static void drawVerticalCircuitCage(double radius, double halfHeight, double width) {
         for (int i = 0; i < 4; i++) {
             double angle = Math.PI * 0.25D + TWO_PI * i / 4.0D;
             double x = Math.cos(angle) * radius;
             double z = Math.sin(angle) * radius;
-            drawShaderLine(x, -halfHeight, z, x, halfHeight, z);
-            drawShaderLine(x * 0.72D, -halfHeight * 0.42D, z * 0.72D, x, -halfHeight * 0.12D, z);
-            drawShaderLine(x * 0.72D, halfHeight * 0.42D, z * 0.72D, x, halfHeight * 0.12D, z);
+            drawShaderLine(x, -halfHeight, z, x, halfHeight, z, width);
+            drawShaderLine(x * 0.72D, -halfHeight * 0.42D, z * 0.72D, x, -halfHeight * 0.12D, z,
+                    width * 0.82D);
+            drawShaderLine(x * 0.72D, halfHeight * 0.42D, z * 0.72D, x, halfHeight * 0.12D, z,
+                    width * 0.82D);
         }
     }
 
-    private static void drawRisingScanDiamond(double radius, double phase) {
+    private static void drawRisingScanDiamond(double radius, double phase, double width) {
         double y = lerp(-0.78D, 0.78D, fract(phase));
-        drawShaderLine(0.0D, y, -radius, radius, y, 0.0D);
-        drawShaderLine(radius, y, 0.0D, 0.0D, y, radius);
-        drawShaderLine(0.0D, y, radius, -radius, y, 0.0D);
-        drawShaderLine(-radius, y, 0.0D, 0.0D, y, -radius);
+        drawShaderLine(0.0D, y, -radius, radius, y, 0.0D, width);
+        drawShaderLine(radius, y, 0.0D, 0.0D, y, radius, width);
+        drawShaderLine(0.0D, y, radius, -radius, y, 0.0D, width);
+        drawShaderLine(-radius, y, 0.0D, 0.0D, y, -radius, width);
     }
 
-    private static void drawShaderCircle(double radius, int segments) {
+    private static void drawShaderCircle(double radius, int segments, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        for (int i = 0; i < segments; i++) {
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i <= segments; i++) {
             double progress = i / (double) segments;
             double angle = TWO_PI * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
+            addRingRibbonVertexPair(buffer, radius, angle, width, progress);
         }
         tessellator.draw();
     }
 
-    private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1) {
+    private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1,
+                                       double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addLine(buffer, x0, y0, z0, x1, y1, z1);
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        addLineRibbon(buffer, x0, y0, z0, x1, y1, z1, width);
         tessellator.draw();
     }
 
@@ -311,10 +318,60 @@ public class RenderNeonCircuitCore extends RenderCelestialEffectBase<TileScalabl
                 .endVertex();
     }
 
-    private static void addLine(BufferBuilder buffer, double x0, double y0, double z0,
-                                double x1, double y1, double z1) {
-        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
-        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
+    private static void addRingRibbonVertexPair(BufferBuilder buffer, double radius, double angle,
+                                                double width, double progress) {
+        double halfWidth = width * 0.5D;
+        double inner = Math.max(0.0D, radius - halfWidth);
+        double outer = radius + halfWidth;
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        addPosition(buffer, cos * outer, 0.0D, sin * outer, progress, 1.0D);
+        addPosition(buffer, cos * inner, 0.0D, sin * inner, progress, 0.0D);
+    }
+
+    private static void addFlatRibbonVertexPair(BufferBuilder buffer, double x, double y, double z,
+                                                double tangentX, double tangentZ, double width,
+                                                double progress) {
+        double sideX = -tangentZ * width * 0.5D;
+        double sideZ = tangentX * width * 0.5D;
+        addPosition(buffer, x - sideX, y, z - sideZ, progress, 0.0D);
+        addPosition(buffer, x + sideX, y, z + sideZ, progress, 1.0D);
+    }
+
+    private static void addLineRibbon(BufferBuilder buffer, double x0, double y0, double z0,
+                                      double x1, double y1, double z1, double width) {
+        double dx = x1 - x0;
+        double dy = y1 - y0;
+        double dz = z1 - z0;
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (length <= 1.0E-5D || width <= 0.0D) {
+            return;
+        }
+
+        dx /= length;
+        dy /= length;
+        dz /= length;
+        double upX = Math.abs(dy) > 0.92D ? 1.0D : 0.0D;
+        double upY = Math.abs(dy) > 0.92D ? 0.0D : 1.0D;
+        double sideX = dy * 0.0D - dz * upY;
+        double sideY = dz * upX - dx * 0.0D;
+        double sideZ = dx * upY - dy * upX;
+        double sideLength = Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+        if (sideLength <= 1.0E-5D) {
+            sideX = 1.0D;
+            sideY = 0.0D;
+            sideZ = 0.0D;
+            sideLength = 1.0D;
+        }
+
+        double halfWidth = width * 0.5D / sideLength;
+        sideX *= halfWidth;
+        sideY *= halfWidth;
+        sideZ *= halfWidth;
+        addPosition(buffer, x0 - sideX, y0 - sideY, z0 - sideZ, 0.0D, 0.0D);
+        addPosition(buffer, x0 + sideX, y0 + sideY, z0 + sideZ, 0.0D, 1.0D);
+        addPosition(buffer, x1 - sideX, y1 - sideY, z1 - sideZ, 1.0D, 0.0D);
+        addPosition(buffer, x1 + sideX, y1 + sideY, z1 + sideZ, 1.0D, 1.0D);
     }
 
     private static void addPosition(BufferBuilder buffer, double x, double y, double z, double u, double v) {

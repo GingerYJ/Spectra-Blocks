@@ -24,6 +24,11 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
     private static final float PARTICLE_SPEED = 0.048F;
     private static final float ARC_CYCLE_SPEED = 0.023F;
     private static final double TWO_PI = Math.PI * 2.0D;
+    private static final double WIRE_HALF_WIDTH = 0.014D;
+    private static final double BAND_CORE_HALF_WIDTH = 0.024D;
+    private static final double LIGHTNING_WIDE_HALF_WIDTH = 0.034D;
+    private static final double LIGHTNING_CORE_HALF_WIDTH = 0.016D;
+    private static final double EPSILON = 1.0E-5D;
 
     @Override
     public void render(TilePlasmaStorm te, double x, double y, double z,
@@ -82,7 +87,6 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
                 GlStateManager.disableBlend();
             }
             useAlphaBlend();
-            GlStateManager.glLineWidth(1.0F);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
@@ -116,9 +120,7 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
 
         setTechUniforms(shader, ticks, 0.0F, 2.0F, 0x77F3FF, 0xBD6DFF, 0xFFFFFF,
                 0.11F + pulse * 0.050F, 1.10F, (float) STORM_RADIUS);
-        GlStateManager.glLineWidth(1.6F);
-        drawShaderWireSphere(STORM_RADIUS * 0.98D, 9, 16);
-        GlStateManager.glLineWidth(1.0F);
+        drawShaderWireSphere(STORM_RADIUS * 0.98D, 9, 16, WIRE_HALF_WIDTH);
         useAlphaBlend();
     }
 
@@ -145,9 +147,7 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
 
         setTechUniforms(shader, ticks, 0.0F, 2.0F, color, 0xFFFFFF, 0x43F1FF,
                 0.22F + pulse * 0.12F, 1.25F, (float) radius);
-        GlStateManager.glLineWidth(2.4F);
-        drawShaderCircle(radius, STORM_SEGMENTS);
-        GlStateManager.glLineWidth(1.0F);
+        drawShaderCircle(radius, BAND_CORE_HALF_WIDTH, STORM_SEGMENTS);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -193,18 +193,15 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
 
             setTechUniforms(shader, ticks, 0.0F, 4.0F, 0xC7FBFF, 0xFFFFFF, 0xC678FF,
                     flash * 0.26F, 1.42F, (float) radius);
-            GlStateManager.glLineWidth(3.0F);
             drawJaggedArc(radius, angle, length, y, 0.36D + (i % 2) * 0.20D,
-                    0.115D, 8, ticks, 97 + i * 31);
+                    0.115D, 8, ticks, 97 + i * 31, LIGHTNING_WIDE_HALF_WIDTH);
 
             setTechUniforms(shader, ticks, 0.0F, 4.0F, i % 2 == 0 ? 0xFFFFFF : 0xC678FF,
                     0xC7FBFF, 0xFFFFFF, flash * 0.55F, 1.55F, (float) radius);
-            GlStateManager.glLineWidth(1.4F);
             drawJaggedArc(radius, angle, length, y, 0.36D + (i % 2) * 0.20D,
-                    0.090D, 8, ticks, 197 + i * 31);
+                    0.090D, 8, ticks, 197 + i * 31, LIGHTNING_CORE_HALF_WIDTH);
         }
 
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -229,7 +226,7 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
         tessellator.draw();
     }
 
-    private static void drawShaderWireSphere(double radius, int gridLat, int gridLon) {
+    private static void drawShaderWireSphere(double radius, int gridLat, int gridLon, double halfWidth) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
 
@@ -237,26 +234,35 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
             double theta = Math.PI * lat / gridLat;
             double y = radius * Math.cos(theta);
             double horizontalRadius = radius * Math.sin(theta);
-            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            for (int lon = 0; lon < gridLon; lon++) {
+            double innerRadius = Math.max(0.0D, horizontalRadius - halfWidth);
+            double outerRadius = horizontalRadius + halfWidth;
+            buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            for (int lon = 0; lon <= gridLon; lon++) {
                 double phi = TWO_PI * lon / gridLon;
-                addPosition(buffer, horizontalRadius * Math.cos(phi), y, horizontalRadius * Math.sin(phi),
-                        lon / (double) gridLon, lat / (double) gridLat, 0.0D, 1.0D, 0.0D);
+                double progress = lon / (double) gridLon;
+                double cos = Math.cos(phi);
+                double sin = Math.sin(phi);
+                addPosition(buffer, outerRadius * cos, y, outerRadius * sin,
+                        progress, 1.0D, 0.0D, 1.0D, 0.0D);
+                addPosition(buffer, innerRadius * cos, y, innerRadius * sin,
+                        progress, 0.0D, 0.0D, 1.0D, 0.0D);
             }
             tessellator.draw();
         }
 
         for (int lon = 0; lon < gridLon; lon++) {
             double phi = TWO_PI * lon / gridLon;
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            int pointCount = gridLat + 1;
+            double[] xs = new double[pointCount];
+            double[] ys = new double[pointCount];
+            double[] zs = new double[pointCount];
             for (int lat = 0; lat <= gridLat; lat++) {
                 double theta = Math.PI * lat / gridLat;
-                addPosition(buffer, radius * Math.sin(theta) * Math.cos(phi),
-                        radius * Math.cos(theta),
-                        radius * Math.sin(theta) * Math.sin(phi),
-                        lon / (double) gridLon, lat / (double) gridLat, 0.0D, 1.0D, 0.0D);
+                xs[lat] = radius * Math.sin(theta) * Math.cos(phi);
+                ys[lat] = radius * Math.cos(theta);
+                zs[lat] = radius * Math.sin(theta) * Math.sin(phi);
             }
-            tessellator.draw();
+            drawPolylineRibbon(xs, ys, zs, pointCount, false, halfWidth);
         }
     }
 
@@ -277,24 +283,32 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
         tessellator.draw();
     }
 
-    private static void drawShaderCircle(double radius, int segments) {
+    private static void drawShaderCircle(double radius, double halfWidth, int segments) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        for (int i = 0; i < segments; i++) {
+        double innerRadius = Math.max(0.0D, radius - halfWidth);
+        double outerRadius = radius + halfWidth;
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i <= segments; i++) {
             double progress = i / (double) segments;
             double angle = TWO_PI * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius,
-                    progress, 0.5D, 0.0D, 1.0D, 0.0D);
+            double cos = Math.cos(angle);
+            double sin = Math.sin(angle);
+            addPosition(buffer, cos * outerRadius, 0.0D, sin * outerRadius,
+                    progress, 1.0D, 0.0D, 1.0D, 0.0D);
+            addPosition(buffer, cos * innerRadius, 0.0D, sin * innerRadius,
+                    progress, 0.0D, 0.0D, 1.0D, 0.0D);
         }
         tessellator.draw();
     }
 
     private static void drawJaggedArc(double radius, double startAngle, double length, double y,
-                                      double height, double jitter, int segments, float ticks, int seed) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+                                      double height, double jitter, int segments, float ticks, int seed,
+                                      double halfWidth) {
+        int pointCount = segments + 1;
+        double[] xs = new double[pointCount];
+        double[] ys = new double[pointCount];
+        double[] zs = new double[pointCount];
         for (int i = 0; i <= segments; i++) {
             double progress = i / (double) segments;
             double localJitter = Math.sin(seed * 0.37D + i * 4.91D + ticks * 0.41D) * jitter;
@@ -302,10 +316,11 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
             double localRadius = radius + Math.sin(seed + i * 1.7D) * jitter * 2.6D;
             double localY = y + Math.sin(progress * Math.PI) * height
                     + Math.cos(seed * 0.23D + i * 2.13D + ticks * 0.22D) * jitter;
-            addPosition(buffer, Math.cos(angle) * localRadius, localY, Math.sin(angle) * localRadius,
-                    progress, 0.5D, 0.0D, 1.0D, 0.0D);
+            xs[i] = Math.cos(angle) * localRadius;
+            ys[i] = localY;
+            zs[i] = Math.sin(angle) * localRadius;
         }
-        tessellator.draw();
+        drawPolylineRibbon(xs, ys, zs, pointCount, false, halfWidth);
     }
 
     private static void addSphereVertex(BufferBuilder buffer, double radius, double theta, double phi,
@@ -325,6 +340,43 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
                 .tex(u, v)
                 .normal((float) normalX, (float) normalY, (float) normalZ)
                 .endVertex();
+    }
+
+    private static void drawPolylineRibbon(double[] xs, double[] ys, double[] zs, int pointCount,
+                                           boolean closed, double halfWidth) {
+        if (pointCount < 2) {
+            return;
+        }
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        int vertexCount = closed ? pointCount + 1 : pointCount;
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i < vertexCount; i++) {
+            int index = closed ? i % pointCount : i;
+            int previous = closed ? (index + pointCount - 1) % pointCount : Math.max(0, index - 1);
+            int next = closed ? (index + 1) % pointCount : Math.min(pointCount - 1, index + 1);
+            double[] side = sideVector(xs[next] - xs[previous], ys[next] - ys[previous], zs[next] - zs[previous]);
+            double progress = vertexCount <= 1 ? 0.0D : i / (double) (vertexCount - 1);
+            addPosition(buffer, xs[index] + side[0] * halfWidth, ys[index] + side[1] * halfWidth,
+                    zs[index] + side[2] * halfWidth, progress, 1.0D, 0.0D, 1.0D, 0.0D);
+            addPosition(buffer, xs[index] - side[0] * halfWidth, ys[index] - side[1] * halfWidth,
+                    zs[index] - side[2] * halfWidth, progress, 0.0D, 0.0D, 1.0D, 0.0D);
+        }
+        tessellator.draw();
+    }
+
+    private static double[] sideVector(double dx, double dy, double dz) {
+        double axisX = Math.abs(dy) > 0.82D ? 1.0D : 0.0D;
+        double axisY = Math.abs(dy) > 0.82D ? 0.0D : 1.0D;
+        double sideX = -dz * axisY;
+        double sideY = dz * axisX;
+        double sideZ = dx * axisY - dy * axisX;
+        double length = Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+        if (length < EPSILON) {
+            return new double[]{1.0D, 0.0D, 0.0D};
+        }
+        return new double[]{sideX / length, sideY / length, sideZ / length};
     }
 
     private static void setTechUniforms(ShaderProgram shader, float ticks, float effect, float layer,

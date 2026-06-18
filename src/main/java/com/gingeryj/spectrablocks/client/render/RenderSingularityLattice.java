@@ -63,10 +63,8 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
 
             setTechUniforms(techShader, ticks, 6.0F, 0.2F, 0x7DDFFF, 0x7A56FF, 0xFFFFFF,
                     0.065F + breath * 0.045F, 1.08F, 0.58F);
-            GlStateManager.glLineWidth(0.9F);
             drawTiltedRing(0.58D + breath * 0.030D, ticks * 0.026F, 71.0F);
             drawTiltedRing(0.50D + flicker * 0.022D, -ticks * 0.032F, -53.0F);
-            GlStateManager.glLineWidth(1.0F);
             useAlphaBlend();
         } finally {
             techShader.end();
@@ -85,7 +83,6 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
             GlStateManager.rotate(11.0F + (float) Math.sin(ticks * 0.021D) * 5.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate((float) Math.sin(ticks * 0.017D) * 4.0F, 0.0F, 0.0F, 1.0F);
 
-            GlStateManager.glLineWidth(0.85F);
             for (int ring = 0; ring < RING_COUNT; ring++) {
                 for (int node = 0; node < NODES_PER_RING; node++) {
                     if ((node + ring) % 3 != 1) {
@@ -104,7 +101,6 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
             }
 
             GlStateManager.popMatrix();
-            GlStateManager.glLineWidth(1.0F);
             useAlphaBlend();
         } finally {
             shader.end();
@@ -142,12 +138,10 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
 
                 setTechUniforms(shader, ticks + i * 0.19F, 6.0F, 3.0F + i * 0.04F,
                         color, 0x79DFFF, 0xFFFFFF, 0.13F + alpha * 0.32F, 1.45F, 0.42F);
-                GlStateManager.glLineWidth(1.05F + alpha * 0.50F);
                 drawShaderLine(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
             }
 
             GlStateManager.popMatrix();
-            GlStateManager.glLineWidth(1.0F);
             useAlphaBlend();
         } finally {
             shader.end();
@@ -264,24 +258,11 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
     }
 
     private static void drawShaderCircle(double radius, int segments) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        for (int i = 0; i < segments; i++) {
-            double progress = i / (double) segments;
-            double angle = TWO_PI * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
-        }
-        tessellator.draw();
+        RenderHelper.drawTexturedCircle(radius, segments, 0.014D);
     }
 
     private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
-        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
-        tessellator.draw();
+        RenderHelper.drawTexturedLine(x0, y0, z0, x1, y1, z1, 0.014D);
     }
 
     private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {

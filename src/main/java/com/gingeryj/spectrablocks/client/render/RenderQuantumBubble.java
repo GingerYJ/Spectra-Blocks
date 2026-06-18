@@ -33,6 +33,12 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
     private static final int SECONDARY_COLOR = 0x73A7FF;
     private static final int WARNING_COLOR = 0xFFD86E;
     private static final double TWO_PI = Math.PI * 2.0D;
+    private static final double GRID_WIDE_HALF_WIDTH = 0.021D;
+    private static final double GRID_CORE_HALF_WIDTH = 0.011D;
+    private static final double ORBIT_WIDE_HALF_WIDTH = 0.019D;
+    private static final double ORBIT_CORE_HALF_WIDTH = 0.011D;
+    private static final double SPARK_HALF_WIDTH = 0.006D;
+    private static final double EPSILON = 1.0E-5D;
 
     @Override
     public void render(TileQuantumBubble te, double x, double y, double z,
@@ -90,7 +96,6 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
                 GlStateManager.disableBlend();
             }
             useAlphaBlend();
-            GlStateManager.glLineWidth(1.0F);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
@@ -119,53 +124,52 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
 
         setTechUniforms(shader, ticks, 1.0F, 2.0F, GRID_COLOR, SECONDARY_COLOR, POINT_COLOR,
                 GRID_ALPHA * 0.28F, 1.12F, (float) BUBBLE_RADIUS);
-        GlStateManager.glLineWidth(2.6F);
-        drawGrid(ticks, 0.055D);
+        drawGrid(ticks, 0.055D, GRID_WIDE_HALF_WIDTH);
 
         setTechUniforms(shader, ticks + 11.0F, 1.0F, 2.0F, GRID_COLOR, SECONDARY_COLOR, POINT_COLOR,
                 GRID_ALPHA, 1.35F, (float) BUBBLE_RADIUS);
-        GlStateManager.glLineWidth(1.2F);
-        drawGrid(ticks + 11.0F, 0.035D);
+        drawGrid(ticks + 11.0F, 0.035D, GRID_CORE_HALF_WIDTH);
 
-        GlStateManager.glLineWidth(1.0F);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawGrid(float ticks, double jitter) {
+    private void drawGrid(float ticks, double jitter, double halfWidth) {
         for (int lat = 1; lat < GRID_LAT_LINES; lat++) {
             double theta = Math.PI * lat / GRID_LAT_LINES;
             double y = BUBBLE_RADIUS * Math.cos(theta);
             double radius = BUBBLE_RADIUS * Math.sin(theta);
-            drawLatitude(radius, y, ticks, lat * 1.3D, jitter);
+            drawLatitude(radius, y, ticks, lat * 1.3D, jitter, halfWidth);
         }
 
         for (int lon = 0; lon < GRID_LON_LINES; lon++) {
             double phi = TWO_PI * lon / GRID_LON_LINES;
-            drawLongitude(phi, ticks, lon * 0.91D, jitter);
+            drawLongitude(phi, ticks, lon * 0.91D, jitter, halfWidth);
         }
     }
 
-    private void drawLatitude(double radius, double y, float ticks, double seed, double jitter) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+    private void drawLatitude(double radius, double y, float ticks, double seed, double jitter, double halfWidth) {
+        double[] xs = new double[GRID_SEGMENTS];
+        double[] ys = new double[GRID_SEGMENTS];
+        double[] zs = new double[GRID_SEGMENTS];
         for (int i = 0; i < GRID_SEGMENTS; i++) {
             double progress = i / (double) GRID_SEGMENTS;
             double angle = TWO_PI * progress;
             double hop = Math.sin(angle * 8.0D + ticks * 0.080D + seed) * jitter;
             double localRadius = radius + hop;
             double localY = y + Math.cos(angle * 5.0D - ticks * 0.060D + seed) * jitter * 0.45D;
-            addPosition(buffer, Math.cos(angle) * localRadius, localY, Math.sin(angle) * localRadius,
-                    progress, (localY / BUBBLE_RADIUS + 1.0D) * 0.5D, 0.0D, 1.0D, 0.0D);
+            xs[i] = Math.cos(angle) * localRadius;
+            ys[i] = localY;
+            zs[i] = Math.sin(angle) * localRadius;
         }
-        tessellator.draw();
+        drawPolylineRibbon(xs, ys, zs, GRID_SEGMENTS, true, halfWidth);
     }
 
-    private void drawLongitude(double phi, float ticks, double seed, double jitter) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+    private void drawLongitude(double phi, float ticks, double seed, double jitter, double halfWidth) {
+        int pointCount = GRID_SEGMENTS + 1;
+        double[] xs = new double[pointCount];
+        double[] ys = new double[pointCount];
+        double[] zs = new double[pointCount];
         for (int i = 0; i <= GRID_SEGMENTS; i++) {
             double progress = i / (double) GRID_SEGMENTS;
             double theta = Math.PI * progress;
@@ -174,10 +178,11 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
             double horizontal = Math.sin(theta) * radius;
             double y = Math.cos(theta) * radius;
             double wobblePhi = phi + Math.sin(theta * 4.0D + ticks * 0.045D + seed) * 0.018D;
-            addPosition(buffer, Math.cos(wobblePhi) * horizontal, y, Math.sin(wobblePhi) * horizontal,
-                    phi / TWO_PI, progress, 0.0D, 1.0D, 0.0D);
+            xs[i] = Math.cos(wobblePhi) * horizontal;
+            ys[i] = y;
+            zs[i] = Math.sin(wobblePhi) * horizontal;
         }
-        tessellator.draw();
+        drawPolylineRibbon(xs, ys, zs, pointCount, false, halfWidth);
     }
 
     private void drawOrbitArcs(ShaderProgram shader, float ticks) {
@@ -190,29 +195,28 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
             GlStateManager.pushMatrix();
             GlStateManager.rotate(36.0F + i * 28.0F + ticks * (0.22F + i * 0.04F), 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(i * 61.0F - ticks * 0.31F, 0.0F, 1.0F, 0.0F);
-            GlStateManager.glLineWidth(i == 0 ? 2.2F : 1.2F);
             drawOrbitArc(BUBBLE_RADIUS * (0.78D + i * 0.055D),
-                    TWO_PI * (0.35D + (i % 3) * 0.08D), ticks, i * 2.4D);
-            GlStateManager.glLineWidth(1.0F);
+                    TWO_PI * (0.35D + (i % 3) * 0.08D), ticks, i * 2.4D,
+                    i == 0 ? ORBIT_WIDE_HALF_WIDTH : ORBIT_CORE_HALF_WIDTH);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();
     }
 
-    private void drawOrbitArc(double radius, double sweep, float ticks, double seed) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
+    private void drawOrbitArc(double radius, double sweep, float ticks, double seed, double halfWidth) {
         double start = ticks * 0.018D + seed;
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        int pointCount = ORBIT_SEGMENTS + 1;
+        double[] xs = new double[pointCount];
+        double[] ys = new double[pointCount];
+        double[] zs = new double[pointCount];
         for (int i = 0; i <= ORBIT_SEGMENTS; i++) {
             double progress = i / (double) ORBIT_SEGMENTS;
             double angle = start + progress * sweep;
-            addPosition(buffer, Math.cos(angle) * radius,
-                    Math.sin(angle * 3.0D + seed) * 0.026D,
-                    Math.sin(angle) * radius,
-                    progress, 0.5D, 0.0D, 1.0D, 0.0D);
+            xs[i] = Math.cos(angle) * radius;
+            ys[i] = Math.sin(angle * 3.0D + seed) * 0.026D;
+            zs[i] = Math.sin(angle) * radius;
         }
-        tessellator.draw();
+        drawPolylineRibbon(xs, ys, zs, pointCount, false, halfWidth);
     }
 
     private void drawFlashPoints(ShaderProgram shader, float ticks) {
@@ -239,7 +243,6 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
             GlStateManager.pushMatrix();
             GlStateManager.translate(px, py, pz);
             drawShaderSphere(size, 7, 7);
-            GlStateManager.glLineWidth(1.0F);
             drawEnergySpark(size * 2.2D);
             GlStateManager.popMatrix();
         }
@@ -249,13 +252,10 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
     private void drawEnergySpark(double size) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addPosition(buffer, -size, 0.0D, 0.0D, 0.0D, 0.5D, 0.0D, 1.0D, 0.0D);
-        addPosition(buffer, size, 0.0D, 0.0D, 1.0D, 0.5D, 0.0D, 1.0D, 0.0D);
-        addPosition(buffer, 0.0D, -size, 0.0D, 0.5D, 0.0D, 0.0D, 1.0D, 0.0D);
-        addPosition(buffer, 0.0D, size, 0.0D, 0.5D, 1.0D, 0.0D, 1.0D, 0.0D);
-        addPosition(buffer, 0.0D, 0.0D, -size, 0.5D, 0.0D, 0.0D, 1.0D, 0.0D);
-        addPosition(buffer, 0.0D, 0.0D, size, 0.5D, 1.0D, 0.0D, 1.0D, 0.0D);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        addRibbonSegment(buffer, -size, 0.0D, 0.0D, size, 0.0D, 0.0D, SPARK_HALF_WIDTH);
+        addRibbonSegment(buffer, 0.0D, -size, 0.0D, 0.0D, size, 0.0D, SPARK_HALF_WIDTH);
+        addRibbonSegment(buffer, 0.0D, 0.0D, -size, 0.0D, 0.0D, size, SPARK_HALF_WIDTH);
         tessellator.draw();
     }
 
@@ -297,6 +297,57 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
                 .tex(u, v)
                 .normal((float) normalX, (float) normalY, (float) normalZ)
                 .endVertex();
+    }
+
+    private static void drawPolylineRibbon(double[] xs, double[] ys, double[] zs, int pointCount,
+                                           boolean closed, double halfWidth) {
+        if (pointCount < 2) {
+            return;
+        }
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        int vertexCount = closed ? pointCount + 1 : pointCount;
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i < vertexCount; i++) {
+            int index = closed ? i % pointCount : i;
+            int previous = closed ? (index + pointCount - 1) % pointCount : Math.max(0, index - 1);
+            int next = closed ? (index + 1) % pointCount : Math.min(pointCount - 1, index + 1);
+            double[] side = sideVector(xs[next] - xs[previous], ys[next] - ys[previous], zs[next] - zs[previous]);
+            double progress = vertexCount <= 1 ? 0.0D : i / (double) (vertexCount - 1);
+            addPosition(buffer, xs[index] + side[0] * halfWidth, ys[index] + side[1] * halfWidth,
+                    zs[index] + side[2] * halfWidth, progress, 1.0D, 0.0D, 1.0D, 0.0D);
+            addPosition(buffer, xs[index] - side[0] * halfWidth, ys[index] - side[1] * halfWidth,
+                    zs[index] - side[2] * halfWidth, progress, 0.0D, 0.0D, 1.0D, 0.0D);
+        }
+        tessellator.draw();
+    }
+
+    private static void addRibbonSegment(BufferBuilder buffer, double x1, double y1, double z1,
+                                         double x2, double y2, double z2, double halfWidth) {
+        double[] side = sideVector(x2 - x1, y2 - y1, z2 - z1);
+        double sx = side[0] * halfWidth;
+        double sy = side[1] * halfWidth;
+        double sz = side[2] * halfWidth;
+        addPosition(buffer, x1 + sx, y1 + sy, z1 + sz, 0.0D, 1.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x2 + sx, y2 + sy, z2 + sz, 1.0D, 1.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x2 - sx, y2 - sy, z2 - sz, 1.0D, 0.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x1 + sx, y1 + sy, z1 + sz, 0.0D, 1.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x2 - sx, y2 - sy, z2 - sz, 1.0D, 0.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x1 - sx, y1 - sy, z1 - sz, 0.0D, 0.0D, 0.0D, 1.0D, 0.0D);
+    }
+
+    private static double[] sideVector(double dx, double dy, double dz) {
+        double axisX = Math.abs(dy) > 0.82D ? 1.0D : 0.0D;
+        double axisY = Math.abs(dy) > 0.82D ? 0.0D : 1.0D;
+        double sideX = -dz * axisY;
+        double sideY = dz * axisX;
+        double sideZ = dx * axisY - dy * axisX;
+        double length = Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+        if (length < EPSILON) {
+            return new double[]{1.0D, 0.0D, 0.0D};
+        }
+        return new double[]{sideX / length, sideY / length, sideZ / length};
     }
 
     private static void setTechUniforms(ShaderProgram shader, float ticks, float effect, float layer,

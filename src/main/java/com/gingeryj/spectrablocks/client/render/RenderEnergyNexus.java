@@ -16,6 +16,11 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
     private static final double TWO_PI = Math.PI * 2.0D;
     private static final int NODE_COUNT = 4;
     private static final int ENERGY_DOT_COUNT = 36;
+    private static final double RIBBON_THIN = 0.014D;
+    private static final double RIBBON_NORMAL = 0.020D;
+    private static final double RIBBON_MEDIUM = 0.026D;
+    private static final double RIBBON_BOLD = 0.036D;
+    private static final double RIBBON_BEAM = 0.052D;
 
     @Override
     protected void renderCelestialEffect(TileEnergyNexus te, float ticks) {
@@ -44,7 +49,6 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         float pulse = wave(ticks * 0.035D);
 
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.8F);
         for (int i = 0; i < NODE_COUNT; i++) {
             double angle = TWO_PI * i / NODE_COUNT + Math.PI * 0.25D;
             double x = Math.cos(angle) * NODE_RADIUS;
@@ -56,17 +60,18 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
 
             setTechUniforms(shader, ticks, 6.0F, 1.0F, 0x6FEAFF, 0x3A8FFF, 0xD8FFFF,
                     0.16F + pulse * 0.07F, 1.05F, (float) NODE_RADIUS);
-            drawShaderLine(x, -0.58D, z, x, 0.58D, z);
+            drawShaderLine(x, -0.58D, z, x, 0.58D, z, RIBBON_MEDIUM);
             setTechUniforms(shader, ticks, 6.0F, 1.1F, 0x3A8FFF, 0x6FEAFF, 0xD8FFFF,
                     0.13F + pulse * 0.05F, 0.98F, (float) NODE_RADIUS);
-            drawShaderLine(inwardX, -0.50D, inwardZ, x, -0.50D, z);
-            drawShaderLine(inwardX, 0.50D, inwardZ, x, 0.50D, z);
+            drawShaderLine(inwardX, -0.50D, inwardZ, x, -0.50D, z, RIBBON_NORMAL);
+            drawShaderLine(inwardX, 0.50D, inwardZ, x, 0.50D, z, RIBBON_NORMAL);
             setTechUniforms(shader, ticks, 6.0F, 1.2F, 0x8FFFFF, 0x3A8FFF, 0xFFFFFF,
                     0.12F + pulse * 0.04F, 1.05F, (float) NODE_RADIUS);
-            drawShaderLine(x - tangentX, -0.58D, z - tangentZ, x + tangentX, -0.58D, z + tangentZ);
-            drawShaderLine(x - tangentX, 0.58D, z - tangentZ, x + tangentX, 0.58D, z + tangentZ);
+            drawShaderLine(x - tangentX, -0.58D, z - tangentZ, x + tangentX, -0.58D, z + tangentZ,
+                    RIBBON_NORMAL);
+            drawShaderLine(x - tangentX, 0.58D, z - tangentZ, x + tangentX, 0.58D, z + tangentZ,
+                    RIBBON_NORMAL);
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -79,12 +84,10 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         GlStateManager.rotate(ticks * 0.10F, 0.0F, 1.0F, 0.0F);
         setTechUniforms(shader, ticks, 6.0F, 2.0F, 0x55EFFF, 0xD8FFFF, 0x247DFF,
                 0.18F + pulse * 0.04F, 1.10F, 1.05F);
-        GlStateManager.glLineWidth(1.35F);
-        drawDashedRing(1.05D + pulse * 0.012D, 28, ticks * 0.012D);
+        drawDashedRing(1.05D + pulse * 0.012D, 28, ticks * 0.012D, RIBBON_NORMAL);
         setTechUniforms(shader, ticks, 6.0F, 2.1F, 0xD8FFFF, 0x55EFFF, 0x247DFF,
                 0.10F + pulse * 0.03F, 1.00F, 0.92F);
-        GlStateManager.glLineWidth(0.9F);
-        drawDashedRing(0.92D, 18, -ticks * 0.008D);
+        drawDashedRing(0.92D, 18, -ticks * 0.008D, RIBBON_THIN);
         GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
@@ -92,15 +95,12 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         GlStateManager.rotate(-ticks * 0.085F, 0.0F, 1.0F, 0.0F);
         setTechUniforms(shader, ticks, 6.0F, 2.2F, 0x55EFFF, 0xD8FFFF, 0x247DFF,
                 0.16F + pulse * 0.04F, 1.10F, 1.05F);
-        GlStateManager.glLineWidth(1.25F);
-        drawDashedRing(1.05D + pulse * 0.012D, 28, -ticks * 0.010D);
+        drawDashedRing(1.05D + pulse * 0.012D, 28, -ticks * 0.010D, RIBBON_NORMAL);
         setTechUniforms(shader, ticks, 6.0F, 2.3F, 0xD8FFFF, 0x55EFFF, 0x247DFF,
                 0.09F + pulse * 0.03F, 1.00F, 0.92F);
-        GlStateManager.glLineWidth(0.9F);
-        drawDashedRing(0.92D, 18, ticks * 0.007D);
+        drawDashedRing(0.92D, 18, ticks * 0.007D, RIBBON_THIN);
         GlStateManager.popMatrix();
 
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -134,18 +134,14 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
 
         setTechUniforms(shader, ticks, 6.0F, 2.8F, 0xEFFFFF, 0x47EFFF, 0xFFFFFF,
                 0.18F + glowBreath * 0.08F, 1.25F, (float) CORE_RADIUS);
-        GlStateManager.glLineWidth(1.4F);
-        drawCoreLatitudeBands(CORE_RADIUS * (1.36D + glowBreath * 0.08D));
-        GlStateManager.glLineWidth(1.0F);
+        drawCoreLatitudeBands(CORE_RADIUS * (1.36D + glowBreath * 0.08D), RIBBON_NORMAL);
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.34F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(45.0F, 0.0F, 1.0F, 0.0F);
         setTechUniforms(shader, ticks, 6.0F, 3.0F, 0xFFFFFF, 0x47EFFF, 0xAFFFFF,
                 0.14F + breath * 0.10F, 1.26F, 0.58F);
-        GlStateManager.glLineWidth(2.0F);
-        drawDiamondFrame(0.58D + breath * 0.20D, 0.0D);
-        GlStateManager.glLineWidth(1.0F);
+        drawDiamondFrame(0.58D + breath * 0.20D, 0.0D, RIBBON_BOLD);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -169,11 +165,9 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             drawShaderSphere(0.085D, 9, 9);
             setTechUniforms(shader, ticks, 6.0F, 4.2F, color, 0xFFFFFF, 0x74A8FF,
                     0.13F + pulse * 0.08F, 1.20F, 0.58F);
-            GlStateManager.glLineWidth(1.25F);
-            drawShaderLine(0.0D, -0.58D, 0.0D, 0.0D, 0.58D, 0.0D);
-            drawNodeBrace(0.26D, -0.32D, ticks * 0.010D + i * 0.28D);
-            drawNodeBrace(0.26D, 0.32D, -ticks * 0.010D + i * 0.28D);
-            GlStateManager.glLineWidth(1.0F);
+            drawShaderLine(0.0D, -0.58D, 0.0D, 0.0D, 0.58D, 0.0D, RIBBON_NORMAL);
+            drawNodeBrace(0.26D, -0.32D, ticks * 0.010D + i * 0.28D, RIBBON_THIN);
+            drawNodeBrace(0.26D, 0.32D, -ticks * 0.010D + i * 0.28D, RIBBON_THIN);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();
@@ -188,15 +182,12 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
 
             setTechUniforms(shader, ticks, 6.0F, 5.0F, color, 0xFFFFFF, 0x74A8FF,
                     0.10F + pulse * 0.20F, 1.45F, (float) NODE_RADIUS);
-            GlStateManager.glLineWidth(3.0F);
-            drawSegmentedBeam(angle, 0.46D, NODE_RADIUS - 0.18D, 0.0D);
+            drawSegmentedBeam(angle, 0.46D, NODE_RADIUS - 0.18D, 0.0D, RIBBON_BEAM);
             setTechUniforms(shader, ticks, 6.0F, 5.1F, 0xFFFFFF, color, 0xAFFFFF,
                     0.07F + pulse * 0.11F, 1.30F, (float) NODE_RADIUS);
-            GlStateManager.glLineWidth(1.2F);
-            drawSegmentedBeam(angle, 0.70D, NODE_RADIUS + 0.08D, 0.20D);
-            drawSegmentedBeam(angle, 0.70D, NODE_RADIUS + 0.08D, -0.20D);
+            drawSegmentedBeam(angle, 0.70D, NODE_RADIUS + 0.08D, 0.20D, RIBBON_NORMAL);
+            drawSegmentedBeam(angle, 0.70D, NODE_RADIUS + 0.08D, -0.20D, RIBBON_NORMAL);
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -225,9 +216,9 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
                     float fade = (float) Math.sin(progress * Math.PI);
                     double seedSize = 0.012D + ((packet * 5 + lane * 7 + i * 3) % 6) * 0.006D;
                     double size = seedSize + fade * (0.010D + lane * 0.004D);
-                    int particleColor = particleColor(packet, lane, i, color);
+                    int packetColor = packetColor(packet, lane, i, color);
 
-                    setTechUniforms(shader, ticks, 6.0F, 6.0F, particleColor, color, 0xFFFFFF,
+                    setTechUniforms(shader, ticks, 6.0F, 6.0F, packetColor, color, 0xFFFFFF,
                             0.12F + fade * 0.42F + (float) eased * 0.12F, 1.38F, (float) size);
                     GlStateManager.pushMatrix();
                     GlStateManager.translate(cos * radius + tangentX, y, sin * radius + tangentZ);
@@ -257,11 +248,9 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
             GlStateManager.pushMatrix();
             GlStateManager.translate(0.0D, y, 0.0D);
             GlStateManager.rotate((float) Math.toDegrees(angle), 0.0F, 1.0F, 0.0F);
-            GlStateManager.glLineWidth(1.5F + alpha * 1.2F);
-            drawPulseArc(radius, 16);
+            drawPulseArc(radius, 16, RIBBON_MEDIUM + alpha * 0.020D);
             GlStateManager.popMatrix();
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -286,18 +275,18 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         useAlphaBlend();
     }
 
-    private static void drawDiamondFrame(double radius, double y) {
-        drawShaderLine(0.0D, y + radius, 0.0D, radius, y, 0.0D);
-        drawShaderLine(radius, y, 0.0D, 0.0D, y - radius, 0.0D);
-        drawShaderLine(0.0D, y - radius, 0.0D, -radius, y, 0.0D);
-        drawShaderLine(-radius, y, 0.0D, 0.0D, y + radius, 0.0D);
-        drawShaderLine(0.0D, y, radius, radius, y, 0.0D);
-        drawShaderLine(radius, y, 0.0D, 0.0D, y, -radius);
-        drawShaderLine(0.0D, y, -radius, -radius, y, 0.0D);
-        drawShaderLine(-radius, y, 0.0D, 0.0D, y, radius);
+    private static void drawDiamondFrame(double radius, double y, double width) {
+        drawShaderLine(0.0D, y + radius, 0.0D, radius, y, 0.0D, width);
+        drawShaderLine(radius, y, 0.0D, 0.0D, y - radius, 0.0D, width);
+        drawShaderLine(0.0D, y - radius, 0.0D, -radius, y, 0.0D, width);
+        drawShaderLine(-radius, y, 0.0D, 0.0D, y + radius, 0.0D, width);
+        drawShaderLine(0.0D, y, radius, radius, y, 0.0D, width * 0.72D);
+        drawShaderLine(radius, y, 0.0D, 0.0D, y, -radius, width * 0.72D);
+        drawShaderLine(0.0D, y, -radius, -radius, y, 0.0D, width * 0.72D);
+        drawShaderLine(-radius, y, 0.0D, 0.0D, y, radius, width * 0.72D);
     }
 
-    private static void drawNodeBrace(double radius, double y, double phase) {
+    private static void drawNodeBrace(double radius, double y, double phase, double width) {
         int braces = 3;
         int segmentsPerBrace = 4;
         double braceLength = Math.PI * 0.34D;
@@ -308,27 +297,29 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
                 double a0 = start + braceLength * segment / segmentsPerBrace;
                 double a1 = start + braceLength * (segment + 1) / segmentsPerBrace;
                 drawShaderLine(Math.cos(a0) * radius, y, Math.sin(a0) * radius,
-                        Math.cos(a1) * radius, y, Math.sin(a1) * radius);
+                        Math.cos(a1) * radius, y, Math.sin(a1) * radius, width);
             }
 
             double spoke = center;
             drawShaderLine(Math.cos(spoke) * (radius - 0.08D), y, Math.sin(spoke) * (radius - 0.08D),
-                    Math.cos(spoke) * (radius + 0.04D), y, Math.sin(spoke) * (radius + 0.04D));
+                    Math.cos(spoke) * (radius + 0.04D), y, Math.sin(spoke) * (radius + 0.04D),
+                    width * 0.86D);
         }
     }
 
-    private static void drawSegmentedBeam(double angle, double innerRadius, double outerRadius, double y) {
+    private static void drawSegmentedBeam(double angle, double innerRadius, double outerRadius, double y,
+                                          double width) {
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         int segments = 5;
         for (int i = 0; i < segments; i++) {
             double start = innerRadius + (outerRadius - innerRadius) * (i / (double) segments);
             double end = innerRadius + (outerRadius - innerRadius) * ((i + 0.62D) / segments);
-            drawShaderLine(cos * start, y, sin * start, cos * end, y, sin * end);
+            drawShaderLine(cos * start, y, sin * start, cos * end, y, sin * end, width);
         }
     }
 
-    private static void drawDashedRing(double radius, int dashes, double phase) {
+    private static void drawDashedRing(double radius, int dashes, double phase, double width) {
         double dashLength = TWO_PI / dashes * 0.54D;
         int segments = 4;
         for (int dash = 0; dash < dashes; dash++) {
@@ -341,37 +332,37 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
                 double localRadius = radius + Math.sin(phase * 3.0D + dash * 0.73D + progress * Math.PI) * 0.010D;
                 double x = Math.cos(angle) * localRadius;
                 double z = Math.sin(angle) * localRadius;
-                drawShaderLine(previousX, 0.0D, previousZ, x, 0.0D, z);
+                drawShaderLine(previousX, 0.0D, previousZ, x, 0.0D, z, width);
                 previousX = x;
                 previousZ = z;
             }
         }
     }
 
-    private static void drawCoreLatitudeBands(double radius) {
-        drawShaderCircle(radius, 72);
+    private static void drawCoreLatitudeBands(double radius, double width) {
+        drawShaderCircle(radius, 72, width);
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(62.0F, 1.0F, 0.0F, 0.0F);
-        drawShaderCircle(radius * 0.96D, 72);
+        drawShaderCircle(radius * 0.96D, 72, width * 0.82D);
         GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(-62.0F, 0.0F, 0.0F, 1.0F);
-        drawShaderCircle(radius * 0.96D, 72);
+        drawShaderCircle(radius * 0.96D, 72, width * 0.82D);
         GlStateManager.popMatrix();
     }
 
-    private static void drawPulseArc(double radius, int segments) {
+    private static void drawPulseArc(double radius, int segments, double width) {
         double start = -0.58D;
         double sweep = 1.16D;
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
         for (int i = 0; i <= segments; i++) {
             double progress = i / (double) segments;
             double angle = start + sweep * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
+            addRingRibbonVertexPair(buffer, radius, angle, width, progress);
         }
         tessellator.draw();
     }
@@ -393,24 +384,24 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         tessellator.draw();
     }
 
-    private static void drawShaderCircle(double radius, int segments) {
+    private static void drawShaderCircle(double radius, int segments, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        for (int i = 0; i < segments; i++) {
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i <= segments; i++) {
             double progress = i / (double) segments;
             double angle = TWO_PI * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
+            addRingRibbonVertexPair(buffer, radius, angle, width, progress);
         }
         tessellator.draw();
     }
 
-    private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1) {
+    private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1,
+                                       double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
-        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        addLineRibbon(buffer, x0, y0, z0, x1, y1, z1, width);
         tessellator.draw();
     }
 
@@ -445,6 +436,53 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
                 .endVertex();
     }
 
+    private static void addRingRibbonVertexPair(BufferBuilder buffer, double radius, double angle,
+                                                double width, double progress) {
+        double halfWidth = width * 0.5D;
+        double inner = Math.max(0.0D, radius - halfWidth);
+        double outer = radius + halfWidth;
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        addPosition(buffer, cos * outer, 0.0D, sin * outer, progress, 1.0D);
+        addPosition(buffer, cos * inner, 0.0D, sin * inner, progress, 0.0D);
+    }
+
+    private static void addLineRibbon(BufferBuilder buffer, double x0, double y0, double z0,
+                                      double x1, double y1, double z1, double width) {
+        double dx = x1 - x0;
+        double dy = y1 - y0;
+        double dz = z1 - z0;
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (length <= 1.0E-5D || width <= 0.0D) {
+            return;
+        }
+
+        dx /= length;
+        dy /= length;
+        dz /= length;
+        double upX = Math.abs(dy) > 0.92D ? 1.0D : 0.0D;
+        double upY = Math.abs(dy) > 0.92D ? 0.0D : 1.0D;
+        double sideX = dy * 0.0D - dz * upY;
+        double sideY = dz * upX - dx * 0.0D;
+        double sideZ = dx * upY - dy * upX;
+        double sideLength = Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+        if (sideLength <= 1.0E-5D) {
+            sideX = 1.0D;
+            sideY = 0.0D;
+            sideZ = 0.0D;
+            sideLength = 1.0D;
+        }
+
+        double halfWidth = width * 0.5D / sideLength;
+        sideX *= halfWidth;
+        sideY *= halfWidth;
+        sideZ *= halfWidth;
+        addPosition(buffer, x0 - sideX, y0 - sideY, z0 - sideZ, 0.0D, 0.0D);
+        addPosition(buffer, x0 + sideX, y0 + sideY, z0 + sideZ, 0.0D, 1.0D);
+        addPosition(buffer, x1 - sideX, y1 - sideY, z1 - sideZ, 1.0D, 0.0D);
+        addPosition(buffer, x1 + sideX, y1 + sideY, z1 + sideZ, 1.0D, 1.0D);
+    }
+
     private static void addPosition(BufferBuilder buffer, double x, double y, double z, double u, double v) {
         buffer.pos(x, y, z)
                 .tex(u, v)
@@ -452,7 +490,7 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
                 .endVertex();
     }
 
-    private static int particleColor(int packet, int lane, int node, int fallback) {
+    private static int packetColor(int packet, int lane, int node, int defaultColor) {
         int selector = Math.floorMod(packet + lane * 2 + node, 5);
         if (selector == 0) {
             return 0xFFFFFF;
@@ -466,7 +504,7 @@ public class RenderEnergyNexus extends RenderCelestialEffectBase<TileEnergyNexus
         if (selector == 3) {
             return 0x74A8FF;
         }
-        return fallback;
+        return defaultColor;
     }
 
     private static float smoothBreath(double time) {

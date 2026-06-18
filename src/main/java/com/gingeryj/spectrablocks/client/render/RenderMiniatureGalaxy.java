@@ -20,6 +20,10 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
     private static final int STAR_COUNT = 132;
     private static final int TRAIL_COUNT = 12;
     private static final double GOLDEN_ANGLE = 2.399963229728653D;
+    private static final double DEFAULT_LINE_HALF_WIDTH = 0.012D;
+    private static final double DEFAULT_ARC_HALF_WIDTH = 0.014D;
+    private static final double DEFAULT_LATITUDE_HALF_WIDTH = 0.012D;
+    private static final double EPSILON = 1.0E-5D;
     private static final float ROTATION_SPEED = 0.055F;
 
     @Override
@@ -120,19 +124,18 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
             double tailZ = Math.sin(trailAngle) * (radius * 1.035D);
             float pulse = wave(ticks * 0.045D + i * 0.9D);
 
-            GlStateManager.glLineWidth(3.0F);
             drawShaderLine(shader, headX, y, headZ, tailX, y * 0.35D, tailZ, ticks,
-                    0.0F, 8.0F, 0x83C8FF, 0xFFFFFF, 0.075F + 0.045F * pulse, 0.85F, i * 0.11F);
-            GlStateManager.glLineWidth(1.4F);
+                    0.0F, 8.0F, 0x83C8FF, 0xFFFFFF, 0.075F + 0.045F * pulse, 0.85F, i * 0.11F,
+                    0.030D);
             drawShaderLine(shader, headX, y, headZ, tailX, y * 0.35D, tailZ, ticks,
-                    0.0F, 9.0F, 0xFFFFFF, 0x83C8FF, 0.155F + 0.070F * pulse, 1.15F, 0.5F + i * 0.09F);
+                    0.0F, 9.0F, 0xFFFFFF, 0x83C8FF, 0.155F + 0.070F * pulse, 1.15F, 0.5F + i * 0.09F,
+                    0.014D);
             GlStateManager.pushMatrix();
             GlStateManager.translate(headX, y, headZ);
             drawShaderSphere(shader, 0.045D + pulse * 0.025D, ticks, 0.0F, 10.0F,
                     i % 3 == 0 ? 0xFFE5A8 : 0xDDEEFF, 0xFFFFFF, 0.55F, 1.40F, i * 0.07F, STAR_SEGMENTS);
             GlStateManager.popMatrix();
         }
-            GL11.glLineWidth(1.0F);
         useAlphaBlend();
         GL11.glNormal3f(0.0F, 1.0F, 0.0F);
     }
@@ -218,6 +221,14 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
     static void drawShaderLine(ShaderProgram shader, double x1, double y1, double z1,
                                double x2, double y2, double z2, float ticks, float effect, float layer,
                                int primaryColor, int accentColor, float alpha, float intensity, float seed) {
+        drawShaderLine(shader, x1, y1, z1, x2, y2, z2, ticks, effect, layer,
+                primaryColor, accentColor, alpha, intensity, seed, DEFAULT_LINE_HALF_WIDTH);
+    }
+
+    static void drawShaderLine(ShaderProgram shader, double x1, double y1, double z1,
+                               double x2, double y2, double z2, float ticks, float effect, float layer,
+                               int primaryColor, int accentColor, float alpha, float intensity, float seed,
+                               double halfWidth) {
         if (alpha <= 0.01F || !beginLayer(shader, ticks, effect, layer, primaryColor, accentColor,
                 alpha, intensity, seed)) {
             return;
@@ -226,9 +237,8 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
         try {
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            buffer.pos(x1, y1, z1).tex(0.0D, 0.0D).normal(0.0F, 1.0F, 0.0F).endVertex();
-            buffer.pos(x2, y2, z2).tex(1.0D, 0.0D).normal(0.0F, 1.0F, 0.0F).endVertex();
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            addRibbonSegment(buffer, x1, y1, z1, x2, y2, z2, Math.max(EPSILON, halfWidth));
             tessellator.draw();
         } finally {
             shader.end();
@@ -247,18 +257,20 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
         try {
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            int pointCount = segments + 1;
+            double[] xs = new double[pointCount];
+            double[] ys = new double[pointCount];
+            double[] zs = new double[pointCount];
             for (int i = 0; i <= segments; i++) {
                 double progress = (double) i / segments;
                 double yaw = startYaw + sweepYaw * progress;
                 double pitch = basePitch + Math.sin(phase + progress * Math.PI * 2.0D) * pitchWave;
                 double horizontal = Math.cos(pitch) * radius;
-                buffer.pos(Math.cos(yaw) * horizontal,
-                                Math.sin(pitch) * radius,
-                                Math.sin(yaw) * horizontal)
-                        .tex(progress, 0.0D).normal(0.0F, 1.0F, 0.0F).endVertex();
+                xs[i] = Math.cos(yaw) * horizontal;
+                ys[i] = Math.sin(pitch) * radius;
+                zs[i] = Math.sin(yaw) * horizontal;
             }
-            tessellator.draw();
+            drawPolylineRibbon(buffer, tessellator, xs, ys, zs, pointCount, false, DEFAULT_ARC_HALF_WIDTH);
         } finally {
             shader.end();
         }
@@ -276,11 +288,16 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
             double radius = Math.sqrt(Math.max(0.0D, sphereRadius * sphereRadius - y * y));
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            for (int i = 0; i < segments; i++) {
+            double innerRadius = Math.max(0.0D, radius - DEFAULT_LATITUDE_HALF_WIDTH);
+            double outerRadius = radius + DEFAULT_LATITUDE_HALF_WIDTH;
+            buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            for (int i = 0; i <= segments; i++) {
                 double angle = Math.PI * 2.0D * i / segments;
-                buffer.pos(Math.cos(angle) * radius, y, Math.sin(angle) * radius)
-                        .tex(i / (double) segments, 0.0D).normal(0.0F, 1.0F, 0.0F).endVertex();
+                double progress = i / (double) segments;
+                double cos = Math.cos(angle);
+                double sin = Math.sin(angle);
+                addPosition(buffer, cos * outerRadius, y, sin * outerRadius, progress, 1.0D, 0.0D, 1.0D, 0.0D);
+                addPosition(buffer, cos * innerRadius, y, sin * innerRadius, progress, 0.0D, 0.0D, 1.0D, 0.0D);
             }
             tessellator.draw();
         } finally {
@@ -318,6 +335,72 @@ public class RenderMiniatureGalaxy extends RenderCelestialEffectBase<TileMiniatu
                 .tex(u, v)
                 .normal(normalX, normalY, normalZ)
                 .endVertex();
+    }
+
+    private static void addPosition(BufferBuilder buffer, double x, double y, double z,
+                                    double u, double v, double normalX, double normalY, double normalZ) {
+        double normalLength = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+        if (normalLength < EPSILON) {
+            normalX = 0.0D;
+            normalY = 1.0D;
+            normalZ = 0.0D;
+            normalLength = 1.0D;
+        }
+        buffer.pos(x, y, z)
+                .tex(u, v)
+                .normal((float) (normalX / normalLength), (float) (normalY / normalLength),
+                        (float) (normalZ / normalLength))
+                .endVertex();
+    }
+
+    private static void drawPolylineRibbon(BufferBuilder buffer, Tessellator tessellator,
+                                           double[] xs, double[] ys, double[] zs, int pointCount,
+                                           boolean closed, double halfWidth) {
+        if (pointCount < 2) {
+            return;
+        }
+
+        int vertexCount = closed ? pointCount + 1 : pointCount;
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i < vertexCount; i++) {
+            int index = closed ? i % pointCount : i;
+            int previous = closed ? (index + pointCount - 1) % pointCount : Math.max(0, index - 1);
+            int next = closed ? (index + 1) % pointCount : Math.min(pointCount - 1, index + 1);
+            double[] side = sideVector(xs[next] - xs[previous], ys[next] - ys[previous], zs[next] - zs[previous]);
+            double progress = vertexCount <= 1 ? 0.0D : i / (double) (vertexCount - 1);
+            addPosition(buffer, xs[index] + side[0] * halfWidth, ys[index] + side[1] * halfWidth,
+                    zs[index] + side[2] * halfWidth, progress, 1.0D, 0.0D, 1.0D, 0.0D);
+            addPosition(buffer, xs[index] - side[0] * halfWidth, ys[index] - side[1] * halfWidth,
+                    zs[index] - side[2] * halfWidth, progress, 0.0D, 0.0D, 1.0D, 0.0D);
+        }
+        tessellator.draw();
+    }
+
+    private static void addRibbonSegment(BufferBuilder buffer, double x1, double y1, double z1,
+                                         double x2, double y2, double z2, double halfWidth) {
+        double[] side = sideVector(x2 - x1, y2 - y1, z2 - z1);
+        double sx = side[0] * halfWidth;
+        double sy = side[1] * halfWidth;
+        double sz = side[2] * halfWidth;
+        addPosition(buffer, x1 + sx, y1 + sy, z1 + sz, 0.0D, 1.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x2 + sx, y2 + sy, z2 + sz, 1.0D, 1.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x2 - sx, y2 - sy, z2 - sz, 1.0D, 0.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x1 + sx, y1 + sy, z1 + sz, 0.0D, 1.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x2 - sx, y2 - sy, z2 - sz, 1.0D, 0.0D, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x1 - sx, y1 - sy, z1 - sz, 0.0D, 0.0D, 0.0D, 1.0D, 0.0D);
+    }
+
+    private static double[] sideVector(double dx, double dy, double dz) {
+        double axisX = Math.abs(dy) > 0.82D ? 1.0D : 0.0D;
+        double axisY = Math.abs(dy) > 0.82D ? 0.0D : 1.0D;
+        double sideX = -dz * axisY;
+        double sideY = dz * axisX;
+        double sideZ = dx * axisY - dy * axisX;
+        double length = Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+        if (length < EPSILON) {
+            return new double[]{1.0D, 0.0D, 0.0D};
+        }
+        return new double[]{sideX / length, sideY / length, sideZ / length};
     }
 
     private static boolean beginLayer(ShaderProgram shader, float ticks, float effect, float layer,

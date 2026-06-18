@@ -17,6 +17,12 @@ final class RenderNaturalShaderHelper {
     static final float MODE_HOURGLASS = 6.0F;
 
     private static final double TWO_PI = Math.PI * 2.0D;
+    private static final double BASIC_LINE_HALF_WIDTH = 0.010D;
+    private static final double BASIC_CIRCLE_HALF_WIDTH = 0.012D;
+    private static final double BASIC_ARC_HALF_WIDTH = 0.014D;
+    private static final double BASIC_WIRE_HALF_WIDTH = 0.010D;
+    private static final double BASIC_RAY_HALF_WIDTH = 0.014D;
+    private static final double EPSILON = 1.0E-5D;
 
     private RenderNaturalShaderHelper() {
     }
@@ -98,9 +104,9 @@ final class RenderNaturalShaderHelper {
             float[] rgb = unpackRGB(color);
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-            buffer.pos(x1, y1, z1).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-            buffer.pos(x2, y2, z2).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+            addColoredSegmentRibbon(buffer, x1, y1, z1, x2, y2, z2,
+                    BASIC_LINE_HALF_WIDTH, rgb, alpha, alpha);
             tessellator.draw();
         } finally {
             shader.end();
@@ -117,12 +123,15 @@ final class RenderNaturalShaderHelper {
             float[] rgb = unpackRGB(color);
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-            for (int i = 0; i < segments; i++) {
+            double innerRadius = Math.max(0.0D, radius - BASIC_CIRCLE_HALF_WIDTH);
+            double outerRadius = radius + BASIC_CIRCLE_HALF_WIDTH;
+            buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+            for (int i = 0; i <= segments; i++) {
                 double angle = TWO_PI * i / segments;
-                buffer.pos(Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius)
-                        .color(rgb[0], rgb[1], rgb[2], alpha)
-                        .endVertex();
+                double cos = Math.cos(angle);
+                double sin = Math.sin(angle);
+                addColoredVertex(buffer, cos * outerRadius, 0.0D, sin * outerRadius, rgb, alpha);
+                addColoredVertex(buffer, cos * innerRadius, 0.0D, sin * innerRadius, rgb, alpha);
             }
             tessellator.draw();
         } finally {
@@ -209,22 +218,23 @@ final class RenderNaturalShaderHelper {
         try {
             setBasicUniforms(shader);
             float[] rgb = unpackRGB(color);
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+            int pointCount = segments + 1;
+            double[] xs = new double[pointCount];
+            double[] ys = new double[pointCount];
+            double[] zs = new double[pointCount];
+            float[] alphas = new float[pointCount];
             for (int i = 0; i <= segments; i++) {
                 double progress = (double) i / segments;
                 double yaw = startYaw + sweepYaw * progress;
                 double pitch = basePitch + Math.sin(phase + progress * TWO_PI) * pitchWave;
                 double horizontal = Math.cos(pitch) * radius;
                 float fade = (float) Math.sin(Math.PI * progress);
-                buffer.pos(Math.cos(yaw) * horizontal,
-                                Math.sin(pitch) * radius,
-                                Math.sin(yaw) * horizontal)
-                        .color(rgb[0], rgb[1], rgb[2], alpha * (0.20F + 0.80F * fade))
-                        .endVertex();
+                xs[i] = Math.cos(yaw) * horizontal;
+                ys[i] = Math.sin(pitch) * radius;
+                zs[i] = Math.sin(yaw) * horizontal;
+                alphas[i] = alpha * (0.20F + 0.80F * fade);
             }
-            tessellator.draw();
+            drawColoredPolylineRibbon(xs, ys, zs, alphas, pointCount, false, BASIC_ARC_HALF_WIDTH, rgb);
         } finally {
             shader.end();
         }
@@ -240,9 +250,11 @@ final class RenderNaturalShaderHelper {
         try {
             setBasicUniforms(shader);
             float[] rgb = unpackRGB(color);
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+            int pointCount = segments + 1;
+            double[] xs = new double[pointCount];
+            double[] ys = new double[pointCount];
+            double[] zs = new double[pointCount];
+            float[] alphas = new float[pointCount];
             for (int i = 0; i <= segments; i++) {
                 double progress = (double) i / segments;
                 double fade = Math.sin(Math.PI * progress);
@@ -251,11 +263,12 @@ final class RenderNaturalShaderHelper {
                 double localRadius = radius + deterministicJitter(seed + 71, i, ticks) * jitter;
                 double localY = y + lift * fade
                         + deterministicJitter(seed + 137, i, ticks) * jitter * 0.85D;
-                buffer.pos(Math.cos(angle) * localRadius, localY, Math.sin(angle) * localRadius)
-                        .color(rgb[0], rgb[1], rgb[2], alpha * (0.18F + 0.82F * (float) fade))
-                        .endVertex();
+                xs[i] = Math.cos(angle) * localRadius;
+                ys[i] = localY;
+                zs[i] = Math.sin(angle) * localRadius;
+                alphas[i] = alpha * (0.18F + 0.82F * (float) fade);
             }
-            tessellator.draw();
+            drawColoredPolylineRibbon(xs, ys, zs, alphas, pointCount, false, BASIC_ARC_HALF_WIDTH, rgb);
         } finally {
             shader.end();
         }
@@ -278,28 +291,34 @@ final class RenderNaturalShaderHelper {
                 double theta = Math.PI * lat / gridLat;
                 double y = radius * Math.cos(theta);
                 double horizontalRadius = radius * Math.sin(theta);
-                buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-                for (int lon = 0; lon < gridLon; lon++) {
+                double innerRadius = Math.max(0.0D, horizontalRadius - BASIC_WIRE_HALF_WIDTH);
+                double outerRadius = horizontalRadius + BASIC_WIRE_HALF_WIDTH;
+                buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+                for (int lon = 0; lon <= gridLon; lon++) {
                     double phi = TWO_PI * lon / gridLon;
-                    buffer.pos(horizontalRadius * Math.cos(phi), y, horizontalRadius * Math.sin(phi))
-                            .color(rgb[0], rgb[1], rgb[2], alpha)
-                            .endVertex();
+                    double cos = Math.cos(phi);
+                    double sin = Math.sin(phi);
+                    addColoredVertex(buffer, outerRadius * cos, y, outerRadius * sin, rgb, alpha);
+                    addColoredVertex(buffer, innerRadius * cos, y, innerRadius * sin, rgb, alpha);
                 }
                 tessellator.draw();
             }
 
             for (int lon = 0; lon < gridLon; lon++) {
                 double phi = TWO_PI * lon / gridLon;
-                buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+                int pointCount = gridLat + 1;
+                double[] xs = new double[pointCount];
+                double[] ys = new double[pointCount];
+                double[] zs = new double[pointCount];
+                float[] alphas = new float[pointCount];
                 for (int lat = 0; lat <= gridLat; lat++) {
                     double theta = Math.PI * lat / gridLat;
-                    buffer.pos(radius * Math.sin(theta) * Math.cos(phi),
-                                    radius * Math.cos(theta),
-                                    radius * Math.sin(theta) * Math.sin(phi))
-                            .color(rgb[0], rgb[1], rgb[2], alpha)
-                            .endVertex();
+                    xs[lat] = radius * Math.sin(theta) * Math.cos(phi);
+                    ys[lat] = radius * Math.cos(theta);
+                    zs[lat] = radius * Math.sin(theta) * Math.sin(phi);
+                    alphas[lat] = alpha;
                 }
-                tessellator.draw();
+                drawColoredPolylineRibbon(xs, ys, zs, alphas, pointCount, false, BASIC_WIRE_HALF_WIDTH, rgb);
             }
         } finally {
             shader.end();
@@ -318,17 +337,15 @@ final class RenderNaturalShaderHelper {
             float[] rgb = unpackRGB(color);
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
             for (int i = 0; i < rayCount; i++) {
                 double angle = TWO_PI * i / rayCount + phase;
                 double rayPulse = 0.74D + 0.26D * Math.sin(phase * 7.0D + i * 1.618D);
                 double outer = innerRadius + (outerRadius - innerRadius) * rayPulse;
-                buffer.pos(Math.cos(angle) * innerRadius, 0.0D, Math.sin(angle) * innerRadius)
-                        .color(rgb[0], rgb[1], rgb[2], alpha * 0.34F)
-                        .endVertex();
-                buffer.pos(Math.cos(angle) * outer, 0.0D, Math.sin(angle) * outer)
-                        .color(rgb[0], rgb[1], rgb[2], alpha)
-                        .endVertex();
+                addColoredSegmentRibbon(buffer,
+                        Math.cos(angle) * innerRadius, 0.0D, Math.sin(angle) * innerRadius,
+                        Math.cos(angle) * outer, 0.0D, Math.sin(angle) * outer,
+                        BASIC_RAY_HALF_WIDTH, rgb, alpha * 0.34F, alpha);
             }
             tessellator.draw();
         } finally {
@@ -366,6 +383,68 @@ final class RenderNaturalShaderHelper {
                 .tex(u, v)
                 .normal(normalX, normalY, normalZ)
                 .endVertex();
+    }
+
+    private static void drawColoredPolylineRibbon(double[] xs, double[] ys, double[] zs,
+                                                  float[] alphas, int pointCount, boolean closed,
+                                                  double halfWidth, float[] rgb) {
+        if (pointCount < 2) {
+            return;
+        }
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        int vertexCount = closed ? pointCount + 1 : pointCount;
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+        for (int i = 0; i < vertexCount; i++) {
+            int index = closed ? i % pointCount : i;
+            int previous = closed ? (index + pointCount - 1) % pointCount : Math.max(0, index - 1);
+            int next = closed ? (index + 1) % pointCount : Math.min(pointCount - 1, index + 1);
+            double[] side = sideVector(xs[next] - xs[previous], ys[next] - ys[previous], zs[next] - zs[previous]);
+            double u = vertexCount <= 1 ? 0.0D : i / (double) (vertexCount - 1);
+
+            addColoredVertex(buffer, xs[index] + side[0] * halfWidth, ys[index] + side[1] * halfWidth,
+                    zs[index] + side[2] * halfWidth, rgb, alphas[index]);
+            addColoredVertex(buffer, xs[index] - side[0] * halfWidth, ys[index] - side[1] * halfWidth,
+                    zs[index] - side[2] * halfWidth, rgb, alphas[index]);
+        }
+        tessellator.draw();
+    }
+
+    private static void addColoredSegmentRibbon(BufferBuilder buffer,
+                                                double x1, double y1, double z1,
+                                                double x2, double y2, double z2,
+                                                double halfWidth, float[] rgb,
+                                                float alpha1, float alpha2) {
+        double[] side = sideVector(x2 - x1, y2 - y1, z2 - z1);
+        double sx = side[0] * halfWidth;
+        double sy = side[1] * halfWidth;
+        double sz = side[2] * halfWidth;
+
+        addColoredVertex(buffer, x1 + sx, y1 + sy, z1 + sz, rgb, alpha1);
+        addColoredVertex(buffer, x2 + sx, y2 + sy, z2 + sz, rgb, alpha2);
+        addColoredVertex(buffer, x2 - sx, y2 - sy, z2 - sz, rgb, alpha2);
+        addColoredVertex(buffer, x1 + sx, y1 + sy, z1 + sz, rgb, alpha1);
+        addColoredVertex(buffer, x2 - sx, y2 - sy, z2 - sz, rgb, alpha2);
+        addColoredVertex(buffer, x1 - sx, y1 - sy, z1 - sz, rgb, alpha1);
+    }
+
+    private static void addColoredVertex(BufferBuilder buffer, double x, double y, double z,
+                                         float[] rgb, float alpha) {
+        buffer.pos(x, y, z).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
+    }
+
+    private static double[] sideVector(double dx, double dy, double dz) {
+        double axisX = Math.abs(dy) > 0.82D ? 1.0D : 0.0D;
+        double axisY = Math.abs(dy) > 0.82D ? 0.0D : 1.0D;
+        double sideX = dy * 0.0D - dz * axisY;
+        double sideY = dz * axisX - dx * 0.0D;
+        double sideZ = dx * axisY - dy * axisX;
+        double length = Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+        if (length < EPSILON) {
+            return new double[]{1.0D, 0.0D, 0.0D};
+        }
+        return new double[]{sideX / length, sideY / length, sideZ / length};
     }
 
     private static void setNaturalUniforms(ShaderProgram shader, float mode, float layer,

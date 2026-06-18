@@ -63,7 +63,6 @@ public class RenderEtherReactorCore extends RenderCelestialEffectBase<TileScalab
                 0.44F + pulse * 0.16F, 1.62F, (float) CORE_RADIUS);
         drawShaderSphere(CORE_RADIUS * (0.62D + pulse * 0.08D), 12, 14);
 
-        GlStateManager.glLineWidth(1.25F);
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.18F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(58.0F, 1.0F, 0.0F, 0.0F);
@@ -71,7 +70,6 @@ public class RenderEtherReactorCore extends RenderCelestialEffectBase<TileScalab
                 0.12F + pulse * 0.06F, 1.22F, 0.48F);
         drawOrbitArcSegments(0.48D + pulse * 0.035D, 6, ticks * 0.010D, 0.62D, 5);
         GlStateManager.popMatrix();
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -95,20 +93,17 @@ public class RenderEtherReactorCore extends RenderCelestialEffectBase<TileScalab
 
             setTechUniforms(shader, ticks, 6.0F, 1.5F + ring * 0.24F, WHITE, color, PALE_CYAN,
                     0.14F + pulse * 0.065F, 1.36F, (float) radius);
-            GlStateManager.glLineWidth(1.35F + ring * 0.12F);
             drawOrbitArcSegments(radius + width * 0.42D, 5 + ring, ticks * (0.010D + ring * 0.002D),
                     0.50D - ring * 0.035D, 6);
 
             setTechUniforms(shader, ticks, 6.0F, 1.9F + ring * 0.22F, color, PALE_CYAN, BLUE,
                     0.085F + pulse * 0.040F, 1.18F, (float) radius);
-            GlStateManager.glLineWidth(0.85F);
             drawOrbitArcSegments(radius - width * 1.7D, 7, -ticks * (0.007D + ring * 0.001D),
                     0.28D, 4);
 
             drawOrbitNodes(shader, ticks, ring, radius);
             GlStateManager.popMatrix();
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -133,7 +128,6 @@ public class RenderEtherReactorCore extends RenderCelestialEffectBase<TileScalab
 
             setTechUniforms(shader, ticks, 6.0F, 3.2F + ring * 0.12F, WHITE, color, PALE_CYAN,
                     0.080F + pulse * 0.055F, 1.18F, (float) radius);
-            GlStateManager.glLineWidth(0.95F);
             drawShortOrbitTail(nodeRadius, angle - 0.16D, angle - 0.045D, 4);
         }
     }
@@ -164,11 +158,9 @@ public class RenderEtherReactorCore extends RenderCelestialEffectBase<TileScalab
             double tailRadius = Math.min(1.52D, radius + 0.18D * (1.0D - eased));
             setTechUniforms(shader, ticks, 6.0F, 4.3F, color, BLUE, PALE_CYAN,
                     0.035F + fade * 0.075F, 1.12F, (float) radius);
-            GlStateManager.glLineWidth(0.9F);
             drawShaderLine(Math.cos(angle) * tailRadius, y * 1.06D, Math.sin(angle) * tailRadius,
                     x, y, z);
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -222,22 +214,23 @@ public class RenderEtherReactorCore extends RenderCelestialEffectBase<TileScalab
     private static void drawArc(double radius, double start, double sweep, int segments) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        for (int i = 0; i <= segments; i++) {
-            double progress = i / (double) segments;
-            double angle = start + sweep * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        double previousAngle = start;
+        double previousX = Math.cos(previousAngle) * radius;
+        double previousZ = Math.sin(previousAngle) * radius;
+        for (int i = 1; i <= segments; i++) {
+            double angle = start + sweep * i / (double) segments;
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            RenderHelper.addTexturedLine(buffer, previousX, 0.0D, previousZ, x, 0.0D, z, 0.022D);
+            previousX = x;
+            previousZ = z;
         }
         tessellator.draw();
     }
 
     private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
-        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
-        tessellator.draw();
+        RenderHelper.drawTexturedLine(x0, y0, z0, x1, y1, z1, 0.018D);
     }
 
     private static void drawShaderSphere(double radius, int latSegs, int lonSegs) {

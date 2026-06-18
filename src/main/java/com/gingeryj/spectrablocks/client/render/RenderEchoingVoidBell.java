@@ -72,10 +72,8 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
 
         useAdditiveBlend();
         if (basicShader != null) {
-            GlStateManager.glLineWidth(1.3F);
             drawBasicLine(basicShader, 0.0D, 0.08D, 0.0D, x, y + 0.03D, z,
                     0x7EF4FF, 0.20F + pulse * 0.10F);
-            GlStateManager.glLineWidth(1.0F);
         }
 
         GlStateManager.pushMatrix();
@@ -107,10 +105,8 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
                     2.0F, alpha * 0.44F, 0.20F + i * 0.13F,
                     0x05000B, color, 0xF5FCFF, 0xFFFFFF);
             if (basicShader != null) {
-                GlStateManager.glLineWidth(1.4F);
                 drawBasicCircle(basicShader, radius + Math.sin(ticks * 0.075D + i) * 0.018D,
                         color, alpha, RING_SEGMENTS);
-                GlStateManager.glLineWidth(1.0F);
             }
             GlStateManager.popMatrix();
         }
@@ -123,7 +119,6 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
         }
 
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.15F);
         for (int i = 0; i < ECHO_LINE_COUNT; i++) {
             double angle = TWO_PI * i / ECHO_LINE_COUNT + ticks * 0.010D;
             double radius = 0.64D + (i % 3) * 0.16D + Math.sin(ticks * 0.030D + i) * 0.035D;
@@ -137,7 +132,6 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
             double z = Math.sin(angle) * radius;
             drawBasicLine(shader, x, baseY, z, x, baseY + height, z, color, alpha);
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
@@ -182,13 +176,8 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
 
         try {
             setBasicUniforms(shader);
-            float[] rgb = unpackRGB(color);
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
-            buffer.pos(x1, y1, z1).color(rgb[0], rgb[1], rgb[2], alpha * 0.35F).endVertex();
-            buffer.pos(x2, y2, z2).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-            tessellator.draw();
+            RenderHelper.drawColorLine(x1, y1, z1, x2, y2, z2, 0.018D, color,
+                    alpha * 0.35F, alpha);
         } finally {
             shader.end();
         }
@@ -202,17 +191,7 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
 
         try {
             setBasicUniforms(shader);
-            float[] rgb = unpackRGB(color);
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_COLOR);
-            for (int i = 0; i < segments; i++) {
-                double angle = TWO_PI * i / segments;
-                buffer.pos(Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius)
-                        .color(rgb[0], rgb[1], rgb[2], alpha)
-                        .endVertex();
-            }
-            tessellator.draw();
+            RenderHelper.drawColorCircle(radius, segments, 0.026D, color, alpha);
         } finally {
             shader.end();
         }

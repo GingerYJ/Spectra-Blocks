@@ -23,6 +23,10 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
     private static final double DUST_RADIUS = 3.85D;
     private static final double TWO_PI = Math.PI * 2.0D;
     private static final double GOLDEN_ANGLE = 2.399963229728653D;
+    private static final double EDGE_HALF_WIDTH = 0.020D;
+    private static final double RING_WIDE_HALF_WIDTH = 0.015D;
+    private static final double RING_FINE_HALF_WIDTH = 0.010D;
+    private static final double EPSILON = 1.0E-5D;
     private static final float PRISM_ROTATION_SPEED = 0.62F;
     private static final float BEAM_ROTATION_SPEED = 0.055F;
 
@@ -67,9 +71,7 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
         useAdditiveBlend();
         setTechUniforms(shader, ticks, 3.0F, 2.0F, 0xFFFFFF, 0x82F6FF, 0xFFB8F4,
                 0.52F, 1.35F, (float) PRISM_RADIUS);
-        GlStateManager.glLineWidth(2.0F);
-        drawCrystalEdges(PRISM_RADIUS * 1.01D, PRISM_HEIGHT * 1.01D, PRISM_FACETS);
-        GlStateManager.glLineWidth(1.0F);
+        drawCrystalEdges(PRISM_RADIUS * 1.01D, PRISM_HEIGHT * 1.01D, PRISM_FACETS, EDGE_HALF_WIDTH);
         GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
@@ -77,12 +79,10 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
         setTechUniforms(shader, ticks, 3.0F, 3.0F, 0xFFFFFF, 0x82F6FF, 0xD27CFF,
                 0.18F, 1.10F, 1.18F);
-        GlStateManager.glLineWidth(1.5F);
-        drawShaderCircle(1.18D + pulse * 0.04D, 72);
+        drawShaderCircle(1.18D + pulse * 0.04D, RING_WIDE_HALF_WIDTH, 72);
         setTechUniforms(shader, ticks, 3.0F, 3.0F, 0x82F6FF, 0xFFFFFF, 0xFFB8F4,
                 0.11F, 1.00F, 1.46F);
-        drawShaderCircle(1.46D, 72);
-        GlStateManager.glLineWidth(1.0F);
+        drawShaderCircle(1.46D, RING_FINE_HALF_WIDTH, 72);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -174,10 +174,10 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
         tessellator.draw();
     }
 
-    private static void drawCrystalEdges(double radius, double height, int facets) {
+    private static void drawCrystalEdges(double radius, double height, int facets, double halfWidth) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
         double topY = height * 0.5D;
         double bottomY = -height * 0.5D;
         for (int i = 0; i < facets; i++) {
@@ -187,21 +187,26 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
             double z0 = Math.sin(angle0) * radius;
             double x1 = Math.cos(angle1) * radius;
             double z1 = Math.sin(angle1) * radius;
-            addLine(buffer, 0.0D, topY, 0.0D, x0, 0.0D, z0);
-            addLine(buffer, 0.0D, bottomY, 0.0D, x0, 0.0D, z0);
-            addLine(buffer, x0, 0.0D, z0, x1, 0.0D, z1);
+            addRibbonSegment(buffer, 0.0D, topY, 0.0D, x0, 0.0D, z0, halfWidth);
+            addRibbonSegment(buffer, 0.0D, bottomY, 0.0D, x0, 0.0D, z0, halfWidth);
+            addRibbonSegment(buffer, x0, 0.0D, z0, x1, 0.0D, z1, halfWidth);
         }
         tessellator.draw();
     }
 
-    private static void drawShaderCircle(double radius, int segments) {
+    private static void drawShaderCircle(double radius, double halfWidth, int segments) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        for (int i = 0; i < segments; i++) {
+        double innerRadius = Math.max(0.0D, radius - halfWidth);
+        double outerRadius = radius + halfWidth;
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i <= segments; i++) {
             double progress = i / (double) segments;
             double angle = TWO_PI * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
+            double cos = Math.cos(angle);
+            double sin = Math.sin(angle);
+            addPosition(buffer, cos * outerRadius, 0.0D, sin * outerRadius, progress, 1.0D);
+            addPosition(buffer, cos * innerRadius, 0.0D, sin * innerRadius, progress, 0.0D);
         }
         tessellator.draw();
     }
@@ -237,10 +242,18 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
                 .endVertex();
     }
 
-    private static void addLine(BufferBuilder buffer, double x0, double y0, double z0,
-                                double x1, double y1, double z1) {
-        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
-        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
+    private static void addRibbonSegment(BufferBuilder buffer, double x0, double y0, double z0,
+                                         double x1, double y1, double z1, double halfWidth) {
+        double[] side = sideVector(x1 - x0, y1 - y0, z1 - z0);
+        double sx = side[0] * halfWidth;
+        double sy = side[1] * halfWidth;
+        double sz = side[2] * halfWidth;
+        addPosition(buffer, x0 + sx, y0 + sy, z0 + sz, 0.0D, 1.0D);
+        addPosition(buffer, x1 + sx, y1 + sy, z1 + sz, 1.0D, 1.0D);
+        addPosition(buffer, x1 - sx, y1 - sy, z1 - sz, 1.0D, 0.0D);
+        addPosition(buffer, x0 + sx, y0 + sy, z0 + sz, 0.0D, 1.0D);
+        addPosition(buffer, x1 - sx, y1 - sy, z1 - sz, 1.0D, 0.0D);
+        addPosition(buffer, x0 - sx, y0 - sy, z0 - sz, 0.0D, 0.0D);
     }
 
     private static void addPosition(BufferBuilder buffer, double x, double y, double z, double u, double v) {
@@ -248,6 +261,19 @@ public class RenderSpectralPrism extends RenderCelestialEffectBase<TileSpectralP
                 .tex(u, v)
                 .normal(0.0F, 1.0F, 0.0F)
                 .endVertex();
+    }
+
+    private static double[] sideVector(double dx, double dy, double dz) {
+        double axisX = Math.abs(dy) > 0.82D ? 1.0D : 0.0D;
+        double axisY = Math.abs(dy) > 0.82D ? 0.0D : 1.0D;
+        double sideX = -dz * axisY;
+        double sideY = dz * axisX;
+        double sideZ = dx * axisY - dy * axisX;
+        double length = Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+        if (length < EPSILON) {
+            return new double[]{1.0D, 0.0D, 0.0D};
+        }
+        return new double[]{sideX / length, sideY / length, sideZ / length};
     }
 
     private static void setTechUniforms(ShaderProgram shader, float ticks, float effect, float layer,

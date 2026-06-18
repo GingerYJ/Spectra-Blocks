@@ -91,17 +91,14 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, 0.012D, 0.0D);
-        GlStateManager.glLineWidth(1.15F);
         RenderNaturalShaderHelper.drawBasicCircle(shader, MIRROR_RADIUS * 1.012D,
                 0xEAFBFF, 0.34F + pulse * 0.09F, DISC_SEGMENTS);
-        GlStateManager.glLineWidth(1.65F);
         RenderNaturalShaderHelper.drawBasicCircle(shader, MIRROR_RADIUS * 1.035D,
                 0x78BBD6, 0.14F + pulse * 0.045F, DISC_SEGMENTS);
         RenderNaturalShaderHelper.drawBasicFlatRing(shader, MIRROR_RADIUS * 0.987D, MIRROR_RADIUS * 1.030D,
                 0xBDEEFF, 0.035F + pulse * 0.018F, DISC_SEGMENTS);
         GlStateManager.popMatrix();
 
-        GlStateManager.glLineWidth(0.85F);
         for (int i = 0; i < 3; i++) {
             GlStateManager.pushMatrix();
             GlStateManager.rotate(54.0F + i * 23.0F, 1.0F, 0.0F, 0.0F);
@@ -111,7 +108,6 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
                     i == 1 ? 0xF7FFFF : 0x9FD7EA, 0.060F + pulse * 0.030F, 104);
             GlStateManager.popMatrix();
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 
@@ -123,11 +119,10 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
         try {
             setBasicUniforms(shader);
             useAdditiveBlend();
-            GlStateManager.glLineWidth(0.95F);
 
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
             for (int i = 0; i < REFLECTION_BANDS; i++) {
                 double baseAngle = i * TWO_PI / REFLECTION_BANDS
                         + Math.sin(ticks * 0.005D + i * 0.77D) * 0.055D
@@ -142,16 +137,17 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
                 double phase = ticks * (0.010D + i * 0.0009D) + i * 0.84D;
 
                 for (int segment = 0; segment < BAND_SEGMENTS; segment++) {
-                    addReflectionVertex(buffer, segment / (double) BAND_SEGMENTS,
-                            baseAngle, halfLength, offset, phase, color, baseAlpha);
-                    addReflectionVertex(buffer, (segment + 1.0D) / BAND_SEGMENTS,
-                            baseAngle, halfLength, offset, phase, color, baseAlpha);
+                    ReflectionPoint p0 = reflectionPoint(segment / (double) BAND_SEGMENTS,
+                            baseAngle, halfLength, offset, phase, baseAlpha);
+                    ReflectionPoint p1 = reflectionPoint((segment + 1.0D) / BAND_SEGMENTS,
+                            baseAngle, halfLength, offset, phase, baseAlpha);
+                    RenderHelper.addColorLine(buffer, p0.x, p0.y, p0.z, p1.x, p1.y, p1.z,
+                            0.014D, color, p0.alpha, p1.alpha);
                 }
             }
             tessellator.draw();
         } finally {
             shader.end();
-            RenderHelper.resetLineWidth();
             useAlphaBlend();
         }
     }
@@ -164,11 +160,10 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
         try {
             setBasicUniforms(shader);
             useAdditiveBlend();
-            GlStateManager.glLineWidth(1.05F);
 
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
             for (int i = 0; i < CAUSTIC_ARCS; i++) {
                 double start = i * GOLDEN_ANGLE + ticks * (0.0024D + i * 0.00045D);
                 double sweep = 0.34D + (i % 3) * 0.15D;
@@ -181,23 +176,24 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
                 int color = REFLECTION_COLORS[(i + 2) % REFLECTION_COLORS.length];
 
                 for (int segment = 0; segment < ARC_SEGMENTS; segment++) {
-                    addCausticVertex(buffer, segment / (double) ARC_SEGMENTS,
-                            start, sweep, radius, centerX, centerZ, ticks, i, color, alpha);
-                    addCausticVertex(buffer, (segment + 1.0D) / ARC_SEGMENTS,
-                            start, sweep, radius, centerX, centerZ, ticks, i, color, alpha);
+                    ReflectionPoint p0 = causticPoint(segment / (double) ARC_SEGMENTS,
+                            start, sweep, radius, centerX, centerZ, ticks, i, alpha);
+                    ReflectionPoint p1 = causticPoint((segment + 1.0D) / ARC_SEGMENTS,
+                            start, sweep, radius, centerX, centerZ, ticks, i, alpha);
+                    RenderHelper.addColorLine(buffer, p0.x, p0.y, p0.z, p1.x, p1.y, p1.z,
+                            0.016D, color, p0.alpha, p1.alpha);
                 }
             }
             tessellator.draw();
         } finally {
             shader.end();
-            RenderHelper.resetLineWidth();
             useAlphaBlend();
         }
     }
 
-    private static void addReflectionVertex(BufferBuilder buffer, double progress,
-                                            double angle, double halfLength, double offset,
-                                            double phase, int color, float baseAlpha) {
+    private static ReflectionPoint reflectionPoint(double progress,
+                                                   double angle, double halfLength, double offset,
+                                                   double phase, float baseAlpha) {
         double centered = progress * 2.0D - 1.0D;
         double localX = centered * halfLength;
         double bend = Math.sin(progress * Math.PI + phase) * 0.046D
@@ -210,13 +206,13 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
         double fade = Math.sin(Math.PI * progress);
         float shimmer = 0.75F + 0.25F * (float) Math.sin(phase + progress * TWO_PI);
         float alpha = (float) (baseAlpha * Math.pow(Math.max(0.0D, fade), 1.45D)) * shimmer;
-        putColorVertex(buffer, x, 0.020D + bend * 0.030D, z, color, alpha);
+        return new ReflectionPoint(x, 0.020D + bend * 0.030D, z, alpha);
     }
 
-    private static void addCausticVertex(BufferBuilder buffer, double progress,
-                                         double start, double sweep, double radius,
-                                         double centerX, double centerZ, float ticks, int seed,
-                                         int color, float baseAlpha) {
+    private static ReflectionPoint causticPoint(double progress,
+                                                double start, double sweep, double radius,
+                                                double centerX, double centerZ, float ticks, int seed,
+                                                float baseAlpha) {
         double fade = Math.sin(Math.PI * progress);
         double angle = start + sweep * progress
                 + Math.sin(progress * Math.PI * 2.0D + ticks * 0.006D + seed) * 0.026D;
@@ -230,7 +226,7 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
             z *= clamp;
         }
         float alpha = (float) (baseAlpha * Math.pow(Math.max(0.0D, fade), 1.25D));
-        putColorVertex(buffer, x, 0.032D + fade * 0.010D, z, color, alpha);
+        return new ReflectionPoint(x, 0.032D + fade * 0.010D, z, alpha);
     }
 
     private static void drawRadialDisc(ShaderProgram shader, double radius, double y,
@@ -349,5 +345,19 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
                 ((color >> 8) & 255) / 255.0F,
                 (color & 255) / 255.0F
         };
+    }
+
+    private static final class ReflectionPoint {
+        private final double x;
+        private final double y;
+        private final double z;
+        private final float alpha;
+
+        private ReflectionPoint(double x, double y, double z, float alpha) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.alpha = alpha;
+        }
     }
 }

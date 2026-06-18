@@ -52,14 +52,12 @@ public class RenderVoidCrystal extends RenderArcaneShaderTile<TileVoidCrystal> {
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.08F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.glLineWidth(1.6F);
         ArcaneShaderEffectRenderer.drawLatitudeCircleLayer(shader, ticks,
                 OUTER_HALO_RADIUS * 0.86D, -0.42D, 0x884CFF, 0xE8CCFF,
                 0.18F + pulse * 0.08F, 1.0F, 10.0F, 3.0F, pulse, RUNE_SEGMENTS);
         ArcaneShaderEffectRenderer.drawLatitudeCircleLayer(shader, ticks,
                 OUTER_HALO_RADIUS * 0.86D, 0.46D, 0x5F2A96, 0xD7B7FF,
                 0.15F + pulse * 0.07F, 1.0F, 11.0F, 6.0F, pulse, RUNE_SEGMENTS);
-        GlStateManager.glLineWidth(1.0F);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -92,14 +90,12 @@ public class RenderVoidCrystal extends RenderArcaneShaderTile<TileVoidCrystal> {
                 0.070D, 0x3E155F, 0xB287FF, 0.28F + pulse * 0.10F,
                 1.15F, 18.0F, 23.0F, pulse, RUNE_SEGMENTS);
         useAdditiveBlend();
-        GlStateManager.glLineWidth(2.1F);
         ArcaneShaderEffectRenderer.drawLatitudeCircleLayer(shader, ticks,
                 RUNE_RING_RADIUS, 0.0D, 0xB287FF, 0xF0D7FF,
                 0.34F + pulse * 0.13F, 1.25F, 20.0F, 31.0F, pulse, RUNE_SEGMENTS);
         ArcaneShaderEffectRenderer.drawRadialMarksLayer(shader, ticks, RUNE_RING_RADIUS,
                 0.22D, 0.028D, RUNE_MARKS, 0xD7B7FF, 0x884CFF,
                 0.42F + pulse * 0.17F, 1.35F, 26.0F, 37.0F, pulse);
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
         GlStateManager.popMatrix();
     }
@@ -133,7 +129,6 @@ public class RenderVoidCrystal extends RenderArcaneShaderTile<TileVoidCrystal> {
             double phase = ticks * ARC_ROTATION_SPEED + i * 1.2566370614359172D;
             double arcPhase = fract(ticks * 0.013D + i * 0.21D);
             float arcAlpha = (float) Math.sin(Math.PI * arcPhase) * 0.46F;
-            GlStateManager.glLineWidth(2.0F + (i % 2));
             ArcaneShaderEffectRenderer.drawJaggedArcLayer(shader, ticks,
                     0.92D + (i % 3) * 0.20D, phase,
                     0.18D + (i % 2) * 0.08D, -0.42D + (i % 4) * 0.26D,
@@ -141,7 +136,6 @@ public class RenderVoidCrystal extends RenderArcaneShaderTile<TileVoidCrystal> {
                     i % 2 == 0 ? 0xF0D7FF : 0x9B5BFF, 0xFFFFFF,
                     arcAlpha, 1.5F, 14.0F, i * 23.0F + 5.0F, (float) arcPhase);
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 }
@@ -217,7 +211,6 @@ abstract class RenderArcaneShaderTile<T extends TileScalableEffect> extends Tile
                 GlStateManager.disableBlend();
             }
             useAlphaBlend();
-            GlStateManager.glLineWidth(1.0F);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
@@ -394,18 +387,14 @@ final class ArcaneShaderEffectRenderer {
                               double x1, double y1, double z1, double x2, double y2, double z2,
                               int primaryColor, int secondaryColor, float alpha,
                               float intensity, float noiseScale, float seed, float pulse) {
+        double width = filamentWidth(alpha, intensity, 0.018D);
         if (!beginLayer(shader, ticks, LAYER_FILAMENT, primaryColor, secondaryColor,
                 alpha, intensity, noiseScale, seed, pulse)) {
             return;
         }
 
         try {
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            addVertex(buffer, x1, y1, z1, 0.0D, 0.5D, 0.0F, 1.0F, 0.0F);
-            addVertex(buffer, x2, y2, z2, 1.0D, 0.5D, 0.0F, 1.0F, 0.0F);
-            tessellator.draw();
+            drawTubeLineGeometry(x1, y1, z1, x2, y2, z2, width);
         } finally {
             shader.end();
         }
@@ -416,25 +405,27 @@ final class ArcaneShaderEffectRenderer {
                                    double heightWave, double jitter, int segments,
                                    int primaryColor, int secondaryColor, float alpha,
                                    float intensity, float noiseScale, float seed, float pulse) {
+        double width = filamentWidth(alpha, intensity, Math.max(0.018D, jitter * 0.62D));
         if (radius <= 0.0D || segments <= 0 || !beginLayer(shader, ticks, LAYER_FILAMENT,
                 primaryColor, secondaryColor, alpha, intensity, noiseScale, seed, pulse)) {
             return;
         }
 
         try {
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            double[] xs = new double[segments + 1];
+            double[] ys = new double[segments + 1];
+            double[] zs = new double[segments + 1];
             for (int i = 0; i <= segments; i++) {
                 double progress = (double) i / segments;
                 double noise = Math.sin(seed * 12.9898D + i * 78.233D + ticks * 0.030D) * jitter;
                 double angle = startAngle + sweep * progress + noise;
                 double pointRadius = radius + Math.sin(progress * Math.PI) * jitter * 2.2D;
                 double y = yOffset + Math.sin(progress * Math.PI) * heightWave + noise * 0.6D;
-                addVertex(buffer, Math.cos(angle) * pointRadius, y, Math.sin(angle) * pointRadius,
-                        progress, 0.5D, 0.0F, 1.0F, 0.0F);
+                xs[i] = Math.cos(angle) * pointRadius;
+                ys[i] = y;
+                zs[i] = Math.sin(angle) * pointRadius;
             }
-            tessellator.draw();
+            drawTubePathGeometry(xs, ys, zs, segments + 1, width, true);
         } finally {
             shader.end();
         }
@@ -444,24 +435,25 @@ final class ArcaneShaderEffectRenderer {
                                double baseRadius, double topRadius, double height,
                                double turns, int segments, int primaryColor, int secondaryColor,
                                float alpha, float intensity, float noiseScale, float seed, float pulse) {
+        double width = filamentWidth(alpha, intensity, 0.016D);
         if (segments <= 0 || !beginLayer(shader, ticks, LAYER_FILAMENT,
                 primaryColor, secondaryColor, alpha, intensity, noiseScale, seed, pulse)) {
             return;
         }
 
         try {
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            double[] xs = new double[segments + 1];
+            double[] ys = new double[segments + 1];
+            double[] zs = new double[segments + 1];
             for (int i = 0; i <= segments; i++) {
                 double progress = (double) i / segments;
                 double angle = phase + progress * TWO_PI * turns;
                 double radius = baseRadius + (topRadius - baseRadius) * progress;
-                double y = progress * height - 0.08D;
-                addVertex(buffer, Math.cos(angle) * radius, y, Math.sin(angle) * radius,
-                        progress, 0.5D, 0.0F, 1.0F, 0.0F);
+                xs[i] = Math.cos(angle) * radius;
+                ys[i] = progress * height - 0.08D;
+                zs[i] = Math.sin(angle) * radius;
             }
-            tessellator.draw();
+            drawTubePathGeometry(xs, ys, zs, segments + 1, width, false);
         } finally {
             shader.end();
         }
@@ -471,6 +463,7 @@ final class ArcaneShaderEffectRenderer {
                                         int primaryColor, int secondaryColor, float alpha,
                                         float intensity, float noiseScale, float seed, float pulse,
                                         int segments) {
+        double width = filamentWidth(alpha, intensity, 0.020D);
         if (Math.abs(y) >= sphereRadius || !beginLayer(shader, ticks, LAYER_FILAMENT,
                 primaryColor, secondaryColor, alpha, intensity, noiseScale, seed, pulse)) {
             return;
@@ -478,16 +471,7 @@ final class ArcaneShaderEffectRenderer {
 
         try {
             double radius = Math.sqrt(Math.max(0.0D, sphereRadius * sphereRadius - y * y));
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            for (int i = 0; i < segments; i++) {
-                double progress = (double) i / segments;
-                double angle = TWO_PI * progress;
-                addVertex(buffer, Math.cos(angle) * radius, y, Math.sin(angle) * radius,
-                        progress, 0.5D, 0.0F, 1.0F, 0.0F);
-            }
-            tessellator.draw();
+            drawLatitudeRibbonGeometry(radius, y, width, segments);
         } finally {
             shader.end();
         }
@@ -578,6 +562,219 @@ final class ArcaneShaderEffectRenderer {
                     cos * inner - tx, sin * inner - tz, progress + 0.015D, 0.0D);
         }
         tessellator.draw();
+    }
+
+    private static void drawTubeLineGeometry(double x1, double y1, double z1,
+                                             double x2, double y2, double z2,
+                                             double width) {
+        double[] xs = new double[]{x1, x2};
+        double[] ys = new double[]{y1, y2};
+        double[] zs = new double[]{z1, z2};
+        drawTubePathGeometry(xs, ys, zs, 2, width, false);
+    }
+
+    private static void drawTubePathGeometry(double[] xs, double[] ys, double[] zs,
+                                             int count, double width, boolean addCaps) {
+        if (count < 2 || width <= 0.0D) {
+            return;
+        }
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+
+        double[] ax = new double[count];
+        double[] ay = new double[count];
+        double[] az = new double[count];
+        double[] bx = new double[count];
+        double[] by = new double[count];
+        double[] bz = new double[count];
+
+        for (int i = 0; i < count; i++) {
+            int previous = Math.max(0, i - 1);
+            int next = Math.min(count - 1, i + 1);
+            double tx = xs[next] - xs[previous];
+            double ty = ys[next] - ys[previous];
+            double tz = zs[next] - zs[previous];
+            double length = Math.sqrt(tx * tx + ty * ty + tz * tz);
+            if (length <= 0.0001D && i + 1 < count) {
+                tx = xs[i + 1] - xs[i];
+                ty = ys[i + 1] - ys[i];
+                tz = zs[i + 1] - zs[i];
+                length = Math.sqrt(tx * tx + ty * ty + tz * tz);
+            }
+            if (length <= 0.0001D && i > 0) {
+                tx = xs[i] - xs[i - 1];
+                ty = ys[i] - ys[i - 1];
+                tz = zs[i] - zs[i - 1];
+                length = Math.sqrt(tx * tx + ty * ty + tz * tz);
+            }
+            if (length <= 0.0001D) {
+                tx = 0.0D;
+                ty = 1.0D;
+                tz = 0.0D;
+                length = 1.0D;
+            }
+
+            tx /= length;
+            ty /= length;
+            tz /= length;
+            double[] basisA = perpendicularUnit(tx, ty, tz);
+            ax[i] = basisA[0];
+            ay[i] = basisA[1];
+            az[i] = basisA[2];
+            bx[i] = ty * az[i] - tz * ay[i];
+            by[i] = tz * ax[i] - tx * az[i];
+            bz[i] = tx * ay[i] - ty * ax[i];
+            double bLength = Math.sqrt(bx[i] * bx[i] + by[i] * by[i] + bz[i] * bz[i]);
+            if (bLength <= 0.0001D) {
+                bx[i] = 0.0D;
+                by[i] = 1.0D;
+                bz[i] = 0.0D;
+            } else {
+                bx[i] /= bLength;
+                by[i] /= bLength;
+                bz[i] /= bLength;
+            }
+        }
+
+        int sides = 6;
+        double radius = width * 0.5D;
+        for (int i = 0; i < count - 1; i++) {
+            double u0 = i / (double) (count - 1);
+            double u1 = (i + 1.0D) / (count - 1);
+            for (int side = 0; side < sides; side++) {
+                double a0 = TWO_PI * side / sides;
+                double a1 = TWO_PI * (side + 1) / sides;
+                double n00x = ax[i] * Math.cos(a0) + bx[i] * Math.sin(a0);
+                double n00y = ay[i] * Math.cos(a0) + by[i] * Math.sin(a0);
+                double n00z = az[i] * Math.cos(a0) + bz[i] * Math.sin(a0);
+                double n01x = ax[i] * Math.cos(a1) + bx[i] * Math.sin(a1);
+                double n01y = ay[i] * Math.cos(a1) + by[i] * Math.sin(a1);
+                double n01z = az[i] * Math.cos(a1) + bz[i] * Math.sin(a1);
+                double n10x = ax[i + 1] * Math.cos(a0) + bx[i + 1] * Math.sin(a0);
+                double n10y = ay[i + 1] * Math.cos(a0) + by[i + 1] * Math.sin(a0);
+                double n10z = az[i + 1] * Math.cos(a0) + bz[i + 1] * Math.sin(a0);
+                double n11x = ax[i + 1] * Math.cos(a1) + bx[i + 1] * Math.sin(a1);
+                double n11y = ay[i + 1] * Math.cos(a1) + by[i + 1] * Math.sin(a1);
+                double n11z = az[i + 1] * Math.cos(a1) + bz[i + 1] * Math.sin(a1);
+                double v0 = side / (double) sides;
+                double v1 = (side + 1.0D) / sides;
+
+                addVertex(buffer, xs[i] + n00x * radius, ys[i] + n00y * radius, zs[i] + n00z * radius,
+                        u0, v0, (float) n00x, (float) n00y, (float) n00z);
+                addVertex(buffer, xs[i + 1] + n10x * radius, ys[i + 1] + n10y * radius, zs[i + 1] + n10z * radius,
+                        u1, v0, (float) n10x, (float) n10y, (float) n10z);
+                addVertex(buffer, xs[i + 1] + n11x * radius, ys[i + 1] + n11y * radius, zs[i + 1] + n11z * radius,
+                        u1, v1, (float) n11x, (float) n11y, (float) n11z);
+                addVertex(buffer, xs[i] + n00x * radius, ys[i] + n00y * radius, zs[i] + n00z * radius,
+                        u0, v0, (float) n00x, (float) n00y, (float) n00z);
+                addVertex(buffer, xs[i + 1] + n11x * radius, ys[i + 1] + n11y * radius, zs[i + 1] + n11z * radius,
+                        u1, v1, (float) n11x, (float) n11y, (float) n11z);
+                addVertex(buffer, xs[i] + n01x * radius, ys[i] + n01y * radius, zs[i] + n01z * radius,
+                        u0, v1, (float) n01x, (float) n01y, (float) n01z);
+            }
+        }
+
+        if (addCaps) {
+            addPathCap(buffer, xs[0], ys[0], zs[0], xs[1] - xs[0], ys[1] - ys[0], zs[1] - zs[0],
+                    width * 0.5D, 0.0D);
+            addPathCap(buffer, xs[count - 1], ys[count - 1], zs[count - 1],
+                    xs[count - 2] - xs[count - 1], ys[count - 2] - ys[count - 1], zs[count - 2] - zs[count - 1],
+                    width * 0.5D, 1.0D);
+        }
+
+        tessellator.draw();
+    }
+
+    private static void addPathCap(BufferBuilder buffer, double x, double y, double z,
+                                   double dx, double dy, double dz, double radius, double u) {
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (length <= 0.0001D) {
+            return;
+        }
+
+        dx /= length;
+        dy /= length;
+        dz /= length;
+        double[] basisA = perpendicularUnit(dx, dy, dz);
+        double ax = basisA[0];
+        double ay = basisA[1];
+        double az = basisA[2];
+        double bx = dy * az - dz * ay;
+        double by = dz * ax - dx * az;
+        double bz = dx * ay - dy * ax;
+        int sides = 6;
+        for (int side = 0; side < sides; side++) {
+            double a0 = TWO_PI * side / sides;
+            double a1 = TWO_PI * (side + 1) / sides;
+            double n0x = ax * Math.cos(a0) + bx * Math.sin(a0);
+            double n0y = ay * Math.cos(a0) + by * Math.sin(a0);
+            double n0z = az * Math.cos(a0) + bz * Math.sin(a0);
+            double n1x = ax * Math.cos(a1) + bx * Math.sin(a1);
+            double n1y = ay * Math.cos(a1) + by * Math.sin(a1);
+            double n1z = az * Math.cos(a1) + bz * Math.sin(a1);
+            addVertex(buffer, x, y, z, u, 0.5D, (float) dx, (float) dy, (float) dz);
+            addVertex(buffer, x + n1x * radius, y + n1y * radius, z + n1z * radius,
+                    u, (side + 1.0D) / sides, (float) dx, (float) dy, (float) dz);
+            addVertex(buffer, x + n0x * radius, y + n0y * radius, z + n0z * radius,
+                    u, side / (double) sides, (float) dx, (float) dy, (float) dz);
+        }
+    }
+
+    private static void drawLatitudeRibbonGeometry(double radius, double y, double width, int segments) {
+        if (radius <= 0.0D || width <= 0.0D || segments <= 2) {
+            return;
+        }
+
+        double innerRadius = Math.max(0.001D, radius - width * 0.5D);
+        double outerRadius = radius + width * 0.5D;
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i < segments; i++) {
+            double u0 = i / (double) segments;
+            double u1 = (i + 1.0D) / segments;
+            double angle0 = TWO_PI * u0;
+            double angle1 = TWO_PI * u1;
+            double c0 = Math.cos(angle0);
+            double s0 = Math.sin(angle0);
+            double c1 = Math.cos(angle1);
+            double s1 = Math.sin(angle1);
+
+            addVertex(buffer, c0 * innerRadius, y, s0 * innerRadius,
+                    u0, 0.0D, 0.0F, 1.0F, 0.0F);
+            addVertex(buffer, c0 * outerRadius, y, s0 * outerRadius,
+                    u0, 1.0D, 0.0F, 1.0F, 0.0F);
+            addVertex(buffer, c1 * outerRadius, y, s1 * outerRadius,
+                    u1, 1.0D, 0.0F, 1.0F, 0.0F);
+            addVertex(buffer, c0 * innerRadius, y, s0 * innerRadius,
+                    u0, 0.0D, 0.0F, 1.0F, 0.0F);
+            addVertex(buffer, c1 * outerRadius, y, s1 * outerRadius,
+                    u1, 1.0D, 0.0F, 1.0F, 0.0F);
+            addVertex(buffer, c1 * innerRadius, y, s1 * innerRadius,
+                    u1, 0.0D, 0.0F, 1.0F, 0.0F);
+        }
+        tessellator.draw();
+    }
+
+    private static double[] perpendicularUnit(double x, double y, double z) {
+        double refX = Math.abs(y) > 0.84D ? 1.0D : 0.0D;
+        double refY = Math.abs(y) > 0.84D ? 0.0D : 1.0D;
+        double refZ = 0.0D;
+        double px = y * refZ - z * refY;
+        double py = z * refX - x * refZ;
+        double pz = x * refY - y * refX;
+        double length = Math.sqrt(px * px + py * py + pz * pz);
+        if (length <= 0.0001D) {
+            return new double[]{1.0D, 0.0D, 0.0D};
+        }
+        return new double[]{px / length, py / length, pz / length};
+    }
+
+    private static double filamentWidth(float alpha, float intensity, double baseWidth) {
+        return baseWidth * (0.82D + Math.min(1.8D, Math.max(0.0D, intensity)) * 0.16D)
+                + Math.min(0.060D, Math.max(0.0D, alpha) * 0.030D);
     }
 
     private static void drawPetalGeometry(double angle, double length, double halfWidth, double lift) {
