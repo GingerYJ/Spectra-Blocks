@@ -1,190 +1,160 @@
 # Spectra Blocks Shader-Only Remake Plan
 
-本文档记录剩余视觉特效方块的 shader-only 重制范围、拆分方式和回退策略。
+本文档记录 Spectra Blocks 视觉特效方块的 shader-only 重制计划、当前状态、agent 分工和清理规则。
 
-## 已完成且冻结的效果
+## 当前目标
 
-以下效果已经由用户确认完成，后续重制不主动修改：
+- 所有特效方块的动态效果都使用 shader 渲染。
+- 不保留贴图球体 fallback，不保留“shader 失败后改用旧渲染”的路径。
+- 不使用 Minecraft 粒子系统制作方块特效。
+- 方块级 NBT 只保留 `RenderScale`，用于整体缩放。
+- 配置文件保留渲染距离控制，默认 32 格。
+- 每完成一批可验证改动就提交并推送到 `origin shader-experiment`，方便回退。
+
+## 已确认完成并冻结
+
+以下效果已经由用户确认效果完成。除非出现编译错误、公共 shader 接口变化，或用户明确要求，否则不主动重制：
 
 - `micro_singularity` / 微型黑洞
 - `micro_white_hole` / 微型白洞
 - `micro_universe` / 微缩宇宙
 - `micro_stellar_source` / 微缩恒星源
 
-这些效果只在出现编译错误、公共 shader 管线接口变化或用户明确要求时调整。
+说明：`RenderMicroUniverse.java` 仍有少量 `GL_LINE_*` primitive，用于已确认完成的宇宙轨道/星线表现。本阶段按用户确认结果保留，不再主动修改。
 
-## 总目标
+## 当前审计结论
 
-- 剩余特效方块全部改为 shader 渲染。
-- 删除旧 Tessellator fallback 逻辑，不再保留“shader 失败则回退”的路径。
-- 保留每个方块现有的 `RenderScale` NBT 作为唯一方块级渲染控制。
-- 保留配置文件中的默认渲染距离控制，默认 32 格。
-- 每完成一组效果就编译、提交并推送，形成可回退节点。
-- 清理无用 PNG 和旧渲染辅助代码前必须先确认没有引用。
+截至 `893a07a Convert shader effect lines to ribbons`：
 
-## 公共渲染策略
-
-1. 使用少量通用 shader 承载同类效果：
-   - `celestial_effect`：星系、星云、坍缩恒星、宇宙背景辐射场。
-   - `space_effect`：空间裂隙、虫洞、引力透镜、维度星门、时间裂隙。
-   - `magic_effect`：虚空水晶、奥术星环、星环祭坛核心、灵魂涡流、虚空莲、梦境碎片。
-   - `tech_effect`：等离子风暴、量子泡、虚数立方、光谱棱镜、水晶折射场、数据流矩阵、能源中心。
-   - `natural_effect`：星尘喷泉、极光帷幕、深海光核、雷暴核心、熵云、日冕喷发、星轨沙漏。
-2. Java 渲染器只负责：
-   - 设置位置、缩放、旋转、混合状态和少量几何体。
-   - 向 shader 传入 `uTime`、`uEffect`、`uLayer`、颜色、透明度、强度、随机种子等参数。
-3. 几何体优先复用公共缓存：
-   - 球体：按分段缓存单位球顶点。
-   - 平面：用于裂隙、星门、光幕、数据流。
-   - 环/带：用于轨道、符文环、吸积盘、日冕弧。
-4. 旧的逐点 CPU 粒子、线条、球壳尽量收敛为 shader 内部噪声、闪烁、扫描线、环带和 billboard 点。
+- Java 旧路径扫描未发现 `bindTexture`、`getTextureManager`、`drawTexturedSphere`、`spawnParticle`、`new Particle`、`effectRenderer.addEffect`。
+- 多数可见线条已经从 `GL_LINES / GL_LINE_LOOP / GL_LINE_STRIP` 改为三角 ribbon 或面片。
+- `ArcaneShaderEffectRenderer` 是本项目内部 shader helper，不是 Minecraft 粒子系统。
+- `ShaderManager.disableShaders(...)` 仍会在 shader 编译或渲染异常后禁用 shader。由于目标是不保留 fallback，这种失败表现为不渲染，而不是回退到贴图/粒子路径。
 
 ## Agent 分工
 
-### Ptolemy：天体与宇宙组
+### Agent A：Java 渲染路径审计
 
-负责文件：
+负责范围：
 
-- `RenderMiniatureGalaxy.java`
-- `RenderNebulaCore.java`
-- `RenderCollapsingStar.java`
-- `RenderCosmicBackgroundRadiationField.java`
-- `celestial_effect.vsh`
-- `celestial_effect.fsh`
+- `src/main/java/com/gingeryj/spectrablocks/client/render`
+- `src/main/java/com/gingeryj/spectrablocks/client/render/shader`
+- 所有 `TileEntitySpecialRenderer` 和公共 shader helper
 
-效果要求：
+检查项：
 
-- `miniature_galaxy`：核心发光、旋涡星臂、星点闪烁、少量拖尾。
-- `nebula_core`：中心能量核、多层云雾翻涌、局部云团变亮。
-- `collapsing_star`：暗核心、吸积环、内吸粒子、偶发坍缩闪爆。
-- `cosmic_background_radiation_field`：淡色场域、细密噪声、温差斑点和慢速漂移。
+- 是否仍存在贴图绑定、旧球体贴图绘制、MC 粒子系统调用。
+- 是否还有非冻结方块直接使用 `GL_LINES / GL_LINE_LOOP / GL_LINE_STRIP`。
+- `ShaderManager.disableShaders(...)` 的失败行为是否仍符合 shader-only 目标。
 
-### Confucius：空间与维度组
+### Agent B：资源与 PNG 审计
 
-负责文件：
+负责范围：
 
-- `RenderSpatialRift.java`
-- `RenderWormhole.java`
-- `RenderGravitationalLens.java`
-- `RenderDimensionalGate.java`
-- `RenderTemporalRift.java`
-- `space_effect.vsh`
-- `space_effect.fsh`
+- `src/main/resources/assets/spectrablocks/textures`
+- `src/main/resources/assets/spectrablocks/models`
+- `src/main/resources/assets/spectrablocks/blockstates`
+- `src/main/resources/assets/spectrablocks/recipes`
 
-效果要求：
+检查项：
 
-- `spatial_rift`：不规则裂口、异色虚空、边缘闪烁、波纹噪声。
-- `wormhole`：深色球形漩涡、发光环、向心粒子、轻微呼吸。
-- `gravitational_lens`：透明力场、中心暗核、焦散弧线、慢速聚焦闪光。
-- `dimensional_gate`：竖直星门、流动星空、符文边环旋转。
-- `temporal_rift`：钟表碎片感、透明波纹、残影、倒转光环。
+- `textures/blocks/*.png` 是否仍被 block/item model 引用。
+- `textures/items/effect_configurator.png` 是否仍被工具物品模型引用。
+- 是否存在旧 `textures/effects` 或不再被任何资源引用的 PNG。
 
-### Linnaeus：魔法与奥术组
+删除规则：
 
-负责文件：
+- 只有确认没有任何模型、物品、方块状态或代码引用的 PNG 才能删除。
+- 当前大多数 blocks PNG 是方块/物品占位模型所需资源，即使动态效果由 shader 渲染，也不能直接删除，否则物品栏/手持/方块模型会丢纹理。
 
-- `RenderVoidCrystal.java`
-- `RenderArcaneStarRing.java`
-- `RenderAstralAltarCore.java`
-- `RenderSoulVortex.java`
-- `RenderVoidLotus.java`
-- `RenderDreamShards.java`
-- `magic_effect.vsh`
-- `magic_effect.fsh`
+### Agent C：文档与计划审计
 
-效果要求：
+负责范围：
 
-- `void_crystal`：黑紫水晶、吞光核心、符文环、短电弧。
-- `arcane_star_ring`：星核、淡金光晕、多层符文环、轨道星点。
-- `astral_altar_core`：水平法阵、中心星火、层级旋转。
-- `soul_vortex`：青绿色灵魂流绕中心上升。
-- `void_lotus`：暗紫光片花瓣缓慢开合。
-- `dream_shards`：彩色碎片漂浮，偶发短暂圆环。
+- `README.md`
+- `SHADER_EXPERIMENT_TASKS.md`
+- `docs/*.md`
+- `src/main/resources/mcmod.info`
 
-### Popper：科技、能量与折射组
+检查项：
 
-负责文件：
+- 文档是否乱码。
+- 文档是否仍提到已经删除的 fallback 方案。
+- 是否准确记录冻结项、当前提交点和后续可回退策略。
 
-- `RenderPlasmaStorm.java`
-- `RenderQuantumBubble.java`
-- `RenderImaginaryCube.java`
-- `RenderSpectralPrism.java`
-- `RenderCrystalRefractionField.java`
-- `RenderDataStreamMatrix.java`
-- `RenderEnergyNexus.java`
-- `tech_effect.vsh`
-- `tech_effect.fsh`
+## 剩余重制策略
 
-效果要求：
+### 1. 冻结项保护
 
-- `plasma_storm`：蓝青等离子旋涡、短促电弧、高速闪烁。
-- `quantum_bubble`：透明护罩、跳动网格、随机光点。
-- `imaginary_cube`：透明立方框架错位、重叠、闪烁。
-- `spectral_prism`：中心棱晶、彩色光束、折射纹。
-- `crystal_refraction_field`：多层透明棱面、空气折射感。
-- `data_stream_matrix`：竖向光符号下落、扫描线。
-- `energy_nexus`：适合作为能源中心，中心球呼吸、能量流向核心、多层能量约束结构。
+不主动修改：
 
-### Copernicus：自然、装饰与流体组
+- 微型黑洞
+- 微型白洞
+- 微缩宇宙
+- 微缩恒星源
 
-负责文件：
+如后续用户指出视觉问题，只针对指定方块做局部修改，并单独提交。
 
-- `RenderStardustFountain.java`
-- `RenderAuroraVeil.java`
-- `RenderAbyssalCore.java`
-- `RenderStormCore.java`
-- `RenderEntropyCloud.java`
-- `RenderSolarCoronaBurst.java`
-- `RenderStellarHourglass.java`
-- `natural_effect.vsh`
-- `natural_effect.fsh`
+### 2. 非冻结项继续清理
 
-效果要求：
+后续优先检查这些风险：
 
-- `stardust_fountain`：星点向上喷出、顶部散开、缓慢回落。
-- `aurora_veil`：竖向彩色光幕、多层波浪面。
-- `abyssal_core`：蓝绿色水波光球、深海浮游光点。
-- `storm_core`：自然雷暴云团、旋转风眼、电弧闪烁。
-- `entropy_cloud`：灰白噪声云不断分解重组，偶发黑色裂纹。
-- `solar_corona_burst`：小型太阳核心、外侧日珥喷发弧线。
-- `stellar_hourglass`：上下星云团、中间星尘流动。
+- `glLineWidth(...)` 状态设置是否已经没有实际意义，可以逐步删除。
+- 是否有 helper 名称、注释或文档仍描述 fallback。
+- 是否有 shader 失败提示文字与“无 fallback”目标不一致。
+- 是否有重复的 ribbon 几何 helper 可以收敛到 `RenderHelper`，但不为抽象而抽象，避免大范围重构。
 
-## 清理计划
+### 3. 资源清理
 
-第一阶段不删除资源，只完成 shader-only 重制和编译通过。
+当前不按文件名批量删除 PNG。正确流程是：
 
-第二阶段执行引用检查：
+1. 先扫描所有模型和代码引用。
+2. 确认资源没有被 block/item model 使用。
+3. 删除资源。
+4. 运行 `.\gradlew.bat build`。
+5. 提交并推送。
 
-- 搜索所有 `textures/effects` 引用。
-- 搜索所有 `textures/blocks/*.png` 是否仅用于方块/物品模型。
-- 搜索 `RenderHelper`、`RenderEnergyEffectHelper`、`RenderCelestialEffectBase` 是否仍被剩余渲染器使用。
+### 4. 新增其他类型特效
 
-第三阶段再删除确认无用的文件：
+剩余 shader-only 清理完成后，再新增非天体类效果。优先方向：
 
-- 已不再被 shader 或模型引用的效果 PNG。
-- 旧 fallback 分支代码。
-- 不再使用的 Tessellator 辅助方法。
+- 声音/共振类：声波共振器已添加，可继续扩展音叉、回声井、静默核心。
+- 热/环境类：热扰动场已添加，可继续扩展寒霜折射、热浪柱、熔流核心。
+- 炼金/仪式类：炼金转化环已添加，可继续扩展符文坩埚、光谱祭坛、元素置换阵。
+- 机械/能源类：可继续做反应堆护罩、能量阀门、矩阵蓄能核心。
 
-## 提交与推送顺序
+## 验证命令
 
-1. 提交本计划文档：`Plan shader-only remake for remaining effects`。
-2. 天体组完成后提交：`Remake celestial effects with shaders`。
-3. 空间组完成后提交：`Remake space effects with shaders`。
-4. 魔法组完成后提交：`Remake magic effects with shaders`。
-5. 科技组完成后提交：`Remake tech effects with shaders`。
-6. 自然组完成后提交：`Remake natural effects with shaders`。
-7. 公共缓存和清理完成后提交：`Clean shader-only rendering leftovers`。
+每批代码修改至少运行：
 
-每个代码提交前至少运行：
+```powershell
+.\gradlew.bat compileJava
+```
 
-- `.\gradlew.bat compileJava`
+每批准备推送前运行：
 
-每个阶段完成后推送到 `origin shader-experiment`。
+```powershell
+.\gradlew.bat build
+```
 
-## 当前已知风险
+旧路径扫描：
 
-- 当前配置说明仍提到实验性 shader 和 fallback，需要在 shader-only 清理阶段更新。
-- `ShaderManager.disableShaders` 仍会全局禁用 shader，需要在移除 fallback 时重新评估失败处理文字与行为。
-- 共享 shader 参数名需要统一，避免不同 agent 增加互不兼容的 uniform。
-- 透明效果需要继续关注视角下的接缝、背面剔除和深度写入状态。
-- 旧 PNG 是否删除不能只按文件名判断，必须先查模型、物品和语言文件引用。
+```powershell
+Get-ChildItem -Path src\main\java\com\gingeryj\spectrablocks -Recurse -File |
+  Select-String -Pattern 'bindTexture','getTextureManager','drawTexturedSphere','spawnParticle','new Particle','effectRenderer.addEffect' -SimpleMatch
+```
+
+line primitive 扫描：
+
+```powershell
+Get-ChildItem -Path src\main\java\com\gingeryj\spectrablocks\client\render -File |
+  Select-String -Pattern 'GL11.GL_LINES','GL11.GL_LINE_LOOP','GL11.GL_LINE_STRIP' -SimpleMatch
+```
+
+## 提交策略
+
+- 文档修复单独提交。
+- 渲染器重制按视觉类型分批提交。
+- 资源删除单独提交。
+- 每次提交后推送到 `origin shader-experiment`。
+- 用户确认某个效果完成后，将其加入冻结项。
