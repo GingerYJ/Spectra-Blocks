@@ -22,6 +22,11 @@ public class RenderDimensionalGate extends TileEntitySpecialRenderer<TileDimensi
     private static final int SPHERE_LON_SEGMENTS = 32;
 
     @Override
+    public boolean isGlobalRenderer(TileDimensionalGate te) {
+        return true;
+    }
+
+    @Override
     public void render(TileDimensionalGate te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {

@@ -35,6 +35,11 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
     };
 
     @Override
+    public boolean isGlobalRenderer(TileMicroUniverse te) {
+        return true;
+    }
+
+    @Override
     public void render(TileMicroUniverse te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         double centerX = x + 0.5D;
@@ -48,20 +53,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-        boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
-        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-        GlStateManager.depthMask(false);
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(
-                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-        );
-        GlStateManager.disableLighting();
-        GlStateManager.disableTexture2D();
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        GL11.glNormal3f(0.0F, 1.0F, 0.0F);
-        GlStateManager.disableCull();
-
+        SpectraRenderState.State renderState = SpectraRenderState.beginIsolated();
         try {
             ShaderProgram shellShader = ShaderManager.getProgram("micro_universe_shell");
             ShaderProgram bodyShader = ShaderManager.getProgram("micro_universe_body");
@@ -70,23 +62,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             drawSolarSystem(ticks, bodyShader, colorShader);
             drawMeteors(ticks, bodyShader, colorShader);
         } finally {
-            if (cullWasEnabled) {
-                GlStateManager.enableCull();
-            } else {
-                GlStateManager.disableCull();
-            }
-            GlStateManager.shadeModel(GL11.GL_FLAT);
-            GlStateManager.enableTexture2D();
-            GlStateManager.enableLighting();
-            GlStateManager.depthMask(true);
-            if (!blendWasEnabled) {
-                GlStateManager.disableBlend();
-            }
-            GlStateManager.tryBlendFuncSeparate(
-                    GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                    GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
-            );
-            RenderHelper.resetLineWidth();
+            renderState.close();
             GlStateManager.popMatrix();
         }
     }

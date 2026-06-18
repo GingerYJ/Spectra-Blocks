@@ -32,6 +32,11 @@ public class RenderImaginaryCube extends TileEntitySpecialRenderer<TileImaginary
     private static final double TWO_PI = Math.PI * 2.0D;
 
     @Override
+    public boolean isGlobalRenderer(TileImaginaryCube te) {
+        return true;
+    }
+
+    @Override
     public void render(TileImaginaryCube te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {

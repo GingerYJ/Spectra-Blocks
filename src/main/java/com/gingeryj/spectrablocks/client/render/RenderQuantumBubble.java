@@ -41,6 +41,11 @@ public class RenderQuantumBubble extends TileEntitySpecialRenderer<TileQuantumBu
     private static final double EPSILON = 1.0E-5D;
 
     @Override
+    public boolean isGlobalRenderer(TileQuantumBubble te) {
+        return true;
+    }
+
+    @Override
     public void render(TileQuantumBubble te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {

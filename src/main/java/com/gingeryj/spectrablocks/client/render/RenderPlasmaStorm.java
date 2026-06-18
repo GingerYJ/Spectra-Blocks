@@ -31,6 +31,11 @@ public class RenderPlasmaStorm extends TileEntitySpecialRenderer<TilePlasmaStorm
     private static final double EPSILON = 1.0E-5D;
 
     @Override
+    public boolean isGlobalRenderer(TilePlasmaStorm te) {
+        return true;
+    }
+
+    @Override
     public void render(TilePlasmaStorm te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {
