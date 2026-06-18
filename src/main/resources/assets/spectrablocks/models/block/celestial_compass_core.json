@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "all":  "spectrablocks:blocks/celestial_compass_core"
+                 },
+    "parent":  "block/cube_all"
+}

@@ -60,3 +60,6 @@ tile.spectrablocks.liquid_starlight_pool.name=流光星池
 tile.spectrablocks.nova_bloom.name=新星绽放
 tile.spectrablocks.ether_reactor_core.name=以太反应堆核心
 tile.spectrablocks.event_horizon_mirror.name=事件视界镜
+tile.spectrablocks.singularity_lattice.name=奇点晶格
+tile.spectrablocks.spectral_hourglass_gate.name=光谱沙漏门
+tile.spectrablocks.celestial_compass_core.name=天体罗盘核心

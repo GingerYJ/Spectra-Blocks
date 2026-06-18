@@ -7,6 +7,7 @@ import com.gingeryj.spectrablocks.client.render.RenderArcaneStarRing;
 import com.gingeryj.spectrablocks.client.render.RenderAstralAltarCore;
 import com.gingeryj.spectrablocks.client.render.RenderAuroraVeil;
 import com.gingeryj.spectrablocks.client.render.RenderBioluminescentSpores;
+import com.gingeryj.spectrablocks.client.render.RenderCelestialCompassCore;
 import com.gingeryj.spectrablocks.client.render.RenderChronoAnchor;
 import com.gingeryj.spectrablocks.client.render.RenderCollapsingStar;
 import com.gingeryj.spectrablocks.client.render.RenderCosmicBackgroundRadiationField;
@@ -45,10 +46,12 @@ import com.gingeryj.spectrablocks.client.render.RenderQuantumBubble;
 import com.gingeryj.spectrablocks.client.render.RenderRadiantSigilField;
 import com.gingeryj.spectrablocks.client.render.RenderRuneObelisk;
 import com.gingeryj.spectrablocks.client.render.RenderShadowFlameLantern;
+import com.gingeryj.spectrablocks.client.render.RenderSingularityLattice;
 import com.gingeryj.spectrablocks.client.render.RenderSolarCoronaBurst;
 import com.gingeryj.spectrablocks.client.render.RenderSoulVortex;
 import com.gingeryj.spectrablocks.client.render.RenderSpatialRift;
 import com.gingeryj.spectrablocks.client.render.RenderSpectralPrism;
+import com.gingeryj.spectrablocks.client.render.RenderSpectralHourglassGate;
 import com.gingeryj.spectrablocks.client.render.RenderStardustFountain;
 import com.gingeryj.spectrablocks.client.render.RenderStellarHourglass;
 import com.gingeryj.spectrablocks.client.render.RenderStormCore;
@@ -62,6 +65,7 @@ import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
 import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
 import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
+import com.gingeryj.spectrablocks.tile.TileCelestialCompassCore;
 import com.gingeryj.spectrablocks.tile.TileChronoAnchor;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
@@ -100,10 +104,12 @@ import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRadiantSigilField;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
+import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
 import com.gingeryj.spectrablocks.tile.TileSpatialRift;
 import com.gingeryj.spectrablocks.tile.TileSpectralPrism;
+import com.gingeryj.spectrablocks.tile.TileSpectralHourglassGate;
 import com.gingeryj.spectrablocks.tile.TileStardustFountain;
 import com.gingeryj.spectrablocks.tile.TileStellarHourglass;
 import com.gingeryj.spectrablocks.tile.TileStormCore;
@@ -186,6 +192,10 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TileNovaBloom.class, new RenderNovaBloom());
         ClientRegistry.bindTileEntitySpecialRenderer(TileEtherReactorCore.class, new RenderEtherReactorCore());
         ClientRegistry.bindTileEntitySpecialRenderer(TileEventHorizonMirror.class, new RenderEventHorizonMirror());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileSingularityLattice.class, new RenderSingularityLattice());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileSpectralHourglassGate.class,
+                new RenderSpectralHourglassGate());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileCelestialCompassCore.class, new RenderCelestialCompassCore());
     }
 
     @Override
@@ -249,6 +259,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.NOVA_BLOOM);
         registerBlockItemModel(ModContent.ETHER_REACTOR_CORE);
         registerBlockItemModel(ModContent.EVENT_HORIZON_MIRROR);
+        registerBlockItemModel(ModContent.SINGULARITY_LATTICE);
+        registerBlockItemModel(ModContent.SPECTRAL_HOURGLASS_GATE);
+        registerBlockItemModel(ModContent.CELESTIAL_COMPASS_CORE);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

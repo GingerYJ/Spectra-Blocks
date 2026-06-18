@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "all":  "spectrablocks:blocks/spectral_hourglass_gate"
+                 },
+    "parent":  "block/cube_all"
+}

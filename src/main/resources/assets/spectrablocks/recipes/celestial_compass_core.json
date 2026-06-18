@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LQL",
+    "CNC",
+    "LQL"
+  ],
+  "key": {
+    "L": {
+      "item": "minecraft:dye",
+      "data": 4
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "C": {
+      "item": "minecraft:compass"
+    },
+    "N": {
+      "item": "minecraft:nether_star"
+    }
+  },
+  "result": {
+    "item": "spectrablocks:celestial_compass_core"
+  }
+}

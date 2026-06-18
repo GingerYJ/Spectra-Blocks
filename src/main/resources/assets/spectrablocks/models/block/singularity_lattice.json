@@ -1,0 +1,6 @@
+﻿{
+    "textures":  {
+                     "all":  "spectrablocks:blocks/singularity_lattice"
+                 },
+    "parent":  "block/cube_all"
+}

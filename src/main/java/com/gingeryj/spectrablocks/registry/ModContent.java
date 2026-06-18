@@ -6,6 +6,7 @@ import com.gingeryj.spectrablocks.block.BlockArcaneStarRing;
 import com.gingeryj.spectrablocks.block.BlockAstralAltarCore;
 import com.gingeryj.spectrablocks.block.BlockAuroraVeil;
 import com.gingeryj.spectrablocks.block.BlockBioluminescentSpores;
+import com.gingeryj.spectrablocks.block.BlockCelestialCompassCore;
 import com.gingeryj.spectrablocks.block.BlockChronoAnchor;
 import com.gingeryj.spectrablocks.block.BlockCollapsingStar;
 import com.gingeryj.spectrablocks.block.BlockCosmicBackgroundRadiationField;
@@ -44,10 +45,12 @@ import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
 import com.gingeryj.spectrablocks.block.BlockRadiantSigilField;
 import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
 import com.gingeryj.spectrablocks.block.BlockShadowFlameLantern;
+import com.gingeryj.spectrablocks.block.BlockSingularityLattice;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
 import com.gingeryj.spectrablocks.block.BlockSoulVortex;
 import com.gingeryj.spectrablocks.block.BlockSpatialRift;
 import com.gingeryj.spectrablocks.block.BlockSpectralPrism;
+import com.gingeryj.spectrablocks.block.BlockSpectralHourglassGate;
 import com.gingeryj.spectrablocks.block.BlockStardustFountain;
 import com.gingeryj.spectrablocks.block.BlockStellarHourglass;
 import com.gingeryj.spectrablocks.block.BlockStormCore;
@@ -61,6 +64,7 @@ import com.gingeryj.spectrablocks.tile.TileArcaneStarRing;
 import com.gingeryj.spectrablocks.tile.TileAstralAltarCore;
 import com.gingeryj.spectrablocks.tile.TileAuroraVeil;
 import com.gingeryj.spectrablocks.tile.TileBioluminescentSpores;
+import com.gingeryj.spectrablocks.tile.TileCelestialCompassCore;
 import com.gingeryj.spectrablocks.tile.TileChronoAnchor;
 import com.gingeryj.spectrablocks.tile.TileCollapsingStar;
 import com.gingeryj.spectrablocks.tile.TileCosmicBackgroundRadiationField;
@@ -99,10 +103,12 @@ import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRadiantSigilField;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
 import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
+import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
 import com.gingeryj.spectrablocks.tile.TileSoulVortex;
 import com.gingeryj.spectrablocks.tile.TileSpatialRift;
 import com.gingeryj.spectrablocks.tile.TileSpectralPrism;
+import com.gingeryj.spectrablocks.tile.TileSpectralHourglassGate;
 import com.gingeryj.spectrablocks.tile.TileStardustFountain;
 import com.gingeryj.spectrablocks.tile.TileStellarHourglass;
 import com.gingeryj.spectrablocks.tile.TileStormCore;
@@ -179,6 +185,9 @@ public final class ModContent {
     public static final BlockNovaBloom NOVA_BLOOM = new BlockNovaBloom();
     public static final BlockEtherReactorCore ETHER_REACTOR_CORE = new BlockEtherReactorCore();
     public static final BlockEventHorizonMirror EVENT_HORIZON_MIRROR = new BlockEventHorizonMirror();
+    public static final BlockSingularityLattice SINGULARITY_LATTICE = new BlockSingularityLattice();
+    public static final BlockSpectralHourglassGate SPECTRAL_HOURGLASS_GATE = new BlockSpectralHourglassGate();
+    public static final BlockCelestialCompassCore CELESTIAL_COMPASS_CORE = new BlockCelestialCompassCore();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -240,7 +249,10 @@ public final class ModContent {
                 LIQUID_STARLIGHT_POOL,
                 NOVA_BLOOM,
                 ETHER_REACTOR_CORE,
-                EVENT_HORIZON_MIRROR
+                EVENT_HORIZON_MIRROR,
+                SINGULARITY_LATTICE,
+                SPECTRAL_HOURGLASS_GATE,
+                CELESTIAL_COMPASS_CORE
         );
     }
 
@@ -301,6 +313,9 @@ public final class ModContent {
                 itemBlock(NOVA_BLOOM),
                 itemBlock(ETHER_REACTOR_CORE),
                 itemBlock(EVENT_HORIZON_MIRROR),
+                itemBlock(SINGULARITY_LATTICE),
+                itemBlock(SPECTRAL_HOURGLASS_GATE),
+                itemBlock(CELESTIAL_COMPASS_CORE),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -360,6 +375,9 @@ public final class ModContent {
         registerTileEntity(TileNovaBloom.class, "nova_bloom");
         registerTileEntity(TileEtherReactorCore.class, "ether_reactor_core");
         registerTileEntity(TileEventHorizonMirror.class, "event_horizon_mirror");
+        registerTileEntity(TileSingularityLattice.class, "singularity_lattice");
+        registerTileEntity(TileSpectralHourglassGate.class, "spectral_hourglass_gate");
+        registerTileEntity(TileCelestialCompassCore.class, "celestial_compass_core");
     }
 
     private static ItemBlock itemBlock(Block block) {
