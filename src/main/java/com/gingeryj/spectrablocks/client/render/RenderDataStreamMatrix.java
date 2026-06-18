@@ -55,15 +55,13 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
             setTechUniforms(shader, ticks, 5.0F, 0.0F + i * 0.1F,
                     i % 2 == 0 ? PRIMARY_COLOR : SECONDARY_COLOR, WHITE_COLOR, PRIMARY_COLOR,
                     alpha, 1.06F, (float) radius);
-            GlStateManager.glLineWidth(1.0F + i * 0.16F);
-            drawShaderCircle(radius, 96);
+            drawShaderCircle(radius, 96, 0.018D + i * 0.004D);
         }
-        GlStateManager.glLineWidth(1.0F);
         GlStateManager.popMatrix();
 
         setTechUniforms(shader, ticks, 5.0F, 1.0F, 0x1AFFC0, SECONDARY_COLOR, WHITE_COLOR,
                 0.045F, 0.95F, 2.74F);
-        drawShaderWireSphere(2.74D, 7, 12);
+        drawShaderWireSphere(2.74D, 7, 12, 0.017D);
         useAlphaBlend();
     }
 
@@ -82,8 +80,7 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
 
             setTechUniforms(shader, ticks, 5.0F, 2.0F, color, SECONDARY_COLOR, WHITE_COLOR,
                     0.045F + 0.025F * wave(ticks * 0.030D + i), 0.92F, (float) COLUMN_HEIGHT);
-            GlStateManager.glLineWidth(1.0F);
-            drawShaderLine(x, -COLUMN_HEIGHT * 0.5D, z, x, COLUMN_HEIGHT * 0.5D, z);
+            drawShaderLine(x, -COLUMN_HEIGHT * 0.5D, z, x, COLUMN_HEIGHT * 0.5D, z, 0.016D);
 
             for (int j = 0; j < GLYPHS_PER_COLUMN; j++) {
                 double local = fract(drift + j / (double) GLYPHS_PER_COLUMN);
@@ -101,7 +98,6 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
                 GlStateManager.popMatrix();
             }
         }
-        GlStateManager.glLineWidth(1.0F);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -119,51 +115,49 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
             GlStateManager.rotate(ticks * (0.045F + i * 0.008F), 0.0F, 1.0F, 0.0F);
             setTechUniforms(shader, ticks, 5.0F, 4.0F, i == 1 ? SECONDARY_COLOR : PRIMARY_COLOR,
                     WHITE_COLOR, SECONDARY_COLOR, 0.11F * fade, 1.18F, (float) radius);
-            GlStateManager.glLineWidth(2.0F);
-            drawShaderCircle(radius, 88);
+            drawShaderCircle(radius, 88, 0.040D);
 
             setTechUniforms(shader, ticks, 5.0F, 5.0F, WHITE_COLOR, i == 1 ? SECONDARY_COLOR : PRIMARY_COLOR,
                     PRIMARY_COLOR, 0.10F * fade, 1.22F, (float) radius);
-            GlStateManager.glLineWidth(1.0F);
-            drawRuneMarks(radius, 0.16D, 18, ticks * 0.011D + i);
+            drawRuneMarks(radius, 0.16D, 18, ticks * 0.011D + i, 0.018D);
             GlStateManager.popMatrix();
         }
-        GlStateManager.glLineWidth(1.0F);
         useAlphaBlend();
     }
 
     private static void drawGlyph(int glyph, double size) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        double width = size * 0.22D;
 
         if ((glyph & 1) == 0) {
-            addLine2D(buffer, -size, -size, size, -size);
-            addLine2D(buffer, -size, size, size, size);
+            addLine2D(buffer, -size, -size, size, -size, width);
+            addLine2D(buffer, -size, size, size, size, width);
         } else {
-            addLine2D(buffer, -size, -size, -size, size);
-            addLine2D(buffer, size, -size, size, size);
+            addLine2D(buffer, -size, -size, -size, size, width);
+            addLine2D(buffer, size, -size, size, size, width);
         }
 
         if ((glyph & 2) == 0) {
-            addLine2D(buffer, -size, 0.0D, size, 0.0D);
+            addLine2D(buffer, -size, 0.0D, size, 0.0D, width);
         } else {
-            addLine2D(buffer, 0.0D, -size, 0.0D, size);
+            addLine2D(buffer, 0.0D, -size, 0.0D, size, width);
         }
 
         if ((glyph & 4) == 0) {
-            addLine2D(buffer, -size, -size, size, size);
+            addLine2D(buffer, -size, -size, size, size, width);
         } else {
-            addLine2D(buffer, -size, size, size, -size);
+            addLine2D(buffer, -size, size, size, -size, width);
         }
 
         tessellator.draw();
     }
 
-    private static void drawRuneMarks(double radius, double length, int count, double phase) {
+    private static void drawRuneMarks(double radius, double length, int count, double phase, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
 
         for (int i = 0; i < count; i++) {
             double angle = phase + TWO_PI * i / count;
@@ -171,79 +165,169 @@ public class RenderDataStreamMatrix extends RenderCelestialEffectBase<TileDataSt
             double sin = Math.sin(angle);
             double inner = radius - length * 0.5D;
             double outer = radius + length * 0.5D;
-            addLine(buffer, cos * inner, 0.0D, sin * inner, cos * outer, 0.0D, sin * outer);
+            addLine(buffer, cos * inner, 0.0D, sin * inner, cos * outer, 0.0D, sin * outer, width);
 
             if ((i & 3) == 0) {
                 double tangentX = -sin * length * 0.36D;
                 double tangentZ = cos * length * 0.36D;
                 double markRadius = radius + length * 0.18D;
                 addLine(buffer, cos * markRadius - tangentX, 0.0D, sin * markRadius - tangentZ,
-                        cos * markRadius + tangentX, 0.0D, sin * markRadius + tangentZ);
+                        cos * markRadius + tangentX, 0.0D, sin * markRadius + tangentZ, width);
             }
         }
 
         tessellator.draw();
     }
 
-    private static void drawShaderWireSphere(double radius, int gridLat, int gridLon) {
+    private static void drawShaderWireSphere(double radius, int gridLat, int gridLon, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
 
         for (int lat = 1; lat < gridLat; lat++) {
             double theta = Math.PI * lat / gridLat;
             double y = radius * Math.cos(theta);
             double horizontalRadius = radius * Math.sin(theta);
-            buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
             for (int lon = 0; lon < gridLon; lon++) {
-                double phi = TWO_PI * lon / gridLon;
-                addPosition(buffer, horizontalRadius * Math.cos(phi), y, horizontalRadius * Math.sin(phi),
-                        lon / (double) gridLon, lat / (double) gridLat);
+                double u0 = lon / (double) gridLon;
+                double u1 = (lon + 1.0D) / gridLon;
+                addRingQuad(buffer, horizontalRadius, y, TWO_PI * u0, TWO_PI * u1, width, u0, u1);
             }
-            tessellator.draw();
         }
 
         for (int lon = 0; lon < gridLon; lon++) {
             double phi = TWO_PI * lon / gridLon;
-            buffer.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            for (int lat = 0; lat <= gridLat; lat++) {
+            double previousX = radius * Math.sin(0.0D) * Math.cos(phi);
+            double previousY = radius;
+            double previousZ = radius * Math.sin(0.0D) * Math.sin(phi);
+            for (int lat = 1; lat <= gridLat; lat++) {
                 double theta = Math.PI * lat / gridLat;
-                addPosition(buffer, radius * Math.sin(theta) * Math.cos(phi),
-                        radius * Math.cos(theta),
-                        radius * Math.sin(theta) * Math.sin(phi),
-                        lon / (double) gridLon, lat / (double) gridLat);
+                double x = radius * Math.sin(theta) * Math.cos(phi);
+                double y = radius * Math.cos(theta);
+                double z = radius * Math.sin(theta) * Math.sin(phi);
+                addLine(buffer, previousX, previousY, previousZ, x, y, z, width);
+                previousX = x;
+                previousY = y;
+                previousZ = z;
             }
-            tessellator.draw();
         }
+
+        tessellator.draw();
     }
 
-    private static void drawShaderCircle(double radius, int segments) {
+    private static void drawShaderCircle(double radius, int segments, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
         for (int i = 0; i < segments; i++) {
-            double progress = i / (double) segments;
-            double angle = TWO_PI * progress;
-            addPosition(buffer, Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, progress, 0.5D);
+            double u0 = i / (double) segments;
+            double u1 = (i + 1.0D) / segments;
+            addRingQuad(buffer, radius, 0.0D, TWO_PI * u0, TWO_PI * u1, width, u0, u1);
         }
         tessellator.draw();
     }
 
-    private static void drawShaderLine(double x0, double y0, double z0, double x1, double y1, double z1) {
+    private static void drawShaderLine(double x0, double y0, double z0,
+                                       double x1, double y1, double z1, double width) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        addLine(buffer, x0, y0, z0, x1, y1, z1);
+        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        addLine(buffer, x0, y0, z0, x1, y1, z1, width);
         tessellator.draw();
     }
 
-    private static void addLine2D(BufferBuilder buffer, double x0, double y0, double x1, double y1) {
-        addLine(buffer, x0, y0, 0.0D, x1, y1, 0.0D);
+    private static void addLine2D(BufferBuilder buffer, double x0, double y0,
+                                  double x1, double y1, double width) {
+        double dx = x1 - x0;
+        double dy = y1 - y0;
+        double length = Math.sqrt(dx * dx + dy * dy);
+        if (length < 0.0001D) {
+            return;
+        }
+
+        double px = -dy / length * width * 0.5D;
+        double py = dx / length * width * 0.5D;
+        addPosition(buffer, x0 + px, y0 + py, 0.0D, 0.0D, 1.0D);
+        addPosition(buffer, x0 - px, y0 - py, 0.0D, 0.0D, 0.0D);
+        addPosition(buffer, x1 - px, y1 - py, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x0 + px, y0 + py, 0.0D, 0.0D, 1.0D);
+        addPosition(buffer, x1 - px, y1 - py, 0.0D, 1.0D, 0.0D);
+        addPosition(buffer, x1 + px, y1 + py, 0.0D, 1.0D, 1.0D);
     }
 
     private static void addLine(BufferBuilder buffer, double x0, double y0, double z0,
-                                double x1, double y1, double z1) {
-        addPosition(buffer, x0, y0, z0, 0.0D, 0.0D);
-        addPosition(buffer, x1, y1, z1, 1.0D, 1.0D);
+                                double x1, double y1, double z1, double width) {
+        addLineRibbon(buffer, x0, y0, z0, x1, y1, z1, width);
+    }
+
+    private static void addRingQuad(BufferBuilder buffer, double radius, double y,
+                                    double angle0, double angle1, double width, double u0, double u1) {
+        double innerRadius = Math.max(0.001D, radius - width * 0.5D);
+        double outerRadius = radius + width * 0.5D;
+        double c0 = Math.cos(angle0);
+        double s0 = Math.sin(angle0);
+        double c1 = Math.cos(angle1);
+        double s1 = Math.sin(angle1);
+        addPosition(buffer, c0 * innerRadius, y, s0 * innerRadius, u0, 0.0D);
+        addPosition(buffer, c0 * outerRadius, y, s0 * outerRadius, u0, 1.0D);
+        addPosition(buffer, c1 * outerRadius, y, s1 * outerRadius, u1, 1.0D);
+        addPosition(buffer, c0 * innerRadius, y, s0 * innerRadius, u0, 0.0D);
+        addPosition(buffer, c1 * outerRadius, y, s1 * outerRadius, u1, 1.0D);
+        addPosition(buffer, c1 * innerRadius, y, s1 * innerRadius, u1, 0.0D);
+    }
+
+    private static void addLineRibbon(BufferBuilder buffer, double x0, double y0, double z0,
+                                      double x1, double y1, double z1, double width) {
+        double dx = x1 - x0;
+        double dy = y1 - y0;
+        double dz = z1 - z0;
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (length < 0.0001D) {
+            return;
+        }
+
+        dx /= length;
+        dy /= length;
+        dz /= length;
+        double refX = Math.abs(dy) > 0.88D ? 1.0D : 0.0D;
+        double refY = Math.abs(dy) > 0.88D ? 0.0D : 1.0D;
+        double refZ = 0.0D;
+        double px = dy * refZ - dz * refY;
+        double py = dz * refX - dx * refZ;
+        double pz = dx * refY - dy * refX;
+        double pLength = Math.sqrt(px * px + py * py + pz * pz);
+        if (pLength < 0.0001D) {
+            px = 1.0D;
+            py = 0.0D;
+            pz = 0.0D;
+            pLength = 1.0D;
+        }
+
+        double half = width * 0.5D / pLength;
+        px *= half;
+        py *= half;
+        pz *= half;
+        addRibbonVertex(buffer, x0 + px, y0 + py, z0 + pz, 0.0D, 1.0D, px, py, pz);
+        addRibbonVertex(buffer, x0 - px, y0 - py, z0 - pz, 0.0D, 0.0D, -px, -py, -pz);
+        addRibbonVertex(buffer, x1 - px, y1 - py, z1 - pz, 1.0D, 0.0D, -px, -py, -pz);
+        addRibbonVertex(buffer, x0 + px, y0 + py, z0 + pz, 0.0D, 1.0D, px, py, pz);
+        addRibbonVertex(buffer, x1 - px, y1 - py, z1 - pz, 1.0D, 0.0D, -px, -py, -pz);
+        addRibbonVertex(buffer, x1 + px, y1 + py, z1 + pz, 1.0D, 1.0D, px, py, pz);
+    }
+
+    private static void addRibbonVertex(BufferBuilder buffer, double x, double y, double z,
+                                        double u, double v, double normalX, double normalY, double normalZ) {
+        double normalLength = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+        if (normalLength < 0.0001D) {
+            normalX = 0.0D;
+            normalY = 1.0D;
+            normalZ = 0.0D;
+            normalLength = 1.0D;
+        }
+        buffer.pos(x, y, z)
+                .tex(u, v)
+                .normal((float) (normalX / normalLength), (float) (normalY / normalLength), (float) (normalZ / normalLength))
+                .endVertex();
     }
 
     private static void addPosition(BufferBuilder buffer, double x, double y, double z, double u, double v) {
