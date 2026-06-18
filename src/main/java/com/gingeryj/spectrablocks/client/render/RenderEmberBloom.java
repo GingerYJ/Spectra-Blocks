@@ -21,18 +21,17 @@ public class RenderEmberBloom extends RenderCelestialEffectBase<TileScalableEffe
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawHeatHalo(ticks, naturalShader, colorShader);
-        drawFlamePetals(ticks, naturalShader, colorShader);
-        drawBloomCore(ticks, naturalShader, colorShader);
+        drawHeatHalo(ticks, naturalShader);
+        drawFlamePetals(ticks, naturalShader);
+        drawBloomCore(ticks, naturalShader);
         drawRisingEmbers(ticks, naturalShader);
     }
 
-    private void drawHeatHalo(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawHeatHalo(float ticks, ShaderProgram naturalShader) {
         float shimmer = wave(ticks * 0.055D);
 
         useAdditiveBlend();
@@ -47,29 +46,31 @@ public class RenderEmberBloom extends RenderCelestialEffectBase<TileScalableEffe
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, -0.28D, 0.0D);
         GlStateManager.rotate(ticks * 0.34F, 0.0F, 1.0F, 0.0F);
-        RenderNaturalShaderHelper.drawBasicFlatRing(colorShader, 0.30D, HEAT_HALO_RADIUS + shimmer * 0.10D,
-                0xFF8A19, 0.11F + shimmer * 0.05F, RING_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.24D, HEAT_HALO_RADIUS * 0.96D,
-                16, 0xFFE08A, 0.10F + shimmer * 0.06F, ticks * 0.018D);
+        RenderNaturalShaderHelper.drawShaderRing(naturalShader, 0.30D, HEAT_HALO_RADIUS + shimmer * 0.10D,
+                RenderNaturalShaderHelper.MODE_SOLAR, 1.5F, 0xFF8A19, 0xFF5A00, 0xFFE08A,
+                0.11F + shimmer * 0.05F, shimmer, 0.92F, ticks * 0.040F, 31.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.24D, HEAT_HALO_RADIUS * 0.96D,
+                16, RenderNaturalShaderHelper.MODE_SOLAR, 1.8F, 0xFFE08A, 0xFF8A19, 0xFFFFFF,
+                0.10F + shimmer * 0.06F, shimmer, 1.02F, ticks * 0.050F, 43.0F, ticks * 0.018D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawFlamePetals(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawFlamePetals(float ticks, ShaderProgram naturalShader) {
         float open = wave(ticks * 0.034D);
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.16F, 0.0F, 1.0F, 0.0F);
-        drawPetalLayer(ticks, naturalShader, colorShader, OUTER_PETAL_COUNT, OUTER_PETAL_LENGTH,
+        drawPetalLayer(ticks, naturalShader, OUTER_PETAL_COUNT, OUTER_PETAL_LENGTH,
                 0.30D, 0.10D + open * 0.20D, 0.38D, 0xB21F00, 0xFF6A00, 0.42F, 0.0D);
 
         GlStateManager.rotate(180.0F / INNER_PETAL_COUNT, 0.0F, 1.0F, 0.0F);
-        drawPetalLayer(ticks, naturalShader, colorShader, INNER_PETAL_COUNT, INNER_PETAL_LENGTH,
+        drawPetalLayer(ticks, naturalShader, INNER_PETAL_COUNT, INNER_PETAL_LENGTH,
                 0.24D, 0.20D + open * 0.24D, 0.30D, 0xFF5A00, 0xFFC247, 0.52F, 0.5D);
         GlStateManager.popMatrix();
     }
 
-    private void drawPetalLayer(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader,
+    private void drawPetalLayer(float ticks, ShaderProgram naturalShader,
                                 int count, double length, double width, double lift, double curl,
                                 int baseColor, int hotColor, float alpha, double phaseOffset) {
         useAdditiveBlend();
@@ -80,16 +81,18 @@ public class RenderEmberBloom extends RenderCelestialEffectBase<TileScalableEffe
             double tipRadius = length * open;
             double tipLift = lift + Math.sin(ticks * 0.026D + i) * 0.055D;
 
-            RenderNaturalShaderHelper.drawBasicSpiralRibbon(colorShader, 0.16D, tipRadius,
+            RenderNaturalShaderHelper.drawShaderSpiralRibbon(naturalShader, 0.16D, tipRadius,
                     yaw - 0.12D, 0.24D + curl * 0.22D, width,
-                    baseColor, alpha * 0.28F, 18);
+                    RenderNaturalShaderHelper.MODE_SOLAR, 1.9F + (i % 3) * 0.12F,
+                    baseColor, hotColor, 0xFFF2C2, alpha * 0.28F,
+                    (float) open, 1.08F, ticks * 0.052F, 59.0F + i * 11.0F, 18);
 
-            GlStateManager.glLineWidth(2.0F);
-            RenderNaturalShaderHelper.drawBasicSphericalArc(colorShader, tipRadius,
+            RenderNaturalShaderHelper.drawShaderSphericalArc(naturalShader, tipRadius,
                     yaw - 0.18D, 0.36D, 0.08D + tipLift * 0.22D,
                     0.10D + curl * 0.12D, ticks * 0.030D + i,
-                    hotColor, alpha * 0.46F, 24);
-            RenderHelper.resetLineWidth();
+                    RenderNaturalShaderHelper.MODE_SOLAR, 2.3F + (i % 4) * 0.12F,
+                    hotColor, 0xFFE08A, 0xFFFFFF, alpha * 0.46F,
+                    (float) open, 1.18F, ticks * 0.060F, 73.0F + i * 17.0F, 24);
 
             GlStateManager.pushMatrix();
             GlStateManager.translate(Math.cos(yaw) * tipRadius * 0.72D, tipLift,
@@ -105,7 +108,7 @@ public class RenderEmberBloom extends RenderCelestialEffectBase<TileScalableEffe
         useAlphaBlend();
     }
 
-    private void drawBloomCore(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawBloomCore(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.074D);
 
         useAdditiveBlend();
@@ -118,10 +121,10 @@ public class RenderEmberBloom extends RenderCelestialEffectBase<TileScalableEffe
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager.glLineWidth(1.6F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, CORE_RADIUS * 1.55D,
-                0xFFF2C2, 0.30F + pulse * 0.15F, 48);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, CORE_RADIUS * 1.55D,
+                RenderNaturalShaderHelper.MODE_SOLAR, 2.4F,
+                0xFFF2C2, 0xFFFFFF, 0xFF7A00, 0.30F + pulse * 0.15F,
+                pulse, 1.22F, ticks * 0.080F, 137.0F, 48);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }

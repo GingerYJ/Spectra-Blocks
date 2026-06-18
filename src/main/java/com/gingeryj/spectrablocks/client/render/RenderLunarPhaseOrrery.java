@@ -24,28 +24,25 @@ public class RenderLunarPhaseOrrery extends RenderCelestialEffectBase<TileScalab
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram celestialShader = ShaderManager.getProgram("celestial_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
-        if (celestialShader == null) {
+        ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
+        if (celestialShader == null || naturalShader == null) {
             return;
         }
 
         try {
-            drawMoonCore(celestialShader, colorShader, ticks);
-            drawInstrumentRings(celestialShader, colorShader, ticks);
-            drawPhaseMoons(celestialShader, colorShader, ticks);
+            drawMoonCore(celestialShader, naturalShader, ticks);
+            drawInstrumentRings(celestialShader, naturalShader, ticks);
+            drawPhaseMoons(celestialShader, naturalShader, ticks);
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("lunar phase orrery render failed: " + ex.getMessage());
         } finally {
             celestialShader.end();
-            if (colorShader != null) {
-                colorShader.end();
-            }
+            naturalShader.end();
             useAlphaBlend();
-            RenderHelper.resetLineWidth();
         }
     }
 
-    private void drawMoonCore(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawMoonCore(ShaderProgram shader, ShaderProgram naturalShader, float ticks) {
         float pulse = wave(ticks * 0.026D);
 
         useAdditiveBlend();
@@ -56,38 +53,42 @@ public class RenderLunarPhaseOrrery extends RenderCelestialEffectBase<TileScalab
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager.glLineWidth(1.6F);
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.26D, 0.72D, 12,
-                0xEAF4FF, 0.060F + pulse * 0.035F, ticks * 0.005D);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.26D, 0.72D, 12,
+                RenderNaturalShaderHelper.MODE_STARDUST, 0.6F,
+                0xEAF4FF, MOON_BLUE, MOON_WHITE, 0.060F + pulse * 0.035F,
+                pulse, 1.10F, ticks * 0.026F, 23.0F, ticks * 0.005D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawInstrumentRings(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawInstrumentRings(ShaderProgram shader, ShaderProgram naturalShader, float ticks) {
         float pulse = wave(ticks * 0.021D);
 
-        drawTiltedRing(shader, colorShader, ticks, MOON_ORBIT_RADIUS, 23.0F, 1.0F, 0.0F,
+        drawTiltedRing(shader, naturalShader, ticks, MOON_ORBIT_RADIUS, 23.0F, 1.0F, 0.0F,
                 SILVER, MOON_WHITE, 0.075F + pulse * 0.030F, 0.0F, 0.28F);
-        drawTiltedRing(shader, colorShader, ticks, OUTER_ORBIT_RADIUS, -41.0F, 0.18F, 1.0F,
+        drawTiltedRing(shader, naturalShader, ticks, OUTER_ORBIT_RADIUS, -41.0F, 0.18F, 1.0F,
                 GOLD, 0xFFF0C0, 0.060F + pulse * 0.020F, 0.37F, -0.15F);
-        drawTiltedRing(shader, colorShader, ticks, 1.64D, 68.0F, 0.82F, 0.28F,
+        drawTiltedRing(shader, naturalShader, ticks, 1.64D, 68.0F, 0.82F, 0.28F,
                 0xDDE7F5, 0xFFFFFF, 0.048F + pulse * 0.018F, 0.74F, 0.19F);
 
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(ticks * 0.016F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.glLineWidth(1.2F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, 0.82D, 0xEEF6FF, 0.070F + pulse * 0.030F, 72);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, 2.18D, GOLD, 0.050F + pulse * 0.020F, 96);
-        drawCrossHairs(colorShader, 2.18D, GOLD, 0.040F + pulse * 0.018F);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 0.82D,
+                RenderNaturalShaderHelper.MODE_STARDUST, 1.2F,
+                0xEEF6FF, MOON_BLUE, MOON_WHITE, 0.070F + pulse * 0.030F,
+                pulse, 1.05F, ticks * 0.024F, 59.0F, 72);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 2.18D,
+                RenderNaturalShaderHelper.MODE_AURORA, 1.4F,
+                GOLD, 0xFFF0C0, MOON_WHITE, 0.050F + pulse * 0.020F,
+                pulse, 0.92F, ticks * 0.020F, 67.0F, 96);
+        drawCrossHairs(naturalShader, 2.18D, GOLD, 0.040F + pulse * 0.018F, pulse, ticks);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawTiltedRing(ShaderProgram shader, ShaderProgram colorShader, float ticks, double radius,
+    private void drawTiltedRing(ShaderProgram shader, ShaderProgram naturalShader, float ticks, double radius,
                                 float tilt, float axisX, float axisZ, int primaryColor, int accentColor,
                                 float alpha, float seed, float spinScale) {
         GlStateManager.pushMatrix();
@@ -98,15 +99,16 @@ public class RenderLunarPhaseOrrery extends RenderCelestialEffectBase<TileScalab
         RenderMiniatureGalaxy.drawShaderRing(shader, radius - 0.018D, radius + 0.018D, ticks,
                 0.0F, 2.0F + seed, primaryColor, accentColor, alpha, 0.82F, seed, RING_SEGMENTS);
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.5F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, radius, accentColor, alpha * 1.35F, RING_SEGMENTS);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, radius,
+                RenderNaturalShaderHelper.MODE_STARDUST, 2.3F + seed,
+                accentColor, primaryColor, 0xFFFFFF, alpha * 1.35F,
+                wave(ticks * 0.020D + seed), 1.08F, ticks * 0.022F, 101.0F + seed * 37.0F, RING_SEGMENTS);
 
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawPhaseMoons(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawPhaseMoons(ShaderProgram shader, ShaderProgram naturalShader, float ticks) {
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(23.0F, 1.0F, 0.0F, 0.0F);
@@ -122,7 +124,7 @@ public class RenderLunarPhaseOrrery extends RenderCelestialEffectBase<TileScalab
             GlStateManager.pushMatrix();
             GlStateManager.translate(x, verticalBob, z);
             GlStateManager.rotate((float) Math.toDegrees(-angle), 0.0F, 1.0F, 0.0F);
-            drawPhaseMoon(shader, colorShader, ticks, i, localPulse);
+            drawPhaseMoon(shader, naturalShader, ticks, i, localPulse);
             GlStateManager.popMatrix();
         }
 
@@ -130,7 +132,7 @@ public class RenderLunarPhaseOrrery extends RenderCelestialEffectBase<TileScalab
         useAlphaBlend();
     }
 
-    private void drawPhaseMoon(ShaderProgram shader, ShaderProgram colorShader, float ticks,
+    private void drawPhaseMoon(ShaderProgram shader, ShaderProgram naturalShader, float ticks,
                                int phaseIndex, float pulse) {
         double moonRadius = 0.105D + (phaseIndex % 2) * 0.010D;
         double shadeOffset = (phaseIndex - 3.5D) / 3.5D * moonRadius * 0.74D;
@@ -151,16 +153,20 @@ public class RenderLunarPhaseOrrery extends RenderCelestialEffectBase<TileScalab
                 0.45F + phaseIndex * 0.17F, SMALL_SPHERE_SEGMENTS);
         GlStateManager.popMatrix();
 
-        GlStateManager.glLineWidth(1.0F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, moonRadius * 1.32D,
-                phaseIndex % 2 == 0 ? SILVER : GOLD, 0.060F + pulse * 0.035F, 20);
-        RenderHelper.resetLineWidth();
+        int color = phaseIndex % 2 == 0 ? SILVER : GOLD;
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, moonRadius * 1.32D,
+                RenderNaturalShaderHelper.MODE_STARDUST, 3.0F + phaseIndex * 0.08F,
+                color, MOON_WHITE, MOON_BLUE, 0.060F + pulse * 0.035F,
+                pulse, 1.08F, ticks * 0.030F, 131.0F + phaseIndex * 11.0F, 20);
     }
 
-    private void drawCrossHairs(ShaderProgram colorShader, double radius, int color, float alpha) {
-        RenderNaturalShaderHelper.drawBasicLine(colorShader, -radius, 0.0D, 0.0D,
-                radius, 0.0D, 0.0D, color, alpha);
-        RenderNaturalShaderHelper.drawBasicLine(colorShader, 0.0D, 0.0D, -radius,
-                0.0D, 0.0D, radius, color, alpha);
+    private void drawCrossHairs(ShaderProgram naturalShader, double radius, int color,
+                                float alpha, float pulse, float ticks) {
+        RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_STARDUST,
+                1.6F, -radius, 0.0D, 0.0D, radius, 0.0D, 0.0D,
+                color, MOON_WHITE, 0xFFFFFF, alpha, pulse, 1.0F, ticks * 0.026F, 149.0F);
+        RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_STARDUST,
+                1.7F, 0.0D, 0.0D, -radius, 0.0D, 0.0D, radius,
+                color, MOON_WHITE, 0xFFFFFF, alpha, pulse, 1.0F, ticks * 0.026F, 157.0F);
     }
 }

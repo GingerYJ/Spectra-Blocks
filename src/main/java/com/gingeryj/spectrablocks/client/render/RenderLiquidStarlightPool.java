@@ -19,18 +19,17 @@ public class RenderLiquidStarlightPool extends RenderCelestialEffectBase<TileSca
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawLiquidSurface(ticks, naturalShader, colorShader);
+        drawLiquidSurface(ticks, naturalShader);
         drawDriftingStars(ticks, naturalShader);
-        drawSoftRipples(ticks, colorShader);
-        drawRisingSparks(ticks, naturalShader, colorShader);
+        drawSoftRipples(ticks, naturalShader);
+        drawRisingSparks(ticks, naturalShader);
     }
 
-    private void drawLiquidSurface(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawLiquidSurface(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.030D);
 
         useAlphaBlend();
@@ -53,14 +52,18 @@ public class RenderLiquidStarlightPool extends RenderCelestialEffectBase<TileSca
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, SURFACE_Y + 0.018D, 0.0D);
-        GlStateManager.glLineWidth(1.45F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, POOL_RADIUS * 1.02D,
-                0xDDF8FF, 0.22F + pulse * 0.07F, RING_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicFlatRing(colorShader, POOL_RADIUS * 0.86D, POOL_RADIUS * 1.05D,
-                0xB8EEFF, 0.045F + pulse * 0.018F, RING_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.16D, POOL_RADIUS * 0.78D, 14,
-                0xFFF3C4, 0.045F + pulse * 0.030F, ticks * 0.005D);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, POOL_RADIUS * 1.02D,
+                RenderNaturalShaderHelper.MODE_STARDUST, 3.4F,
+                0xDDF8FF, 0x9BE8FF, 0xFFE8A8,
+                0.22F + pulse * 0.07F, pulse, 0.86F, ticks * 0.025F, 301.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderRing(naturalShader, POOL_RADIUS * 0.86D, POOL_RADIUS * 1.05D,
+                RenderNaturalShaderHelper.MODE_STARDUST, 3.7F,
+                0xB8EEFF, 0xEFFFFF, 0xFFE8A8,
+                0.045F + pulse * 0.018F, pulse, 0.72F, ticks * 0.019F, 317.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.16D, POOL_RADIUS * 0.78D, 14,
+                RenderNaturalShaderHelper.MODE_STARDUST, 4.0F,
+                0xFFF3C4, 0x9BE8FF, 0xFFFFFF,
+                0.045F + pulse * 0.030F, pulse, 0.95F, ticks * 0.030F, 331.0F, ticks * 0.005D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -89,35 +92,33 @@ public class RenderLiquidStarlightPool extends RenderCelestialEffectBase<TileSca
         useAlphaBlend();
     }
 
-    private void drawSoftRipples(float ticks, ShaderProgram colorShader) {
-        if (colorShader == null) {
-            return;
-        }
-
+    private void drawSoftRipples(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, SURFACE_Y + 0.028D, 0.0D);
-        GlStateManager.glLineWidth(1.15F);
         for (int i = 0; i < RIPPLE_COUNT; i++) {
             double progress = fract(ticks * (0.009D + i * 0.0008D) + i * 0.173D);
             double radius = lerp(0.28D, POOL_RADIUS * 1.14D, progress);
             float fade = (float) ((1.0D - progress) * Math.sin(Math.PI * progress));
             int color = i % 3 == 0 ? 0xFFF0B8 : (i % 2 == 0 ? 0xEFFFFF : 0xA9E8FF);
 
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, radius, color, 0.16F * fade, 88);
+            RenderNaturalShaderHelper.drawShaderCircle(naturalShader, radius,
+                    RenderNaturalShaderHelper.MODE_STARDUST, 4.3F + i * 0.09F,
+                    color, 0xA9E8FF, 0xFFFFFF,
+                    0.16F * fade, fade, 0.70F, ticks * 0.018F, 401.0F + i, 88);
             if ((i & 1) == 0) {
-                RenderNaturalShaderHelper.drawBasicFlatRing(colorShader, radius * 0.96D, radius * 1.03D,
-                        color, 0.028F * fade, 88);
+                RenderNaturalShaderHelper.drawShaderRing(naturalShader, radius * 0.96D, radius * 1.03D,
+                        RenderNaturalShaderHelper.MODE_STARDUST, 4.9F + i * 0.07F,
+                        color, 0xEFFFFF, 0xFFE8A8,
+                        0.028F * fade, fade, 0.58F, ticks * 0.016F, 421.0F + i, 88);
             }
         }
-        RenderHelper.resetLineWidth();
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawRisingSparks(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawRisingSparks(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.0F);
         for (int i = 0; i < SPARK_COUNT; i++) {
             double progress = fract(ticks * (0.006D + (i % 3) * 0.001D) + i * 0.211D);
             double rise = Math.sin(Math.PI * progress);
@@ -129,8 +130,10 @@ public class RenderLiquidStarlightPool extends RenderCelestialEffectBase<TileSca
             float alpha = (float) (rise * 0.34D);
             int color = i % 3 == 0 ? 0xFFF0B8 : 0xEFFFFF;
 
-            RenderNaturalShaderHelper.drawBasicLine(colorShader, x, y - 0.10D * rise, z,
-                    x, y + 0.045D, z, color, alpha * 0.46F);
+            RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_STARDUST,
+                    5.0F + (i % 4) * 0.08F, x, y - 0.10D * rise, z, x, y + 0.045D, z,
+                    color, 0x9BE8FF, 0xFFFFFF, alpha * 0.46F, (float) progress,
+                    1.06F, ticks * 0.046F, 501.0F + i * 7.0F);
 
             GlStateManager.pushMatrix();
             GlStateManager.translate(x, y, z);
@@ -140,7 +143,6 @@ public class RenderLiquidStarlightPool extends RenderCelestialEffectBase<TileSca
                     (float) progress, 1.24F, ticks * 0.046F, 137.0F + i * 11.0F, 7);
             GlStateManager.popMatrix();
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 }

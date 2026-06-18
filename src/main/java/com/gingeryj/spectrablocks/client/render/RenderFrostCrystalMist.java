@@ -21,18 +21,17 @@ public class RenderFrostCrystalMist extends RenderCelestialEffectBase<TileFrostC
     @Override
     protected void renderCelestialEffect(TileFrostCrystalMist te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawLowMist(ticks, naturalShader, colorShader);
-        drawCrystalCore(ticks, naturalShader, colorShader);
+        drawLowMist(ticks, naturalShader);
+        drawCrystalCore(ticks, naturalShader);
         drawFloatingIceMotes(ticks, naturalShader);
-        drawSnowflakeArcs(ticks, colorShader);
+        drawSnowflakeArcs(ticks, naturalShader);
     }
 
-    private void drawCrystalCore(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawCrystalCore(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.046D);
 
         useAdditiveBlend();
@@ -51,21 +50,20 @@ public class RenderFrostCrystalMist extends RenderCelestialEffectBase<TileFrostC
                 RenderNaturalShaderHelper.MODE_AURORA, 2.0F, 0xD8FAFF, CRYSTAL_BLUE, FROST_WHITE,
                 0.090F + pulse * 0.035F, pulse, 0.78F, ticks * 0.018F, 67.0F, 20);
 
-        if (colorShader != null) {
-            GlStateManager.glLineWidth(1.2F);
-            GlStateManager.rotate(ticks * 0.10F, 0.0F, 1.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.18D, 0.48D,
-                    6, FROST_WHITE, 0.22F + pulse * 0.08F, ticks * 0.010D);
-            GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.16D, 0.42D,
-                    6, PALE_BLUE, 0.16F + pulse * 0.07F, ticks * 0.009D + 0.35D);
-            RenderHelper.resetLineWidth();
-        }
+        GlStateManager.rotate(ticks * 0.10F, 0.0F, 1.0F, 0.0F);
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.18D, 0.48D, 6,
+                RenderNaturalShaderHelper.MODE_STARDUST, 3.1F, FROST_WHITE, PALE_BLUE, CRYSTAL_BLUE,
+                0.22F + pulse * 0.08F, pulse, 1.18F, ticks * 0.030F, 83.0F, ticks * 0.010D);
+        GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.16D, 0.42D, 6,
+                RenderNaturalShaderHelper.MODE_AURORA, 3.3F, PALE_BLUE, CRYSTAL_BLUE, FROST_WHITE,
+                0.16F + pulse * 0.07F, pulse, 1.08F, ticks * 0.026F, 97.0F,
+                ticks * 0.009D + 0.35D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawLowMist(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawLowMist(float ticks, ShaderProgram naturalShader) {
         float breath = wave(ticks * 0.030D);
 
         useAdditiveBlend();
@@ -98,17 +96,15 @@ public class RenderFrostCrystalMist extends RenderCelestialEffectBase<TileFrostC
             GlStateManager.popMatrix();
         }
 
-        if (colorShader != null) {
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(0.0D, -0.43D, 0.0D);
-            GlStateManager.glLineWidth(1.1F);
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, 1.18D + breath * 0.04D,
-                    PALE_BLUE, 0.105F + breath * 0.035F, RING_SEGMENTS);
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, 1.64D + breath * 0.06D,
-                    FROST_WHITE, 0.050F + breath * 0.020F, RING_SEGMENTS);
-            RenderHelper.resetLineWidth();
-            GlStateManager.popMatrix();
-        }
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(0.0D, -0.43D, 0.0D);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 1.18D + breath * 0.04D,
+                RenderNaturalShaderHelper.MODE_AURORA, 4.0F, PALE_BLUE, CRYSTAL_BLUE, FROST_WHITE,
+                0.105F + breath * 0.035F, breath, 0.92F, ticks * 0.018F, 193.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 1.64D + breath * 0.06D,
+                RenderNaturalShaderHelper.MODE_AURORA, 4.2F, FROST_WHITE, PALE_BLUE, CRYSTAL_BLUE,
+                0.050F + breath * 0.020F, breath, 0.82F, ticks * 0.016F, 211.0F, RING_SEGMENTS);
+        GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
@@ -143,13 +139,8 @@ public class RenderFrostCrystalMist extends RenderCelestialEffectBase<TileFrostC
         useAlphaBlend();
     }
 
-    private void drawSnowflakeArcs(float ticks, ShaderProgram colorShader) {
-        if (colorShader == null) {
-            return;
-        }
-
+    private void drawSnowflakeArcs(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.35F);
         for (int i = 0; i < SNOW_ARC_COUNT; i++) {
             float pulse = wave(ticks * (0.024D + i * 0.003D) + i * 0.79D);
             double radius = 0.72D + i * 0.105D + pulse * 0.035D;
@@ -164,20 +155,58 @@ public class RenderFrostCrystalMist extends RenderCelestialEffectBase<TileFrostC
             GlStateManager.rotate(14.0F + i * 23.0F, 1.0F, 0.0F, 0.25F);
             GlStateManager.rotate((float) (ticks * (0.050D + i * 0.004D) + i * 37.0D),
                     0.0F, 1.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicSphericalArc(colorShader, radius, startYaw, sweep,
-                    pitch, 0.105D, ticks * 0.018D + i, color, alpha, 28);
+            drawShaderSphericalArc(naturalShader, radius, startYaw, sweep, pitch, 0.105D,
+                    ticks * 0.018D + i, color, alpha, pulse, ticks, 5.0F + i * 0.11F, 28);
 
             GlStateManager.pushMatrix();
             GlStateManager.rotate((float) Math.toDegrees(startYaw + sweep * 0.52D),
                     0.0F, 1.0F, 0.0F);
             GlStateManager.translate(radius * 0.82D, Math.sin(pitch) * radius, 0.0D);
             GlStateManager.scale(0.34D, 0.34D, 0.34D);
-            RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.035D, 0.155D,
-                    6, color, alpha * 0.72F, ticks * 0.012D + i);
+            RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.035D, 0.155D, 6,
+                    RenderNaturalShaderHelper.MODE_STARDUST, 6.0F + i * 0.10F,
+                    color, PALE_BLUE, FROST_WHITE, alpha * 0.72F, pulse, 1.10F,
+                    ticks * 0.032F, 251.0F + i * 17.0F, ticks * 0.012D + i);
             GlStateManager.popMatrix();
             GlStateManager.popMatrix();
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
+    }
+
+    private void drawShaderSphericalArc(ShaderProgram shader, double radius, double startYaw,
+                                        double sweepYaw, double basePitch, double pitchWave,
+                                        double phase, int color, float alpha, float pulse,
+                                        float ticks, float layer, int segments) {
+        if (alpha <= 0.005F || radius <= 0.0D || segments < 2) {
+            return;
+        }
+
+        double previousYaw = startYaw;
+        double previousPitch = basePitch + Math.sin(phase) * pitchWave;
+        double previousHorizontal = Math.cos(previousPitch) * radius;
+        double previousX = Math.cos(previousYaw) * previousHorizontal;
+        double previousY = Math.sin(previousPitch) * radius;
+        double previousZ = Math.sin(previousYaw) * previousHorizontal;
+
+        for (int i = 1; i <= segments; i++) {
+            double progress = (double) i / segments;
+            double yaw = startYaw + sweepYaw * progress;
+            double pitch = basePitch + Math.sin(phase + progress * TWO_PI) * pitchWave;
+            double horizontal = Math.cos(pitch) * radius;
+            double x = Math.cos(yaw) * horizontal;
+            double y = Math.sin(pitch) * radius;
+            double z = Math.sin(yaw) * horizontal;
+            double fadeProgress = (i - 0.5D) / segments;
+            float segmentAlpha = alpha * (0.20F + 0.80F * (float) Math.sin(Math.PI * fadeProgress));
+
+            RenderNaturalShaderHelper.drawShaderLine(shader, RenderNaturalShaderHelper.MODE_AURORA,
+                    layer, previousX, previousY, previousZ, x, y, z,
+                    color, PALE_BLUE, FROST_WHITE, segmentAlpha, pulse, 1.05F,
+                    ticks * 0.030F, 271.0F + layer * 13.0F + i * 0.37F, 0.014D);
+
+            previousX = x;
+            previousY = y;
+            previousZ = z;
+        }
     }
 }

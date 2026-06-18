@@ -24,18 +24,17 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
     @Override
     protected void renderCelestialEffect(TileStormCore te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawWindEye(ticks, naturalShader, colorShader);
+        drawWindEye(ticks, naturalShader);
         drawCloudMass(ticks, naturalShader);
-        drawWindBands(ticks, colorShader);
-        drawLightning(ticks, colorShader);
+        drawWindBands(ticks, naturalShader);
+        drawLightning(ticks, naturalShader);
     }
 
-    private void drawWindEye(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawWindEye(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.052D);
 
         useAdditiveBlend();
@@ -49,12 +48,14 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
         GlStateManager.pushMatrix();
         GlStateManager.rotate(76.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(ticks * 0.54F, 0.0F, 1.0F, 0.0F);
-        RenderNaturalShaderHelper.drawBasicFlatRing(colorShader, 0.60D, 1.18D + pulse * 0.05D,
-                0xD8F4FF, 0.070F + pulse * 0.035F, RING_SEGMENTS);
-        GlStateManager.glLineWidth(1.6F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, 1.20D + pulse * 0.04D,
-                0xFFFFFF, 0.14F + pulse * 0.05F, RING_SEGMENTS);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderRing(naturalShader, 0.60D, 1.18D + pulse * 0.05D,
+                RenderNaturalShaderHelper.MODE_STORM, 2.0F,
+                0xD8F4FF, 0x89D6FF, 0xFFFFFF, 0.070F + pulse * 0.035F,
+                pulse, 1.04F, ticks * 0.050F, 53.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, 1.20D + pulse * 0.04D,
+                RenderNaturalShaderHelper.MODE_STORM, 2.4F,
+                0xFFFFFF, 0xD8F4FF, 0x89D6FF, 0.14F + pulse * 0.05F,
+                pulse, 1.22F, ticks * 0.056F, 67.0F, RING_SEGMENTS);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
@@ -89,7 +90,7 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
         }
     }
 
-    private void drawWindBands(float ticks, ShaderProgram colorShader) {
+    private void drawWindBands(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         for (int i = 0; i < WIND_BAND_COUNT; i++) {
             double radius = 1.30D + i * 0.36D;
@@ -102,26 +103,30 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
             GlStateManager.pushMatrix();
             GlStateManager.rotate(18.0F + i * 9.0F, 1.0F, 0.0F, 0.20F);
             GlStateManager.rotate(i * 24.0F, 0.0F, 1.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicSpiralRibbon(colorShader, radius,
+            RenderNaturalShaderHelper.drawShaderSpiralRibbon(naturalShader, radius,
                     OUTER_WIND_RADIUS - i * 0.10D, startAngle, sweep,
-                    0.080D + pulse * 0.020D, color, alpha, 58);
+                    0.080D + pulse * 0.020D, RenderNaturalShaderHelper.MODE_STORM, 3.0F + i * 0.16F,
+                    color, 0xE8F6FF, 0x91DFFF, alpha, pulse, 0.98F,
+                    ticks * 0.046F, 101.0F + i * 19.0F, 58);
             GlStateManager.popMatrix();
         }
 
-        GlStateManager.glLineWidth(1.8F);
         GlStateManager.pushMatrix();
         GlStateManager.rotate(78.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(ticks * -0.17F, 0.0F, 1.0F, 0.0F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, OUTER_WIND_RADIUS * 0.68D,
-                0xBFD7E3, 0.12F, RING_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, OUTER_WIND_RADIUS * 0.86D,
-                0xE8F6FF, 0.075F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, OUTER_WIND_RADIUS * 0.68D,
+                RenderNaturalShaderHelper.MODE_STORM, 4.2F,
+                0xBFD7E3, 0x8FC6DF, 0xFFFFFF, 0.12F,
+                wave(ticks * 0.030D), 1.04F, ticks * 0.038F, 229.0F, RING_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, OUTER_WIND_RADIUS * 0.86D,
+                RenderNaturalShaderHelper.MODE_STORM, 4.6F,
+                0xE8F6FF, 0xBFD7E3, 0x91DFFF, 0.075F,
+                wave(ticks * 0.026D + 0.7D), 0.92F, ticks * 0.034F, 251.0F, RING_SEGMENTS);
         GlStateManager.popMatrix();
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 
-    private void drawLightning(float ticks, ShaderProgram colorShader) {
+    private void drawLightning(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         for (int i = 0; i < ARC_COUNT; i++) {
             double flashPhase = fract(ticks * LIGHTNING_CYCLE_SPEED + i * 0.173D);
@@ -132,24 +137,23 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
             double lift = 0.34D + (i % 3) * 0.16D;
             double length = 0.45D + (i % 4) * 0.13D;
 
-            GlStateManager.glLineWidth(3.1F);
-            RenderNaturalShaderHelper.drawBasicJaggedArc(colorShader, radius, angle, length, y, lift,
-                    0.090D, 7, 0x91DFFF, flash * 0.16F, ticks, 311 + i * 37);
-            GlStateManager.glLineWidth(1.3F);
-            RenderNaturalShaderHelper.drawBasicJaggedArc(colorShader, radius, angle, length, y, lift,
-                    0.065D, 7, i % 2 == 0 ? 0xFFFFFF : 0xB7F0FF,
-                    flash * 0.48F, ticks, 811 + i * 41);
+            drawShaderJaggedArc(naturalShader, radius, angle, length, y, lift,
+                    0.090D, 7, 0x91DFFF, 0xEAFBFF, flash * 0.16F,
+                    flash, ticks, 311 + i * 37, 5.0F + i * 0.12F, 0.026D);
+            drawShaderJaggedArc(naturalShader, radius, angle, length, y, lift,
+                    0.065D, 7, i % 2 == 0 ? 0xFFFFFF : 0xB7F0FF, 0x91DFFF,
+                    flash * 0.48F, flash, ticks, 811 + i * 41, 6.0F + i * 0.12F, 0.012D);
 
             if ((i & 1) == 0) {
-                drawBranch(ticks, i, angle + length * 0.52D, radius, y + lift * 0.40D, flash, colorShader);
+                drawBranch(ticks, i, angle + length * 0.52D, radius, y + lift * 0.40D,
+                        flash, naturalShader);
             }
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 
     private void drawBranch(float ticks, int index, double angle, double radius, double y,
-                            float flash, ShaderProgram colorShader) {
+                            float flash, ShaderProgram naturalShader) {
         double startX = Math.cos(angle) * radius;
         double startZ = Math.sin(angle) * radius;
         double endAngle = angle + Math.sin(ticks * 0.08D + index) * 0.34D;
@@ -158,8 +162,53 @@ public class RenderStormCore extends RenderCelestialEffectBase<TileStormCore> {
         double endY = y + Math.sin(index * 1.7D) * 0.24D;
         double endZ = Math.sin(endAngle) * endRadius;
 
-        GlStateManager.glLineWidth(1.2F);
-        RenderNaturalShaderHelper.drawBasicLine(colorShader, startX, y, startZ, endX, endY, endZ,
-                0xEAFBFF, flash * 0.24F);
+        RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_STORM,
+                7.0F + index * 0.08F, startX, y, startZ, endX, endY, endZ,
+                0xEAFBFF, 0x91DFFF, 0xFFFFFF, flash * 0.24F, flash, 1.28F,
+                ticks * 0.060F, 401.0F + index * 17.0F, 0.010D);
+    }
+
+    private void drawShaderJaggedArc(ShaderProgram shader, double radius, double startYaw,
+                                     double sweepYaw, double y, double lift, double jitter,
+                                     int segments, int primaryColor, int secondaryColor,
+                                     float alpha, float flash, float ticks, int seed,
+                                     float layer, double halfWidth) {
+        if (alpha <= 0.005F || radius <= 0.0D || segments < 2) {
+            return;
+        }
+
+        double previousX = 0.0D;
+        double previousY = 0.0D;
+        double previousZ = 0.0D;
+        for (int i = 0; i <= segments; i++) {
+            double progress = (double) i / segments;
+            double fade = Math.sin(Math.PI * progress);
+            double angle = startYaw + sweepYaw * progress
+                    + deterministicJitter(seed, i, ticks) * jitter * 0.80D;
+            double localRadius = radius + deterministicJitter(seed + 71, i, ticks) * jitter;
+            double localY = y + lift * fade
+                    + deterministicJitter(seed + 137, i, ticks) * jitter * 0.85D;
+            double x = Math.cos(angle) * localRadius;
+            double z = Math.sin(angle) * localRadius;
+
+            if (i > 0) {
+                double fadeProgress = (i - 0.5D) / segments;
+                float segmentAlpha = alpha * (0.18F + 0.82F * (float) Math.sin(Math.PI * fadeProgress));
+                RenderNaturalShaderHelper.drawShaderLine(shader, RenderNaturalShaderHelper.MODE_STORM,
+                        layer, previousX, previousY, previousZ, x, localY, z,
+                        primaryColor, secondaryColor, 0xFFFFFF, segmentAlpha, flash, 1.45F,
+                        ticks * 0.070F, seed + i * 0.73F, halfWidth);
+            }
+
+            previousX = x;
+            previousY = localY;
+            previousZ = z;
+        }
+    }
+
+    private double deterministicJitter(int seed, int step, float ticks) {
+        double frame = Math.floor(ticks * 0.35D);
+        double value = Math.sin(seed * 12.9898D + step * 78.233D + frame * 0.37D) * 43758.5453D;
+        return value - Math.floor(value) - 0.5D;
     }
 }

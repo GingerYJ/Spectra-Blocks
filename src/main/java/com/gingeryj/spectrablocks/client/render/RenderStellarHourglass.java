@@ -23,48 +23,54 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
     @Override
     protected void renderCelestialEffect(TileStellarHourglass te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawFrame(ticks, colorShader);
-        drawNebulaLobe(ticks, LOBE_OFFSET, TOP_COLOR, 1.0F, naturalShader, colorShader);
-        drawNebulaLobe(ticks, -LOBE_OFFSET, BOTTOM_COLOR, -1.0F, naturalShader, colorShader);
+        drawFrame(ticks, naturalShader);
+        drawNebulaLobe(ticks, LOBE_OFFSET, TOP_COLOR, 1.0F, naturalShader);
+        drawNebulaLobe(ticks, -LOBE_OFFSET, BOTTOM_COLOR, -1.0F, naturalShader);
         drawFallingDust(ticks, naturalShader);
-        drawStarArcs(ticks, colorShader);
+        drawStarArcs(ticks, naturalShader);
     }
 
-    private void drawFrame(float ticks, ShaderProgram colorShader) {
+    private void drawFrame(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.036D);
 
         useAdditiveBlend();
-        GlStateManager.glLineWidth(2.2F);
         for (int i = 0; i < 4; i++) {
             double angle = Math.PI * 0.5D * i + ticks * 0.004D;
-            RenderNaturalShaderHelper.drawBasicLine(colorShader,
+            RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_HOURGLASS,
+                    3.5F + i * 0.10F,
                     Math.cos(angle) * FRAME_RADIUS, 1.70D, Math.sin(angle) * FRAME_RADIUS,
                     Math.cos(angle + Math.PI) * FRAME_RADIUS, -1.70D,
-                    Math.sin(angle + Math.PI) * FRAME_RADIUS, 0xBEEBFF, 0.055F + pulse * 0.035F);
+                    Math.sin(angle + Math.PI) * FRAME_RADIUS,
+                    0xBEEBFF, TOP_COLOR, STAR_COLOR,
+                    0.055F + pulse * 0.035F, pulse, 0.85F, ticks * 0.028F, 301.0F + i);
         }
-        RenderHelper.resetLineWidth();
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, 1.72D, 0.0D);
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, FRAME_RADIUS * 0.82D, 0xDFF7FF, 0.14F, 88);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, FRAME_RADIUS * 0.82D,
+                RenderNaturalShaderHelper.MODE_HOURGLASS, 4.0F,
+                0xDFF7FF, TOP_COLOR, STAR_COLOR,
+                0.14F, pulse, 0.82F, ticks * 0.025F, 331.0F, 88);
         GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, -1.72D, 0.0D);
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, FRAME_RADIUS * 0.82D, 0xFFD6A3, 0.14F, 88);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, FRAME_RADIUS * 0.82D,
+                RenderNaturalShaderHelper.MODE_HOURGLASS, 4.2F,
+                0xFFD6A3, BOTTOM_COLOR, STAR_COLOR,
+                0.14F, pulse, 0.82F, ticks * 0.025F, 347.0F, 88);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
     private void drawNebulaLobe(float ticks, double yOffset, int color, float direction,
-                                ShaderProgram naturalShader, ShaderProgram colorShader) {
+                                ShaderProgram naturalShader) {
         useAlphaBlend();
         for (int i = 0; i < CLOUD_LAYER_COUNT; i++) {
             double radius = LOBE_RADIUS + i * 0.22D;
@@ -80,10 +86,11 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
                     color, direction > 0.0F ? BOTTOM_COLOR : TOP_COLOR, STAR_COLOR,
                     0.080F + pulse * 0.034F, pulse, 0.94F,
                     ticks * 0.030F, 17.0F + i * 13.0F + direction * 3.0F, 24);
-            GlStateManager.glLineWidth(1.0F);
-            RenderNaturalShaderHelper.drawBasicWireSphere(colorShader, (radius + pulse * 0.08D) * 1.02D,
-                    STAR_COLOR, 0.036F + pulse * 0.018F, 6, 10);
-            RenderHelper.resetLineWidth();
+            RenderNaturalShaderHelper.drawShaderWireSphere(naturalShader, (radius + pulse * 0.08D) * 1.02D,
+                    RenderNaturalShaderHelper.MODE_HOURGLASS, 4.6F + i * 0.12F,
+                    STAR_COLOR, color, 0xFFFFFF,
+                    0.036F + pulse * 0.018F, pulse, 0.86F,
+                    ticks * 0.034F, 401.0F + i * 17.0F + direction * 5.0F, 6, 10);
             GlStateManager.popMatrix();
         }
 
@@ -139,7 +146,7 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
         useAlphaBlend();
     }
 
-    private void drawStarArcs(float ticks, ShaderProgram colorShader) {
+    private void drawStarArcs(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         for (int i = 0; i < ARC_COUNT; i++) {
             double radius = 1.42D + (i % 4) * 0.17D;
@@ -152,11 +159,12 @@ public class RenderStellarHourglass extends RenderCelestialEffectBase<TileStella
 
             GlStateManager.pushMatrix();
             GlStateManager.translate(0.0D, y, 0.0D);
-            GlStateManager.glLineWidth(2.0F);
-            RenderNaturalShaderHelper.drawBasicSphericalArc(colorShader, radius, start, sweep,
-                    sign * 0.24D, 0.15D, ticks * 0.010D + i, color, alpha, 46);
-            GlStateManager.glLineWidth(1.0F);
-            RenderHelper.resetLineWidth();
+            RenderNaturalShaderHelper.drawShaderSphericalArc(naturalShader, radius, start, sweep,
+                    sign * 0.24D, 0.15D, ticks * 0.010D + i,
+                    RenderNaturalShaderHelper.MODE_HOURGLASS, 5.4F + i * 0.11F,
+                    color, STAR_COLOR, 0xFFFFFF, alpha,
+                    wave(ticks * 0.044D + i), 0.92F, ticks * 0.040F,
+                    521.0F + i * 13.0F, 46);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();

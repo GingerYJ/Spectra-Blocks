@@ -15,15 +15,14 @@ public class RenderTectonicFaultCore extends RenderCelestialEffectBase<TileTecto
     protected void renderCelestialEffect(TileTectonicFaultCore te, float ticks) {
         ShaderProgram natural = ShaderManager.getProgram("natural_effect");
         ShaderProgram arcane = ShaderManager.getProgram("arcane_effect");
-        ShaderProgram basic = ShaderManager.getProgram("basic");
-        if (natural == null || arcane == null || basic == null) {
+        if (natural == null || arcane == null) {
             return;
         }
 
         drawPressureColumn(natural, ticks);
         drawFaultLines(arcane, ticks);
         drawStoneSlabs(arcane, ticks);
-        drawSeismicRings(basic, ticks);
+        drawSeismicRings(natural, ticks);
         drawMoltenSparks(natural, ticks);
     }
 
@@ -90,8 +89,11 @@ public class RenderTectonicFaultCore extends RenderCelestialEffectBase<TileTecto
             double phase = fract(ticks * 0.0075D + i * 0.33D);
             double radius = 0.72D + phase * 1.72D;
             float alpha = (float) Math.sin(phase * Math.PI) * (0.26F - i * 0.035F);
-            RenderNaturalShaderHelper.drawBasicFlatRing(shader, radius - 0.030D, radius + 0.030D,
-                    i % 2 == 0 ? 0xFF8B3E : 0xF0C06A, alpha, 96);
+            int color = i % 2 == 0 ? 0xFF8B3E : 0xF0C06A;
+            RenderNaturalShaderHelper.drawShaderRing(shader, radius - 0.030D, radius + 0.030D,
+                    RenderNaturalShaderHelper.MODE_SOLAR, 4.9F + i * 0.18F,
+                    color, 0xFFE1A3, 0xFFFFFF, alpha, (float) phase, 1.08F,
+                    ticks * 0.042F, 193.0F + i * 17.0F, 96);
         }
         GlStateManager.popMatrix();
         useAlphaBlend();

@@ -356,6 +356,38 @@ final class RenderNaturalShaderHelper {
         }
     }
 
+    static void drawShaderSphericalArc(ShaderProgram shader, double radius, double startYaw,
+                                       double sweepYaw, double basePitch, double pitchWave,
+                                       double phase, float mode, float layer,
+                                       int primaryColor, int secondaryColor, int accentColor,
+                                       float alpha, float pulse, float intensity,
+                                       float time, float seed, int segments) {
+        if (shader == null || alpha <= 0.005F || radius <= 0.0D || segments < 2 || !shader.begin()) {
+            return;
+        }
+
+        try {
+            setNaturalUniforms(shader, mode, layer, primaryColor, secondaryColor, accentColor,
+                    alpha, pulse, intensity, time, seed);
+            int pointCount = segments + 1;
+            double[] xs = new double[pointCount];
+            double[] ys = new double[pointCount];
+            double[] zs = new double[pointCount];
+            for (int i = 0; i <= segments; i++) {
+                double progress = (double) i / segments;
+                double yaw = startYaw + sweepYaw * progress;
+                double pitch = basePitch + Math.sin(phase + progress * TWO_PI) * pitchWave;
+                double horizontal = Math.cos(pitch) * radius;
+                xs[i] = Math.cos(yaw) * horizontal;
+                ys[i] = Math.sin(pitch) * radius;
+                zs[i] = Math.sin(yaw) * horizontal;
+            }
+            drawTexturedPolylineRibbon(xs, ys, zs, pointCount, false, BASIC_ARC_HALF_WIDTH);
+        } finally {
+            shader.end();
+        }
+    }
+
     static void drawBasicJaggedArc(ShaderProgram shader, double radius, double startYaw,
                                    double sweepYaw, double y, double lift, double jitter,
                                    int segments, int color, float alpha, float ticks, int seed) {
@@ -385,6 +417,41 @@ final class RenderNaturalShaderHelper {
                 alphas[i] = alpha * (0.18F + 0.82F * (float) fade);
             }
             drawColoredPolylineRibbon(xs, ys, zs, alphas, pointCount, false, BASIC_ARC_HALF_WIDTH, rgb);
+        } finally {
+            shader.end();
+        }
+    }
+
+    static void drawShaderJaggedArc(ShaderProgram shader, double radius, double startYaw,
+                                    double sweepYaw, double y, double lift, double jitter,
+                                    int segments, float mode, float layer,
+                                    int primaryColor, int secondaryColor, int accentColor,
+                                    float alpha, float pulse, float intensity,
+                                    float time, float seed, float ticks, int jitterSeed) {
+        if (shader == null || alpha <= 0.005F || radius <= 0.0D || segments < 2 || !shader.begin()) {
+            return;
+        }
+
+        try {
+            setNaturalUniforms(shader, mode, layer, primaryColor, secondaryColor, accentColor,
+                    alpha, pulse, intensity, time, seed);
+            int pointCount = segments + 1;
+            double[] xs = new double[pointCount];
+            double[] ys = new double[pointCount];
+            double[] zs = new double[pointCount];
+            for (int i = 0; i <= segments; i++) {
+                double progress = (double) i / segments;
+                double fade = Math.sin(Math.PI * progress);
+                double angle = startYaw + sweepYaw * progress
+                        + deterministicJitter(jitterSeed, i, ticks) * jitter * 0.80D;
+                double localRadius = radius + deterministicJitter(jitterSeed + 71, i, ticks) * jitter;
+                double localY = y + lift * fade
+                        + deterministicJitter(jitterSeed + 137, i, ticks) * jitter * 0.85D;
+                xs[i] = Math.cos(angle) * localRadius;
+                ys[i] = localY;
+                zs[i] = Math.sin(angle) * localRadius;
+            }
+            drawTexturedPolylineRibbon(xs, ys, zs, pointCount, false, BASIC_ARC_HALF_WIDTH);
         } finally {
             shader.end();
         }

@@ -17,18 +17,17 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
     @Override
     protected void renderCelestialEffect(TileSolarCoronaBurst te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawSolarCore(ticks, naturalShader, colorShader);
-        drawCoronaShell(ticks, naturalShader, colorShader);
-        drawProminences(ticks, naturalShader, colorShader);
+        drawSolarCore(ticks, naturalShader);
+        drawCoronaShell(ticks, naturalShader);
+        drawProminences(ticks, naturalShader);
         drawExpelledSparks(ticks, naturalShader);
     }
 
-    private void drawSolarCore(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawSolarCore(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.070D);
 
         useAdditiveBlend();
@@ -45,14 +44,17 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.55F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(21.0F, 1.0F, 0.0F, 0.35F);
-        RenderNaturalShaderHelper.drawBasicFlatRing(colorShader,
+        RenderNaturalShaderHelper.drawShaderRing(naturalShader,
                 CORE_RADIUS * 1.12D, CORE_RADIUS * 1.20D,
-                0xFF6A00, 0.12F + pulse * 0.05F, RING_SEGMENTS);
+                RenderNaturalShaderHelper.MODE_SOLAR, 1.6F,
+                0xFF6A00, 0xFFB31F, 0xFFF3A2,
+                0.12F + pulse * 0.05F, pulse, 1.10F,
+                ticks * 0.060F, 89.0F, RING_SEGMENTS);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawCoronaShell(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawCoronaShell(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.043D);
 
         useAdditiveBlend();
@@ -66,14 +68,16 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
         GlStateManager.pushMatrix();
         GlStateManager.rotate(76.0F, 1.0F, 0.1F, 0.0F);
         GlStateManager.rotate(ticks * -0.28F, 0.0F, 1.0F, 0.0F);
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, CORE_RADIUS * 1.10D,
-                CORONA_RADIUS * 1.72D, 28, 0xFF8A19,
-                0.12F + pulse * 0.060F, ticks * 0.014D);
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, CORE_RADIUS * 1.10D,
+                CORONA_RADIUS * 1.72D, 28,
+                RenderNaturalShaderHelper.MODE_SOLAR, 2.0F, 0xFF8A19, 0xFFD36A, 0xFFF8D6,
+                0.12F + pulse * 0.060F, pulse, 1.20F,
+                ticks * 0.070F, 131.0F, ticks * 0.014D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawProminences(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawProminences(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         for (int i = 0; i < PROMINENCE_COUNT; i++) {
             double cycle = fract(ticks * (0.018D + (i % 4) * 0.002D) + i * 0.137D);
@@ -86,16 +90,17 @@ public class RenderSolarCoronaBurst extends RenderCelestialEffectBase<TileSolarC
             double arcRadius = CORONA_RADIUS * (1.02D + surge * 0.68D);
             int color = i % 3 == 0 ? 0xFFF3A2 : (i % 3 == 1 ? 0xFF8A19 : 0xFF3D00);
 
-            GlStateManager.glLineWidth(5.0F);
-            RenderNaturalShaderHelper.drawBasicSphericalArc(colorShader, arcRadius, yaw, sweep,
-                    basePitch, pitchWave, ticks * 0.037D + i, color,
-                    0.080F + surge * 0.095F, 42);
-            GlStateManager.glLineWidth(2.0F);
-            RenderNaturalShaderHelper.drawBasicSphericalArc(colorShader, arcRadius * 0.98D,
+            RenderNaturalShaderHelper.drawShaderSphericalArc(naturalShader, arcRadius, yaw, sweep,
+                    basePitch, pitchWave, ticks * 0.037D + i,
+                    RenderNaturalShaderHelper.MODE_SOLAR, 2.4F + (i % 4) * 0.10F,
+                    color, 0xFF8A19, 0xFFF8D6, 0.080F + surge * 0.095F,
+                    surge, 1.24F, ticks * 0.078F, 173.0F + i * 13.0F, 42);
+            RenderNaturalShaderHelper.drawShaderSphericalArc(naturalShader, arcRadius * 0.98D,
                     yaw + 0.025D, sweep * 0.94D, basePitch, pitchWave * 0.82D,
-                    ticks * 0.046D + i * 1.7D, 0xFFF8D6,
-                    0.12F + surge * 0.22F, 42);
-            RenderHelper.resetLineWidth();
+                    ticks * 0.046D + i * 1.7D,
+                    RenderNaturalShaderHelper.MODE_SOLAR, 2.8F + (i % 4) * 0.10F,
+                    0xFFF8D6, color, 0xFFFFFF, 0.12F + surge * 0.22F,
+                    surge, 1.36F, ticks * 0.090F, 211.0F + i * 13.0F, 42);
 
             if (surge > 0.46F) {
                 double tipYaw = yaw + sweep * 0.52D;

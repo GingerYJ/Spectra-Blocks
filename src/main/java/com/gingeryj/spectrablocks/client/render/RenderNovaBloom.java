@@ -19,18 +19,17 @@ public class RenderNovaBloom extends RenderCelestialEffectBase<TileScalableEffec
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawShockwaves(ticks, naturalShader, colorShader);
-        drawStarCore(ticks, naturalShader, colorShader);
-        drawShortRays(ticks, colorShader);
+        drawShockwaves(ticks, naturalShader);
+        drawStarCore(ticks, naturalShader);
+        drawShortRays(ticks, naturalShader);
         drawEjectedStardust(ticks, naturalShader);
     }
 
-    private void drawStarCore(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawStarCore(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.086D);
         float flare = wave(ticks * 0.143D);
 
@@ -48,15 +47,14 @@ public class RenderNovaBloom extends RenderCelestialEffectBase<TileScalableEffec
         GlStateManager.pushMatrix();
         GlStateManager.rotate(ticks * 0.42F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager.glLineWidth(1.8F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, CORE_RADIUS * 2.08D,
-                0xFFF4C8, 0.24F + flare * 0.12F, 64);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, CORE_RADIUS * 2.08D,
+                RenderNaturalShaderHelper.MODE_SOLAR, 1.8F, 0xFFF4C8, 0xFFFFFF, 0xBFEFFF,
+                0.24F + flare * 0.12F, flare, 1.28F, ticks * 0.085F, 89.0F, 64);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawShockwaves(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawShockwaves(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         for (int i = 0; i < 2; i++) {
             double progress = fract(ticks * 0.0065D + i * 0.50D);
@@ -70,10 +68,14 @@ public class RenderNovaBloom extends RenderCelestialEffectBase<TileScalableEffec
             GlStateManager.pushMatrix();
             GlStateManager.rotate(12.0F + i * 54.0F, 1.0F, 0.0F, 0.24F);
             GlStateManager.rotate(ticks * (0.10F + i * 0.035F), 0.0F, 1.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicFlatRing(colorShader, radius * 0.94D, radius,
-                    warmColor, alpha, RING_SEGMENTS);
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, radius * 1.016D,
-                    coolColor, alpha * 0.86F, RING_SEGMENTS);
+            RenderNaturalShaderHelper.drawShaderRing(naturalShader, radius * 0.94D, radius,
+                    RenderNaturalShaderHelper.MODE_STARDUST, 1.4F + i * 0.25F,
+                    warmColor, coolColor, 0xFFFFFF, alpha, fade, 1.04F,
+                    ticks * 0.050F, 121.0F + i * 17.0F, RING_SEGMENTS);
+            RenderNaturalShaderHelper.drawShaderCircle(naturalShader, radius * 1.016D,
+                    RenderNaturalShaderHelper.MODE_STARDUST, 1.7F + i * 0.25F,
+                    coolColor, warmColor, 0xFFFFFF, alpha * 0.86F, fade, 1.06F,
+                    ticks * 0.058F, 137.0F + i * 17.0F, RING_SEGMENTS);
             GlStateManager.popMatrix();
 
             GlStateManager.pushMatrix();
@@ -87,18 +89,17 @@ public class RenderNovaBloom extends RenderCelestialEffectBase<TileScalableEffec
         useAlphaBlend();
     }
 
-    private void drawShortRays(float ticks, ShaderProgram colorShader) {
+    private void drawShortRays(float ticks, ShaderProgram naturalShader) {
         float shimmer = wave(ticks * 0.067D);
 
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.rotate(74.0F, 1.0F, 0.0F, 0.18F);
         GlStateManager.rotate(ticks * 0.22F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.glLineWidth(2.2F);
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, CORE_RADIUS * 1.32D,
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, CORE_RADIUS * 1.32D,
                 BLOOM_RADIUS * (1.20D + shimmer * 0.22D), RAY_COUNT,
-                0xFFF6CE, 0.13F + shimmer * 0.08F, ticks * 0.019D);
-        RenderHelper.resetLineWidth();
+                RenderNaturalShaderHelper.MODE_STARDUST, 2.1F, 0xFFF6CE, 0xBFEFFF, 0xFFFFFF,
+                0.13F + shimmer * 0.08F, shimmer, 1.24F, ticks * 0.064F, 157.0F, ticks * 0.019D);
         GlStateManager.popMatrix();
 
         for (int i = 0; i < 8; i++) {
@@ -115,13 +116,13 @@ public class RenderNovaBloom extends RenderCelestialEffectBase<TileScalableEffec
             double outer = BLOOM_RADIUS * (0.98D + blink * 0.46D);
             int color = i % 2 == 0 ? 0xFFFFFF : 0xBFEFFF;
 
-            GlStateManager.glLineWidth(1.5F + (float) blink * 1.8F);
-            RenderNaturalShaderHelper.drawBasicLine(colorShader,
+            RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_STARDUST,
+                    2.4F + i * 0.08F,
                     Math.cos(yaw) * horizontal * inner, Math.sin(pitch) * inner, Math.sin(yaw) * horizontal * inner,
                     Math.cos(yaw) * horizontal * outer, Math.sin(pitch) * outer, Math.sin(yaw) * horizontal * outer,
-                    color, (float) blink * 0.24F);
+                    color, 0xBFEFFF, 0xFFFFFF, (float) blink * 0.24F, (float) blink,
+                    1.34F, ticks * 0.075F, 179.0F + i * 13.0F, 0.020D + blink * 0.018D);
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 

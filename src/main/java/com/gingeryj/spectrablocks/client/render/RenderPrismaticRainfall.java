@@ -24,17 +24,16 @@ public class RenderPrismaticRainfall extends RenderCelestialEffectBase<TilePrism
     @Override
     protected void renderCelestialEffect(TilePrismaticRainfall te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
-        drawUpperHalo(ticks, naturalShader, colorShader);
-        drawFallingDrops(ticks, naturalShader, colorShader);
-        drawBottomRipples(ticks, naturalShader, colorShader);
+        drawUpperHalo(ticks, naturalShader);
+        drawFallingDrops(ticks, naturalShader);
+        drawBottomRipples(ticks, naturalShader);
     }
 
-    private void drawUpperHalo(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawUpperHalo(float ticks, ShaderProgram naturalShader) {
         float pulse = wave(ticks * 0.038D);
 
         useAdditiveBlend();
@@ -52,19 +51,20 @@ public class RenderPrismaticRainfall extends RenderCelestialEffectBase<TilePrism
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, TOP_Y + 0.01D, 0.0D);
         GlStateManager.rotate(ticks * 0.055F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.glLineWidth(1.6F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, HALO_RADIUS * 0.92D, 0xDDFBFF,
-                0.24F + pulse * 0.06F, HALO_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, HALO_RADIUS * 0.58D, 0xFFD7F0,
-                0.13F + pulse * 0.05F, HALO_SEGMENTS);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, HALO_RADIUS * 0.92D,
+                RenderNaturalShaderHelper.MODE_AURORA, 3.1F,
+                0xDDFBFF, 0x9FEAFF, 0xFFFFFF,
+                0.24F + pulse * 0.06F, pulse, 0.92F, ticks * 0.026F, 101.0F, HALO_SEGMENTS);
+        RenderNaturalShaderHelper.drawShaderCircle(naturalShader, HALO_RADIUS * 0.58D,
+                RenderNaturalShaderHelper.MODE_AURORA, 3.4F,
+                0xFFD7F0, 0xB8FFF1, 0xFFFFFF,
+                0.13F + pulse * 0.05F, pulse, 0.86F, ticks * 0.032F, 113.0F, HALO_SEGMENTS);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawFallingDrops(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawFallingDrops(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.15F);
         for (int i = 0; i < DROP_COUNT; i++) {
             double progress = fract(ticks * (0.0068D + (i % 5) * 0.00055D) + i * 0.071D);
             double fallEase = progress * progress * (3.0D - 2.0D * progress);
@@ -80,8 +80,11 @@ public class RenderPrismaticRainfall extends RenderCelestialEffectBase<TilePrism
             int color = PRISM_COLORS[(i + (int) (ticks * 0.014F)) % PRISM_COLORS.length];
             int secondary = PRISM_COLORS[(i + 2) % PRISM_COLORS.length];
 
-            RenderNaturalShaderHelper.drawBasicLine(colorShader, x, y + streak * 0.42D, z,
-                    x - drift * 0.72D, y - streak, z, color, fade * 0.62F);
+            RenderNaturalShaderHelper.drawShaderLine(naturalShader, RenderNaturalShaderHelper.MODE_AURORA,
+                    4.0F + (i % 6) * 0.08F, x, y + streak * 0.42D, z,
+                    x - drift * 0.72D, y - streak, z,
+                    color, secondary, 0xFFFFFF, fade * 0.62F, (float) progress,
+                    1.12F, ticks * 0.035F, 151.0F + i * 7.0F);
 
             GlStateManager.pushMatrix();
             GlStateManager.translate(x, y, z);
@@ -91,11 +94,10 @@ public class RenderPrismaticRainfall extends RenderCelestialEffectBase<TilePrism
                     ticks * 0.035F, 53.0F + i * 7.0F, 7);
             GlStateManager.popMatrix();
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 
-    private void drawBottomRipples(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawBottomRipples(float ticks, ShaderProgram naturalShader) {
         float basinPulse = wave(ticks * 0.034D);
 
         useAdditiveBlend();
@@ -109,22 +111,28 @@ public class RenderPrismaticRainfall extends RenderCelestialEffectBase<TilePrism
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, BOTTOM_Y, 0.0D);
-        GlStateManager.glLineWidth(1.35F);
         for (int i = 0; i < RIPPLE_COUNT; i++) {
             double progress = fract(ticks * 0.014D + i * 0.147D);
             double radius = lerp(0.20D, 1.58D, progress);
             float alpha = (float) ((1.0D - progress) * Math.sin(Math.PI * progress));
             int color = PRISM_COLORS[(i * 2 + (int) (ticks * 0.020F)) % PRISM_COLORS.length];
 
-            RenderNaturalShaderHelper.drawBasicCircle(colorShader, radius, color, 0.24F * alpha, 80);
+            RenderNaturalShaderHelper.drawShaderCircle(naturalShader, radius,
+                    RenderNaturalShaderHelper.MODE_AURORA, 5.0F + i * 0.10F,
+                    color, 0xB5FFE2, 0xFFFFFF,
+                    0.24F * alpha, alpha, 0.82F, ticks * 0.024F, 211.0F + i, 80);
             if ((i & 1) == 0) {
-                RenderNaturalShaderHelper.drawBasicFlatRing(colorShader, radius * 0.94D, radius * 1.02D,
-                        color, 0.055F * alpha, 80);
+                RenderNaturalShaderHelper.drawShaderRing(naturalShader, radius * 0.94D, radius * 1.02D,
+                        RenderNaturalShaderHelper.MODE_AURORA, 5.8F + i * 0.09F,
+                        color, 0xFFD0F4, 0xFFFFFF,
+                        0.055F * alpha, alpha, 0.76F, ticks * 0.020F, 233.0F + i, 80);
             }
         }
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.18D, 1.12D, 12, 0xFFFFFF,
-                0.055F + basinPulse * 0.035F, ticks * 0.006D);
-        RenderHelper.resetLineWidth();
+        RenderNaturalShaderHelper.drawShaderStarRays(naturalShader, 0.18D, 1.12D, 12,
+                RenderNaturalShaderHelper.MODE_STARDUST, 6.3F,
+                0xFFFFFF, 0xB5FFE2, 0xFFD0F4,
+                0.055F + basinPulse * 0.035F, basinPulse, 0.95F,
+                ticks * 0.028F, 257.0F, ticks * 0.006D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
