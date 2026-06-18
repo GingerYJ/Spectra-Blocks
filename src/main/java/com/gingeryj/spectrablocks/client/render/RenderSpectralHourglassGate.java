@@ -32,15 +32,14 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
         drawFunnelPair(ticks, naturalShader);
-        drawThroat(ticks, naturalShader, colorShader);
+        drawThroat(ticks, naturalShader);
         drawSpectralSand(ticks, naturalShader);
-        drawGateArcs(ticks, colorShader);
+        drawGateArcs(ticks, naturalShader);
     }
 
     private void drawFunnelPair(float ticks, ShaderProgram naturalShader) {
@@ -72,7 +71,7 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
         }
     }
 
-    private void drawThroat(float ticks, ShaderProgram naturalShader, ShaderProgram colorShader) {
+    private void drawThroat(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         float pulse = wave(ticks * 0.092D);
 
@@ -88,10 +87,11 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
         for (int i = 0; i < 6; i++) {
             double angle = i * Math.PI / 3.0D + ticks * 0.020D;
             double radius = 0.17D + (i % 2) * 0.035D;
-            RenderNaturalShaderHelper.drawBasicLine(colorShader,
+            drawNaturalLine(naturalShader, ticks,
                     Math.cos(angle) * radius, -0.13D, Math.sin(angle) * radius,
                     Math.cos(angle + Math.PI) * radius, 0.13D, Math.sin(angle + Math.PI) * radius,
-                    i % 2 == 0 ? CYAN : ROSE, 0.20F + pulse * 0.10F);
+                    i % 2 == 0 ? CYAN : ROSE, 0.20F + pulse * 0.10F,
+                    0.018D, 5.2F + i * 0.19F);
         }
         RenderHelper.resetLineWidth();
         useAlphaBlend();
@@ -137,26 +137,23 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
         useAlphaBlend();
     }
 
-    private void drawGateArcs(float ticks, ShaderProgram colorShader) {
-        if (colorShader == null) {
-            return;
-        }
-
+    private void drawGateArcs(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
-        drawGateArc(colorShader, -1.0D, ticks, CYAN, 0.28F);
-        drawGateArc(colorShader, 1.0D, ticks + 17.0F, ROSE, 0.25F);
+        drawGateArc(naturalShader, -1.0D, ticks, CYAN, 0.28F);
+        drawGateArc(naturalShader, 1.0D, ticks + 17.0F, ROSE, 0.25F);
 
-        drawInnerArc(colorShader, -1.0D, ticks + 31.0F, MINT, 0.15F);
-        drawInnerArc(colorShader, 1.0D, ticks + 47.0F, VIOLET, 0.15F);
+        drawInnerArc(naturalShader, -1.0D, ticks + 31.0F, MINT, 0.15F);
+        drawInnerArc(naturalShader, 1.0D, ticks + 47.0F, VIOLET, 0.15F);
 
         for (int i = 0; i < 8; i++) {
             double side = i % 2 == 0 ? -1.0D : 1.0D;
             double y = -1.08D + (i / 2) * 0.72D;
             double pulse = wave(ticks * 0.070D + i);
-            RenderNaturalShaderHelper.drawBasicLine(colorShader,
+            drawNaturalLine(naturalShader, ticks,
                     side * (ARC_RADIUS - 0.05D), y, 0.0D,
                     side * (ARC_RADIUS - 0.22D - pulse * 0.04D), y + 0.08D * (i % 3 - 1), 0.0D,
-                    spectralColor(i), 0.10F + (float) pulse * 0.10F);
+                    spectralColor(i), 0.10F + (float) pulse * 0.10F,
+                    0.022D, 6.8F + i * 0.23F);
         }
         useAlphaBlend();
     }
@@ -176,19 +173,39 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
         }
 
         try {
-            setBasicUniforms(shader);
+            setNaturalUniforms(shader, RenderNaturalShaderHelper.MODE_HOURGLASS, 5.0F,
+                    color, WHITE, MINT, alpha, wave(ticks * 0.040D), 1.22F,
+                    ticks * 0.038F, 293.0F + (float) zOffset * 37.0F);
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
             ArcPoint previous = verticalArcPoint(side, radius, height, ticks, zOffset, 0.0D, alpha);
             for (int i = 1; i <= ARC_SEGMENTS; i++) {
                 double progress = (double) i / ARC_SEGMENTS;
                 ArcPoint current = verticalArcPoint(side, radius, height, ticks, zOffset, progress, alpha);
-                RenderHelper.addColorLine(buffer, previous.x, previous.y, previous.z,
-                        current.x, current.y, current.z, 0.030D, color, previous.alpha, current.alpha);
+                RenderHelper.addTexturedLine(buffer, previous.x, previous.y, previous.z,
+                        current.x, current.y, current.z, 0.030D);
                 previous = current;
             }
             tessellator.draw();
+        } finally {
+            shader.end();
+        }
+    }
+
+    private static void drawNaturalLine(ShaderProgram shader, float ticks,
+                                        double x1, double y1, double z1,
+                                        double x2, double y2, double z2,
+                                        int color, float alpha, double width, float seed) {
+        if (shader == null || alpha <= 0.005F || !shader.begin()) {
+            return;
+        }
+
+        try {
+            setNaturalUniforms(shader, RenderNaturalShaderHelper.MODE_HOURGLASS, 5.0F,
+                    color, WHITE, MINT, alpha, wave(ticks * 0.040D + seed), 1.16F,
+                    ticks * 0.040F, 317.0F + seed * 11.0F);
+            RenderHelper.drawTexturedLine(x1, y1, z1, x2, y2, z2, width);
         } finally {
             shader.end();
         }
@@ -261,11 +278,6 @@ public class RenderSpectralHourglassGate extends RenderCelestialEffectBase<TileS
         shader.setUniform3f("uPrimaryColor", primary[0], primary[1], primary[2]);
         shader.setUniform3f("uSecondaryColor", secondary[0], secondary[1], secondary[2]);
         shader.setUniform3f("uAccentColor", accent[0], accent[1], accent[2]);
-    }
-
-    private static void setBasicUniforms(ShaderProgram shader) {
-        shader.setUniform1f("alpha", 1.0F);
-        shader.setUniform4f("tint", 1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static int spectralColor(int index) {

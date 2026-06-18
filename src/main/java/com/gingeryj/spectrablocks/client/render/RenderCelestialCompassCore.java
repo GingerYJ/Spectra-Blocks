@@ -32,30 +32,25 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram celestialShader = ShaderManager.getProgram("celestial_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (celestialShader == null) {
             return;
         }
 
         try {
-            drawCentralStar(celestialShader, colorShader, ticks);
-            drawCompassDiscs(celestialShader, colorShader, ticks);
-            drawCardinalMarkers(celestialShader, colorShader, ticks);
-            drawSeekingPointer(celestialShader, colorShader, ticks);
-            drawOrbitingTickStars(celestialShader, colorShader, ticks);
+            drawCentralStar(celestialShader, ticks);
+            drawCompassDiscs(celestialShader, ticks);
+            drawCardinalMarkers(celestialShader, ticks);
+            drawSeekingPointer(celestialShader, ticks);
+            drawOrbitingTickStars(celestialShader, ticks);
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("celestial compass core render failed: " + ex.getMessage());
         } finally {
             celestialShader.end();
-            if (colorShader != null) {
-                colorShader.end();
-            }
             useAlphaBlend();
-            RenderHelper.resetLineWidth();
         }
     }
 
-    private void drawCentralStar(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawCentralStar(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.045D);
 
         useAdditiveBlend();
@@ -69,45 +64,40 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
         GlStateManager.pushMatrix();
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(ticks * 0.010F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.glLineWidth(1.5F);
-        RenderNaturalShaderHelper.drawBasicStarRays(colorShader, 0.20D, 0.68D + pulse * 0.08D,
+        drawShaderStarRays(shader, ticks, 0.20D, 0.68D + pulse * 0.08D,
                 8, STAR_WHITE, 0.11F + pulse * 0.06F, ticks * 0.010D);
-        RenderHelper.resetLineWidth();
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawCompassDiscs(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawCompassDiscs(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.026D);
 
         GlStateManager.pushMatrix();
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
-        drawFlatCompassDisc(shader, colorShader, ticks, INNER_DISC_RADIUS, 0.020D,
+        drawFlatCompassDisc(shader, ticks, INNER_DISC_RADIUS, 0.020D,
                 CELESTIAL_BLUE, STAR_WHITE, 0.075F + pulse * 0.028F, ticks * 0.006D, 0.20F);
-        drawFlatCompassDisc(shader, colorShader, ticks, MIDDLE_DISC_RADIUS, 0.026D,
+        drawFlatCompassDisc(shader, ticks, MIDDLE_DISC_RADIUS, 0.026D,
                 COMPASS_GOLD, STAR_GOLD, 0.064F + pulse * 0.024F, -ticks * 0.004D, 0.54F);
-        drawFlatCompassDisc(shader, colorShader, ticks, OUTER_DISC_RADIUS, 0.032D,
+        drawFlatCompassDisc(shader, ticks, OUTER_DISC_RADIUS, 0.032D,
                 DEEP_BLUE, CELESTIAL_BLUE, 0.052F + pulse * 0.020F, ticks * 0.0025D, 0.86F);
 
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.0F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, 0.48D, STAR_WHITE, 0.070F + pulse * 0.030F, 64);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, 1.02D, CELESTIAL_BLUE, 0.060F + pulse * 0.024F, 96);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, 1.58D, COMPASS_GOLD, 0.064F + pulse * 0.024F, 128);
-        GlStateManager.glLineWidth(1.8F);
-        drawCompassCross(colorShader, OUTER_DISC_RADIUS * 0.94D, CELESTIAL_BLUE, 0.055F + pulse * 0.024F,
+        drawShaderCircle(shader, ticks, 0.48D, STAR_WHITE, 0.070F + pulse * 0.030F, 64, 0.010D, 1.3F);
+        drawShaderCircle(shader, ticks, 1.02D, CELESTIAL_BLUE, 0.060F + pulse * 0.024F, 96, 0.012D, 1.7F);
+        drawShaderCircle(shader, ticks, 1.58D, COMPASS_GOLD, 0.064F + pulse * 0.024F, 128, 0.013D, 2.1F);
+        drawCompassCross(shader, ticks, OUTER_DISC_RADIUS * 0.94D, CELESTIAL_BLUE, 0.055F + pulse * 0.024F,
                 ticks * 0.002D);
-        RenderHelper.resetLineWidth();
         GlStateManager.popMatrix();
         useAlphaBlend();
 
-        drawTiltedInstrumentDisc(shader, colorShader, ticks, 21.0F, 1.0F, 0.0F,
+        drawTiltedInstrumentDisc(shader, ticks, 21.0F, 1.0F, 0.0F,
                 1.08D, COMPASS_GOLD, STAR_GOLD, 0.036F + pulse * 0.018F, 0.18F);
-        drawTiltedInstrumentDisc(shader, colorShader, ticks, -34.0F, 0.0F, 1.0F,
+        drawTiltedInstrumentDisc(shader, ticks, -34.0F, 0.0F, 1.0F,
                 1.58D, CELESTIAL_BLUE, STAR_WHITE, 0.032F + pulse * 0.016F, -0.12F);
     }
 
-    private void drawFlatCompassDisc(ShaderProgram shader, ShaderProgram colorShader, float ticks, double radius,
+    private void drawFlatCompassDisc(ShaderProgram shader, float ticks, double radius,
                                      double width, int bandColor, int lineColor, float alpha,
                                      double rotation, float seed) {
         GlStateManager.pushMatrix();
@@ -118,15 +108,13 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
                 0.0F, 3.0F + seed, bandColor, lineColor, alpha, 0.88F, seed, RING_SEGMENTS);
 
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.1F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, radius, lineColor, alpha * 1.65F, RING_SEGMENTS);
-        drawTickMarks(colorShader, radius, MINOR_TICK_COUNT, lineColor, alpha * 1.25F, 0.060D, 0.12D);
-        RenderHelper.resetLineWidth();
+        drawShaderCircle(shader, ticks, radius, lineColor, alpha * 1.65F, RING_SEGMENTS, 0.011D, 3.8F + seed);
+        drawTickMarks(shader, ticks, radius, MINOR_TICK_COUNT, lineColor, alpha * 1.25F, 0.060D, 0.12D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawTiltedInstrumentDisc(ShaderProgram shader, ShaderProgram colorShader, float ticks,
+    private void drawTiltedInstrumentDisc(ShaderProgram shader, float ticks,
                                           float tilt, float axisX, float axisZ, double radius,
                                           int primaryColor, int accentColor, float alpha, float spinScale) {
         GlStateManager.pushMatrix();
@@ -138,14 +126,13 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
                 0.0F, 4.0F + spinScale, primaryColor, accentColor, alpha, 0.78F,
                 1.3F + spinScale, RING_SEGMENTS);
         useAdditiveBlend();
-        GlStateManager.glLineWidth(1.2F);
-        RenderNaturalShaderHelper.drawBasicCircle(colorShader, radius, accentColor, alpha * 1.45F, RING_SEGMENTS);
-        RenderHelper.resetLineWidth();
+        drawShaderCircle(shader, ticks, radius, accentColor, alpha * 1.45F, RING_SEGMENTS, 0.011D,
+                4.4F + spinScale);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawCardinalMarkers(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawCardinalMarkers(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.038D);
 
         useAdditiveBlend();
@@ -160,12 +147,11 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
             double markerWidth = north ? 0.12D : 0.085D;
             float markerAlpha = north ? 0.34F + pulse * 0.14F : 0.22F + pulse * 0.10F;
 
-            GlStateManager.glLineWidth(north ? 2.4F : 1.8F);
-            drawRadialGuide(colorShader, angle, 0.58D, MARKER_RADIUS + markerLength * 0.25D,
+            drawRadialGuide(shader, ticks, angle, 0.58D, MARKER_RADIUS + markerLength * 0.25D,
                     color, markerAlpha * 0.34F);
-            drawCardinalChevron(colorShader, angle, MARKER_RADIUS, markerLength, markerWidth,
+            drawCardinalChevron(shader, ticks, angle, MARKER_RADIUS, markerLength, markerWidth,
                     color, markerAlpha);
-            drawMarkerSideTicks(colorShader, angle, MARKER_RADIUS - 0.18D, color, markerAlpha * 0.76F);
+            drawMarkerSideTicks(shader, ticks, angle, MARKER_RADIUS - 0.18D, color, markerAlpha * 0.76F);
 
             GlStateManager.pushMatrix();
             GlStateManager.translate(Math.cos(angle) * (MARKER_RADIUS + markerLength * 0.70D),
@@ -175,12 +161,11 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
             GlStateManager.popMatrix();
         }
 
-        RenderHelper.resetLineWidth();
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private void drawSeekingPointer(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawSeekingPointer(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.050D);
         double searchAngle = ticks * 0.010D
                 + Math.sin(ticks * 0.020D) * 0.28D
@@ -191,16 +176,13 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate((float) Math.toDegrees(searchAngle), 0.0F, 0.0F, 1.0F);
 
-        GlStateManager.glLineWidth(3.0F);
-        RenderNaturalShaderHelper.drawBasicLine(colorShader, -POINTER_TAIL, 0.0D, 0.010D,
-                POINTER_LENGTH, 0.0D, 0.010D, STAR_GOLD, 0.32F + pulse * 0.12F);
-        GlStateManager.glLineWidth(1.4F);
-        RenderNaturalShaderHelper.drawBasicLine(colorShader, -POINTER_TAIL * 0.72D, 0.0D, 0.014D,
-                POINTER_LENGTH * 0.88D, 0.0D, 0.014D, STAR_WHITE, 0.42F + pulse * 0.18F);
-        drawNeedleHead(colorShader, POINTER_LENGTH, 0.18D, 0.28D, STAR_GOLD, 0.28F + pulse * 0.14F);
-        drawNeedleHead(colorShader, -POINTER_TAIL, 0.10D, -0.18D, CELESTIAL_BLUE, 0.22F + pulse * 0.10F);
+        drawShaderLine(shader, ticks, -POINTER_TAIL, 0.0D, 0.010D,
+                POINTER_LENGTH, 0.0D, 0.010D, STAR_GOLD, 0.32F + pulse * 0.12F, 0.030D, 6.0F);
+        drawShaderLine(shader, ticks, -POINTER_TAIL * 0.72D, 0.0D, 0.014D,
+                POINTER_LENGTH * 0.88D, 0.0D, 0.014D, STAR_WHITE, 0.42F + pulse * 0.18F, 0.014D, 6.3F);
+        drawNeedleHead(shader, ticks, POINTER_LENGTH, 0.18D, 0.28D, STAR_GOLD, 0.28F + pulse * 0.14F);
+        drawNeedleHead(shader, ticks, -POINTER_TAIL, 0.10D, -0.18D, CELESTIAL_BLUE, 0.22F + pulse * 0.10F);
 
-        RenderHelper.resetLineWidth();
         GlStateManager.popMatrix();
 
         GlStateManager.pushMatrix();
@@ -212,7 +194,7 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
         useAlphaBlend();
     }
 
-    private void drawOrbitingTickStars(ShaderProgram shader, ShaderProgram colorShader, float ticks) {
+    private void drawOrbitingTickStars(ShaderProgram shader, float ticks) {
         useAdditiveBlend();
         for (int i = 0; i < STAR_COUNT; i++) {
             double track = i % 3;
@@ -233,69 +215,69 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
 
             if (i % 6 == 0) {
                 double nextAngle = angle - 0.10D - track * 0.018D;
-                GlStateManager.glLineWidth(1.0F);
-                RenderNaturalShaderHelper.drawBasicLine(colorShader,
+                drawShaderLine(shader, ticks,
                         Math.cos(nextAngle) * radius, y * 0.45D, Math.sin(nextAngle) * radius,
                         Math.cos(angle) * radius, y, Math.sin(angle) * radius,
-                        color, 0.050F + localPulse * 0.035F);
+                        color, 0.050F + localPulse * 0.035F, 0.010D, 8.6F + i * 0.03F);
             }
         }
-        RenderHelper.resetLineWidth();
         useAlphaBlend();
     }
 
-    private void drawCompassCross(ShaderProgram colorShader, double radius, int color, float alpha, double phase) {
+    private void drawCompassCross(ShaderProgram shader, float ticks, double radius,
+                                  int color, float alpha, double phase) {
         for (int i = 0; i < 4; i++) {
             double angle = Math.PI * 0.5D * i + phase;
-            RenderNaturalShaderHelper.drawBasicLine(colorShader,
+            drawShaderLine(shader, ticks,
                     Math.cos(angle) * 0.36D, 0.0D, Math.sin(angle) * 0.36D,
-                    Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius, color, alpha);
+                    Math.cos(angle) * radius, 0.0D, Math.sin(angle) * radius,
+                    color, alpha, 0.014D, 9.1F + i * 0.15F);
         }
     }
 
-    private void drawTickMarks(ShaderProgram colorShader, double radius, int count, int color, float alpha,
-                               double minorLength, double majorLength) {
+    private void drawTickMarks(ShaderProgram shader, float ticks, double radius, int count, int color,
+                               float alpha, double minorLength, double majorLength) {
         for (int i = 0; i < count; i++) {
             double angle = Math.PI * 2.0D * i / count;
             double length = i % 8 == 0 ? majorLength : (i % 4 == 0 ? majorLength * 0.78D : minorLength);
             float localAlpha = alpha * (i % 8 == 0 ? 1.25F : 0.82F);
             double inner = radius - length * 0.58D;
             double outer = radius + length * 0.42D;
-            RenderNaturalShaderHelper.drawBasicLine(colorShader,
+            drawShaderLine(shader, ticks,
                     Math.cos(angle) * inner, 0.0D, Math.sin(angle) * inner,
-                    Math.cos(angle) * outer, 0.0D, Math.sin(angle) * outer, color, localAlpha);
+                    Math.cos(angle) * outer, 0.0D, Math.sin(angle) * outer,
+                    color, localAlpha, i % 8 == 0 ? 0.013D : 0.009D, 10.0F + i * 0.08F);
         }
     }
 
-    private void drawRadialGuide(ShaderProgram colorShader, double angle, double inner,
+    private void drawRadialGuide(ShaderProgram shader, float ticks, double angle, double inner,
                                  double outer, int color, float alpha) {
-        RenderNaturalShaderHelper.drawBasicLine(colorShader,
+        drawShaderLine(shader, ticks,
                 Math.cos(angle) * inner, Math.sin(angle) * inner, 0.004D,
                 Math.cos(angle) * outer, Math.sin(angle) * outer, 0.004D,
-                color, alpha);
+                color, alpha, 0.012D, 11.4F);
     }
 
-    private void drawMarkerSideTicks(ShaderProgram colorShader, double angle, double radius,
+    private void drawMarkerSideTicks(ShaderProgram shader, float ticks, double angle, double radius,
                                      int color, float alpha) {
         double tangentX = -Math.sin(angle);
         double tangentY = Math.cos(angle);
         double centerX = Math.cos(angle) * radius;
         double centerY = Math.sin(angle) * radius;
-        RenderNaturalShaderHelper.drawBasicLine(colorShader,
+        drawShaderLine(shader, ticks,
                 centerX - tangentX * 0.16D, centerY - tangentY * 0.16D, 0.006D,
                 centerX + tangentX * 0.16D, centerY + tangentY * 0.16D, 0.006D,
-                color, alpha);
+                color, alpha, 0.011D, 12.2F);
     }
 
-    private void drawCardinalChevron(ShaderProgram colorShader, double angle, double radius,
+    private void drawCardinalChevron(ShaderProgram shader, float ticks, double angle, double radius,
                                      double length, double halfWidth, int color, float alpha) {
-        if (colorShader == null || !colorShader.begin()) {
+        if (shader == null || alpha <= 0.01F || !shader.begin()) {
             return;
         }
 
         try {
-            setBasicUniforms(colorShader);
-            float[] rgb = RenderHelper.unpackRGB(color);
+            setCelestialUniforms(shader, ticks, 3.0F, 8.0F, color, STAR_WHITE, alpha, 1.12F, 12.8F);
             double dirX = Math.cos(angle);
             double dirY = Math.sin(angle);
             double tangentX = -dirY;
@@ -311,42 +293,90 @@ public class RenderCelestialCompassCore extends RenderCelestialEffectBase<TileSc
 
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-            buffer.pos(tipX, tipY, 0.010D).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-            buffer.pos(leftX, leftY, 0.010D).color(rgb[0], rgb[1], rgb[2], alpha * 0.42F).endVertex();
-            buffer.pos(rightX, rightY, 0.010D).color(rgb[0], rgb[1], rgb[2], alpha * 0.42F).endVertex();
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            addFlatVertex(buffer, tipX, tipY, 0.010D, 0.5D, 1.0D);
+            addFlatVertex(buffer, leftX, leftY, 0.010D, 0.0D, 0.0D);
+            addFlatVertex(buffer, rightX, rightY, 0.010D, 1.0D, 0.0D);
             tessellator.draw();
         } finally {
-            colorShader.end();
+            shader.end();
         }
     }
 
-    private void drawNeedleHead(ShaderProgram colorShader, double baseX, double halfWidth,
+    private void drawNeedleHead(ShaderProgram shader, float ticks, double baseX, double halfWidth,
                                 double length, int color, float alpha) {
-        if (colorShader == null || !colorShader.begin()) {
+        if (shader == null || alpha <= 0.01F || !shader.begin()) {
             return;
         }
 
         try {
-            setBasicUniforms(colorShader);
-            float[] rgb = RenderHelper.unpackRGB(color);
+            setCelestialUniforms(shader, ticks, 3.0F, 8.4F, color, STAR_WHITE, alpha, 1.18F, 13.6F);
             double tipX = baseX + length;
             double backX = baseX - Math.signum(length) * 0.050D;
 
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-            buffer.pos(tipX, 0.0D, 0.018D).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-            buffer.pos(backX, halfWidth, 0.018D).color(rgb[0], rgb[1], rgb[2], alpha * 0.45F).endVertex();
-            buffer.pos(backX, -halfWidth, 0.018D).color(rgb[0], rgb[1], rgb[2], alpha * 0.45F).endVertex();
+            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
+            addFlatVertex(buffer, tipX, 0.0D, 0.018D, 0.5D, 1.0D);
+            addFlatVertex(buffer, backX, halfWidth, 0.018D, 0.0D, 0.0D);
+            addFlatVertex(buffer, backX, -halfWidth, 0.018D, 1.0D, 0.0D);
             tessellator.draw();
         } finally {
-            colorShader.end();
+            shader.end();
         }
     }
 
-    private void setBasicUniforms(ShaderProgram shader) {
-        shader.setUniform1f("alpha", 1.0F);
-        shader.setUniform4f("tint", 1.0F, 1.0F, 1.0F, 1.0F);
+    private void drawShaderCircle(ShaderProgram shader, float ticks, double radius, int color,
+                                  float alpha, int segments, double halfWidth, float seed) {
+        RenderMiniatureGalaxy.drawShaderRing(shader, Math.max(0.0D, radius - halfWidth),
+                radius + halfWidth, ticks, 3.0F, 7.0F, color, STAR_WHITE,
+                alpha, 1.05F, seed, segments);
+    }
+
+    private void drawShaderLine(ShaderProgram shader, float ticks,
+                                double x1, double y1, double z1,
+                                double x2, double y2, double z2,
+                                int color, float alpha, double halfWidth, float seed) {
+        RenderMiniatureGalaxy.drawShaderLine(shader, x1, y1, z1, x2, y2, z2,
+                ticks, 3.0F, 7.6F, color, STAR_WHITE, alpha, 1.10F, seed, halfWidth);
+    }
+
+    private void drawShaderStarRays(ShaderProgram shader, float ticks, double innerRadius, double outerRadius,
+                                    int rayCount, int color, float alpha, double phase) {
+        if (rayCount < 2) {
+            return;
+        }
+
+        for (int i = 0; i < rayCount; i++) {
+            double angle = Math.PI * 2.0D * i / rayCount + phase;
+            double rayPulse = 0.74D + 0.26D * Math.sin(phase * 7.0D + i * 1.618D);
+            double outer = innerRadius + (outerRadius - innerRadius) * rayPulse;
+            drawShaderLine(shader, ticks,
+                    Math.cos(angle) * innerRadius, 0.0D, Math.sin(angle) * innerRadius,
+                    Math.cos(angle) * outer, 0.0D, Math.sin(angle) * outer,
+                    color, alpha, 0.014D, 14.0F + i * 0.17F);
+        }
+    }
+
+    private void setCelestialUniforms(ShaderProgram shader, float ticks, float effect, float layer,
+                                      int primaryColor, int accentColor, float alpha,
+                                      float intensity, float seed) {
+        float[] primary = RenderHelper.unpackRGB(primaryColor);
+        float[] accent = RenderHelper.unpackRGB(accentColor);
+        shader.setUniform1f("uTime", ticks * 0.025F);
+        shader.setUniform1f("uEffect", effect);
+        shader.setUniform1f("uLayer", layer);
+        shader.setUniform1f("uAlpha", alpha);
+        shader.setUniform1f("uIntensity", intensity);
+        shader.setUniform1f("uSeed", seed);
+        shader.setUniform3f("uPrimaryColor", primary[0], primary[1], primary[2]);
+        shader.setUniform3f("uAccentColor", accent[0], accent[1], accent[2]);
+    }
+
+    private void addFlatVertex(BufferBuilder buffer, double x, double y, double z, double u, double v) {
+        buffer.pos(x, y, z)
+                .tex(u, v)
+                .normal(0.0F, 1.0F, 0.0F)
+                .endVertex();
     }
 }

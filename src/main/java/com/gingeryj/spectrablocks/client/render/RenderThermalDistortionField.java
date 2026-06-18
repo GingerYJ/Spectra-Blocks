@@ -29,15 +29,14 @@ public class RenderThermalDistortionField extends RenderCelestialEffectBase<Tile
     @Override
     protected void renderCelestialEffect(TileThermalDistortionField te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram basicShader = ShaderManager.getProgram("basic");
-        if (naturalShader == null || basicShader == null) {
+        if (naturalShader == null) {
             return;
         }
 
         try {
             drawTransparentHeatShell(ticks, naturalShader);
             drawRisingHeatColumns(ticks, naturalShader);
-            drawEdgeRipples(ticks, basicShader);
+            drawEdgeRipples(ticks, naturalShader);
             drawHeatSparks(ticks, naturalShader);
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("thermal distortion field render failed: " + ex.getMessage());
@@ -124,7 +123,7 @@ public class RenderThermalDistortionField extends RenderCelestialEffectBase<Tile
         }
     }
 
-    private void drawEdgeRipples(float ticks, ShaderProgram basicShader) {
+    private void drawEdgeRipples(float ticks, ShaderProgram naturalShader) {
         useAdditiveBlend();
         for (int i = 0; i < 6; i++) {
             double progress = fract(ticks * (0.010D + i * 0.0015D) + i * 0.173D);
@@ -138,7 +137,7 @@ public class RenderThermalDistortionField extends RenderCelestialEffectBase<Tile
             GlStateManager.pushMatrix();
             GlStateManager.rotate((float) (ticks * (0.018D + i * 0.004D) + i * 31.0D),
                     0.0F, 1.0F, 0.0F);
-            drawWavyColorRing(basicShader, radius, y, width, color,
+            drawWavyShaderRing(naturalShader, radius, y, width, color,
                     (0.075F + fade * 0.085F) * (i == 0 ? 1.15F : 1.0F),
                     ticks, i * 0.61D);
             GlStateManager.popMatrix();
@@ -146,24 +145,25 @@ public class RenderThermalDistortionField extends RenderCelestialEffectBase<Tile
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, -0.52D, 0.0D);
-        drawWavyColorRing(basicShader, 1.02D + wave(ticks * 0.046D) * 0.055D, 0.0D, 0.055D,
+        drawWavyShaderRing(naturalShader, 1.02D + wave(ticks * 0.046D) * 0.055D, 0.0D, 0.055D,
                 EMBER_GOLD, 0.095F + wave(ticks * 0.061D) * 0.070F, ticks, 7.3D);
         GlStateManager.popMatrix();
         useAlphaBlend();
     }
 
-    private static void drawWavyColorRing(ShaderProgram shader, double radius, double y, double width,
+    private static void drawWavyShaderRing(ShaderProgram shader, double radius, double y, double width,
                                           int color, float alpha, float ticks, double seed) {
         if (shader == null || radius <= 0.0D || width <= 0.0D || alpha <= 0.005F || !shader.begin()) {
             return;
         }
 
         try {
-            setBasicUniforms(shader);
-            float[] rgb = unpackRGB(color);
+            setNaturalUniforms(shader, RenderNaturalShaderHelper.MODE_SOLAR, 2.65F + (float) seed * 0.07F,
+                    color, HOT_ORANGE, HEAT_GLASS, alpha, wave(ticks * 0.040D + seed),
+                    0.95F, ticks * 0.052F, 631.0F + (float) seed * 17.0F);
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+            buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
 
             for (int i = 0; i <= RIPPLE_SEGMENTS; i++) {
                 double progress = i / (double) RIPPLE_SEGMENTS;
@@ -172,17 +172,11 @@ public class RenderThermalDistortionField extends RenderCelestialEffectBase<Tile
                         + Math.sin(angle * 11.0D + ticks * 0.034D + seed * 1.7D) * 0.012D;
                 double inner = radius - width * 0.5D + ripple * 0.65D;
                 double outer = radius + width * 0.5D + ripple;
-                float lobe = 0.68F + 0.32F * (float) Math.sin(angle * 3.0D + ticks * 0.040D + seed);
-                float vertexAlpha = alpha * lobe;
                 double cos = Math.cos(angle);
                 double sin = Math.sin(angle);
 
-                buffer.pos(cos * outer, y, sin * outer)
-                        .color(rgb[0], rgb[1], rgb[2], vertexAlpha)
-                        .endVertex();
-                buffer.pos(cos * inner, y, sin * inner)
-                        .color(rgb[0], rgb[1], rgb[2], vertexAlpha * 0.58F)
-                        .endVertex();
+                addShaderVertex(buffer, cos * outer, y, sin * outer, progress, 1.0D, 0.0D, 1.0D, 0.0D);
+                addShaderVertex(buffer, cos * inner, y, sin * inner, progress, 0.0D, 0.0D, 1.0D, 0.0D);
             }
 
             tessellator.draw();
@@ -245,11 +239,6 @@ public class RenderThermalDistortionField extends RenderCelestialEffectBase<Tile
         shader.setUniform3f("uPrimaryColor", primary[0], primary[1], primary[2]);
         shader.setUniform3f("uSecondaryColor", secondary[0], secondary[1], secondary[2]);
         shader.setUniform3f("uAccentColor", accent[0], accent[1], accent[2]);
-    }
-
-    private static void setBasicUniforms(ShaderProgram shader) {
-        shader.setUniform1f("alpha", 1.0F);
-        shader.setUniform4f("tint", 1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static float[] unpackRGB(int color) {
