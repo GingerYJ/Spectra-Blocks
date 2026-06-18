@@ -50,6 +50,8 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         float innerAlpha = innerAlphaBase() + innerAlphaRange() * innerBrightness;
         float outerAlpha = outerAlphaBase() + outerAlphaRange() * outerBrightness;
 
+        EffectDepthPrepass.render(te, x, y, z);
+
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY, centerZ);
         double renderScale = te.renderScale(defaultRenderScale());

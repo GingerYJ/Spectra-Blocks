@@ -19,6 +19,8 @@ abstract class RenderCelestialEffectBase<T extends TileScalableEffect> extends T
         double centerZ = z + 0.5D;
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
+        EffectDepthPrepass.render(te, x, y, z);
+
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY, centerZ);
         double renderScale = te.renderScale(1.0D);

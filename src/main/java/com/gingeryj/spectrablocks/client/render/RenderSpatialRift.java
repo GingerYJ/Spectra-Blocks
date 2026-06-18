@@ -34,6 +34,8 @@ public class RenderSpatialRift extends TileEntitySpecialRenderer<TileSpatialRift
             return;
         }
 
+        EffectDepthPrepass.render(te, x, y, z);
+
         GlStateManager.pushMatrix();
         GlStateManager.translate(x + 0.5D, y + 0.5D, z + 0.5D);
         double renderScale = te.renderScale(1.0D);

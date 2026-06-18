@@ -42,6 +42,8 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
         double centerZ = z + 0.5D;
         float ticks = te.getWorld().getTotalWorldTime() + partialTicks;
 
+        EffectDepthPrepass.render(te, x, y, z);
+
         GlStateManager.pushMatrix();
         GlStateManager.translate(centerX, centerY, centerZ);
         double renderScale = te.renderScale(ModConfig.microUniverseScale());
