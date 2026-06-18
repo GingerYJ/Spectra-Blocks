@@ -146,11 +146,6 @@ abstract class RenderArcaneShaderTile<T extends TileScalableEffect> extends Tile
     private static final String ARCANE_SHADER = "arcane_effect";
 
     @Override
-    public boolean isGlobalRenderer(T te) {
-        return true;
-    }
-
-    @Override
     public final void render(T te, double x, double y, double z,
                              float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {
@@ -173,13 +168,50 @@ abstract class RenderArcaneShaderTile<T extends TileScalableEffect> extends Tile
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-        SpectraRenderState.State renderState = SpectraRenderState.beginIsolated();
+        boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean lightingWasEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        int previousShadeModel = GL11.glGetInteger(GL11.GL_SHADE_MODEL);
+
+        GlStateManager.depthMask(false);
+        GlStateManager.enableBlend();
+        useAlphaBlend();
+        GlStateManager.disableLighting();
+        GlStateManager.disableTexture2D();
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        GlStateManager.disableCull();
+
         try {
             renderShaderLayers(te, ticks, shader);
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("arcane shader render failed: " + ex.getMessage());
         } finally {
-            renderState.close();
+            if (cullWasEnabled) {
+                GlStateManager.enableCull();
+            } else {
+                GlStateManager.disableCull();
+            }
+            GlStateManager.cullFace(GlStateManager.CullFace.BACK);
+            GlStateManager.shadeModel(previousShadeModel);
+            if (textureWasEnabled) {
+                GlStateManager.enableTexture2D();
+            } else {
+                GlStateManager.disableTexture2D();
+            }
+            if (lightingWasEnabled) {
+                GlStateManager.enableLighting();
+            } else {
+                GlStateManager.disableLighting();
+            }
+            GlStateManager.depthMask(true);
+            if (blendWasEnabled) {
+                GlStateManager.enableBlend();
+            } else {
+                GlStateManager.disableBlend();
+            }
+            useAlphaBlend();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
     }
@@ -187,11 +219,17 @@ abstract class RenderArcaneShaderTile<T extends TileScalableEffect> extends Tile
     protected abstract void renderShaderLayers(T te, float ticks, ShaderProgram shader);
 
     protected static void useAlphaBlend() {
-        SpectraRenderState.useAlphaBlend();
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
     }
 
     protected static void useAdditiveBlend() {
-        SpectraRenderState.useAdditiveBlend();
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
     }
 
     protected static float wave(double time) {

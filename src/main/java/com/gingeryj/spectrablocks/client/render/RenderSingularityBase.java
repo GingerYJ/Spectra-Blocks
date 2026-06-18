@@ -28,11 +28,6 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
     private static final float OUTER_EXPAND_RANGE = 0.24F;
 
     @Override
-    public boolean isGlobalRenderer(T te) {
-        return true;
-    }
-
-    @Override
     public void render(T te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
         double centerX = x + 0.5D;
         double centerY = y + 0.5D;
@@ -61,7 +56,24 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-        SpectraRenderState.State renderState = SpectraRenderState.beginIsolated();
+        boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean alphaWasEnabled = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
+        boolean textureWasEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        boolean lightingWasEnabled = GL11.glIsEnabled(GL11.GL_LIGHTING);
+        boolean depthMaskWasEnabled = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+        int previousCullFace = GL11.glGetInteger(GL11.GL_CULL_FACE_MODE);
+        GlStateManager.depthMask(false);
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
+        GlStateManager.disableLighting();
+        GlStateManager.disableTexture2D();
+        GlStateManager.disableAlpha();
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        GL11.glNormal3f(0.0F, 1.0F, 0.0F);
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
 
@@ -84,7 +96,39 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
             if (shader != null) {
                 shader.end();
             }
-            renderState.close();
+            if (cullWasEnabled) {
+                GlStateManager.enableCull();
+            } else {
+                GlStateManager.disableCull();
+            }
+            GlStateManager.cullFace(previousCullFace == GL11.GL_FRONT
+                    ? GlStateManager.CullFace.FRONT
+                    : GlStateManager.CullFace.BACK);
+            GlStateManager.shadeModel(GL11.GL_FLAT);
+            if (alphaWasEnabled) {
+                GlStateManager.enableAlpha();
+            } else {
+                GlStateManager.disableAlpha();
+            }
+            if (textureWasEnabled) {
+                GlStateManager.enableTexture2D();
+            } else {
+                GlStateManager.disableTexture2D();
+            }
+            if (lightingWasEnabled) {
+                GlStateManager.enableLighting();
+            } else {
+                GlStateManager.disableLighting();
+            }
+            GlStateManager.depthMask(depthMaskWasEnabled);
+            if (!blendWasEnabled) {
+                GlStateManager.disableBlend();
+            }
+            GlStateManager.tryBlendFuncSeparate(
+                    GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                    GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+            );
+            RenderHelper.resetLineWidth();
             GlStateManager.popMatrix();
         }
     }
@@ -94,10 +138,6 @@ public abstract class RenderSingularityBase<T extends TileScalableEffect> extend
                                  float mainRotation, float tilt, float tiltX, float tiltY, float tiltZ) {
         float[] primary = RenderHelper.unpackRGB(primaryColor);
         float[] grid = RenderHelper.unpackRGB(gridColor);
-        SpectraRenderState.forceShaderLayerState();
-        SpectraRenderState.useAlphaBlend();
-        GlStateManager.enableCull();
-        GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         shader.setUniform1f("uTime", ticks * 0.025F);
         shader.setUniform1f("uLayer", layer);
         shader.setUniform1f("uMode", shaderMode());

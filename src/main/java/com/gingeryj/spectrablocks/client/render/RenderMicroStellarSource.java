@@ -38,11 +38,6 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
     }
 
     @Override
-    public boolean isGlobalRenderer(TileMicroStellarSource te) {
-        return true;
-    }
-
-    @Override
     public void render(TileMicroStellarSource te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         double centerX = x + 0.5D;
@@ -56,14 +51,42 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         GlStateManager.scale(renderScale, renderScale, renderScale);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-        SpectraRenderState.State renderState = SpectraRenderState.beginIsolated();
+        boolean blendWasEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        GlStateManager.depthMask(false);
+        GlStateManager.enableBlend();
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+        );
+        GlStateManager.disableLighting();
+        GlStateManager.disableTexture2D();
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        GlStateManager.disableCull();
+
         try {
             drawCore(ticks);
             drawOuterRadiance(ticks);
             drawProminences(ticks);
             drawActiveParticles(ticks);
         } finally {
-            renderState.close();
+            if (cullWasEnabled) {
+                GlStateManager.enableCull();
+            } else {
+                GlStateManager.disableCull();
+            }
+            GlStateManager.shadeModel(GL11.GL_FLAT);
+            GlStateManager.enableTexture2D();
+            GlStateManager.enableLighting();
+            GlStateManager.depthMask(true);
+            if (!blendWasEnabled) {
+                GlStateManager.disableBlend();
+            }
+            GlStateManager.tryBlendFuncSeparate(
+                    GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                    GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO
+            );
+            GlStateManager.glLineWidth(1.0F);
             GlStateManager.popMatrix();
         }
     }

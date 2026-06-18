@@ -2,7 +2,6 @@ package com.gingeryj.spectrablocks.client.render.shader;
 
 import com.gingeryj.spectrablocks.ExampleMod;
 import com.gingeryj.spectrablocks.Reference;
-import com.gingeryj.spectrablocks.client.render.SpectraRenderState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
@@ -97,7 +96,6 @@ public final class ShaderProgram {
             return false;
         }
         previousProgramId = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
-        SpectraRenderState.forceShaderLayerState();
         GL20.glUseProgram(programId);
         active = true;
         return true;

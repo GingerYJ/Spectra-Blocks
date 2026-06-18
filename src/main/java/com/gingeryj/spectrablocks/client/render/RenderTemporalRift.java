@@ -23,11 +23,6 @@ public class RenderTemporalRift extends TileEntitySpecialRenderer<TileTemporalRi
     private static final int SPHERE_LON_SEGMENTS = 28;
 
     @Override
-    public boolean isGlobalRenderer(TileTemporalRift te) {
-        return true;
-    }
-
-    @Override
     public void render(TileTemporalRift te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {

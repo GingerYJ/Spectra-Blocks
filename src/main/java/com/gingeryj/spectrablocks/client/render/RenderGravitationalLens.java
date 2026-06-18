@@ -21,11 +21,6 @@ public class RenderGravitationalLens extends TileEntitySpecialRenderer<TileGravi
     private static final int PLANE_SEGMENTS = 104;
 
     @Override
-    public boolean isGlobalRenderer(TileGravitationalLens te) {
-        return true;
-    }
-
-    @Override
     public void render(TileGravitationalLens te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {

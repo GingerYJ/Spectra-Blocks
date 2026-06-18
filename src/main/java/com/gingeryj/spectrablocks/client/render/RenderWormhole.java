@@ -22,11 +22,6 @@ public class RenderWormhole extends TileEntitySpecialRenderer<TileWormhole> {
     private static final int SPHERE_LON_SEGMENTS = 36;
 
     @Override
-    public boolean isGlobalRenderer(TileWormhole te) {
-        return true;
-    }
-
-    @Override
     public void render(TileWormhole te, double x, double y, double z,
                        float partialTicks, int destroyStage, float alpha) {
         if (te == null || te.getWorld() == null) {
