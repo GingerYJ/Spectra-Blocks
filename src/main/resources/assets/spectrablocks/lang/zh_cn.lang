@@ -66,3 +66,6 @@ tile.spectrablocks.celestial_compass_core.name=天体罗盘核心
 tile.spectrablocks.soundwave_resonator.name=声波共振器
 tile.spectrablocks.thermal_distortion_field.name=热扰动场
 tile.spectrablocks.alchemy_transmutation_ring.name=炼金转化环
+tile.spectrablocks.phase_gear_loom.name=相位齿轮织机
+tile.spectrablocks.tectonic_fault_core.name=地脉断层核
+tile.spectrablocks.ink_mirage_basin.name=墨影幻池

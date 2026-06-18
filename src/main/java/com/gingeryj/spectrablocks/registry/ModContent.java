@@ -27,6 +27,7 @@ import com.gingeryj.spectrablocks.block.BlockGravitationalLens;
 import com.gingeryj.spectrablocks.block.BlockGravityWell;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
+import com.gingeryj.spectrablocks.block.BlockInkMirageBasin;
 import com.gingeryj.spectrablocks.block.BlockLiquidStarlightPool;
 import com.gingeryj.spectrablocks.block.BlockLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.block.BlockMagneticFluxCage;
@@ -40,6 +41,7 @@ import com.gingeryj.spectrablocks.block.BlockNebulaCore;
 import com.gingeryj.spectrablocks.block.BlockNeonCircuitCore;
 import com.gingeryj.spectrablocks.block.BlockNovaBloom;
 import com.gingeryj.spectrablocks.block.BlockPhantomEye;
+import com.gingeryj.spectrablocks.block.BlockPhaseGearLoom;
 import com.gingeryj.spectrablocks.block.BlockPlasmaStorm;
 import com.gingeryj.spectrablocks.block.BlockPrismaticRainfall;
 import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
@@ -56,6 +58,7 @@ import com.gingeryj.spectrablocks.block.BlockSpectralHourglassGate;
 import com.gingeryj.spectrablocks.block.BlockStardustFountain;
 import com.gingeryj.spectrablocks.block.BlockStellarHourglass;
 import com.gingeryj.spectrablocks.block.BlockStormCore;
+import com.gingeryj.spectrablocks.block.BlockTectonicFaultCore;
 import com.gingeryj.spectrablocks.block.BlockTemporalRift;
 import com.gingeryj.spectrablocks.block.BlockThermalDistortionField;
 import com.gingeryj.spectrablocks.block.BlockVoidCrystal;
@@ -88,6 +91,7 @@ import com.gingeryj.spectrablocks.tile.TileGravitationalLens;
 import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
+import com.gingeryj.spectrablocks.tile.TileInkMirageBasin;
 import com.gingeryj.spectrablocks.tile.TileLiquidStarlightPool;
 import com.gingeryj.spectrablocks.tile.TileLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.tile.TileMagneticFluxCage;
@@ -101,6 +105,7 @@ import com.gingeryj.spectrablocks.tile.TileNebulaCore;
 import com.gingeryj.spectrablocks.tile.TileNeonCircuitCore;
 import com.gingeryj.spectrablocks.tile.TileNovaBloom;
 import com.gingeryj.spectrablocks.tile.TilePhantomEye;
+import com.gingeryj.spectrablocks.tile.TilePhaseGearLoom;
 import com.gingeryj.spectrablocks.tile.TilePlasmaStorm;
 import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
@@ -117,6 +122,7 @@ import com.gingeryj.spectrablocks.tile.TileSpectralHourglassGate;
 import com.gingeryj.spectrablocks.tile.TileStardustFountain;
 import com.gingeryj.spectrablocks.tile.TileStellarHourglass;
 import com.gingeryj.spectrablocks.tile.TileStormCore;
+import com.gingeryj.spectrablocks.tile.TileTectonicFaultCore;
 import com.gingeryj.spectrablocks.tile.TileTemporalRift;
 import com.gingeryj.spectrablocks.tile.TileThermalDistortionField;
 import com.gingeryj.spectrablocks.tile.TileVoidCrystal;
@@ -198,6 +204,9 @@ public final class ModContent {
     public static final BlockThermalDistortionField THERMAL_DISTORTION_FIELD = new BlockThermalDistortionField();
     public static final BlockAlchemyTransmutationRing ALCHEMY_TRANSMUTATION_RING =
             new BlockAlchemyTransmutationRing();
+    public static final BlockPhaseGearLoom PHASE_GEAR_LOOM = new BlockPhaseGearLoom();
+    public static final BlockTectonicFaultCore TECTONIC_FAULT_CORE = new BlockTectonicFaultCore();
+    public static final BlockInkMirageBasin INK_MIRAGE_BASIN = new BlockInkMirageBasin();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -265,7 +274,10 @@ public final class ModContent {
                 CELESTIAL_COMPASS_CORE,
                 SOUNDWAVE_RESONATOR,
                 THERMAL_DISTORTION_FIELD,
-                ALCHEMY_TRANSMUTATION_RING
+                ALCHEMY_TRANSMUTATION_RING,
+                PHASE_GEAR_LOOM,
+                TECTONIC_FAULT_CORE,
+                INK_MIRAGE_BASIN
         );
     }
 
@@ -332,6 +344,9 @@ public final class ModContent {
                 itemBlock(SOUNDWAVE_RESONATOR),
                 itemBlock(THERMAL_DISTORTION_FIELD),
                 itemBlock(ALCHEMY_TRANSMUTATION_RING),
+                itemBlock(PHASE_GEAR_LOOM),
+                itemBlock(TECTONIC_FAULT_CORE),
+                itemBlock(INK_MIRAGE_BASIN),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -397,6 +412,9 @@ public final class ModContent {
         registerTileEntity(TileSoundwaveResonator.class, "soundwave_resonator");
         registerTileEntity(TileThermalDistortionField.class, "thermal_distortion_field");
         registerTileEntity(TileAlchemyTransmutationRing.class, "alchemy_transmutation_ring");
+        registerTileEntity(TilePhaseGearLoom.class, "phase_gear_loom");
+        registerTileEntity(TileTectonicFaultCore.class, "tectonic_fault_core");
+        registerTileEntity(TileInkMirageBasin.class, "ink_mirage_basin");
     }
 
     private static ItemBlock itemBlock(Block block) {
