@@ -17,14 +17,13 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
     @Override
     protected void renderCelestialEffect(TileEntropyCloud te, float ticks) {
         ShaderProgram naturalShader = ShaderManager.getProgram("natural_effect");
-        ShaderProgram colorShader = ShaderManager.getProgram("basic");
         if (naturalShader == null) {
             return;
         }
 
         drawCloudBody(ticks, naturalShader);
         drawNoiseNodes(ticks, naturalShader);
-        drawBlackCracks(ticks, colorShader);
+        drawBlackCracks(ticks, naturalShader);
     }
 
     private void drawCloudBody(float ticks, ShaderProgram naturalShader) {
@@ -83,7 +82,7 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
         }
     }
 
-    private void drawBlackCracks(float ticks, ShaderProgram colorShader) {
+    private void drawBlackCracks(float ticks, ShaderProgram naturalShader) {
         useAlphaBlend();
         for (int i = 0; i < CRACK_COUNT; i++) {
             double cycle = fract(ticks * (0.010D + i * 0.0012D) + i * 0.173D);
@@ -99,13 +98,14 @@ public class RenderEntropyCloud extends RenderCelestialEffectBase<TileEntropyClo
             double y = -0.62D + (i % 5) * 0.31D;
             double lift = 0.22D + (i % 2) * 0.16D;
 
-            GlStateManager.glLineWidth(3.8F);
-            RenderNaturalShaderHelper.drawBasicJaggedArc(colorShader, radius, angle, length, y, lift,
-                    0.105D, 7, 0x020204, flash * 0.42F, ticks, 311 + i * 47);
-            GlStateManager.glLineWidth(1.3F);
-            RenderNaturalShaderHelper.drawBasicJaggedArc(colorShader, radius, angle, length, y, lift,
-                    0.075D, 7, 0x121217, flash * 0.72F, ticks, 617 + i * 47);
+            RenderNaturalShaderHelper.drawShaderJaggedArc(naturalShader, radius, angle, length, y, lift,
+                    0.105D, 7, RenderNaturalShaderHelper.MODE_ENTROPY, 4.4F + i * 0.10F,
+                    0x020204, 0x121217, 0x777B80, flash * 0.42F, flash,
+                    0.92F, ticks * 0.042F, 311.0F + i * 47.0F, ticks, 311 + i * 47);
+            RenderNaturalShaderHelper.drawShaderJaggedArc(naturalShader, radius, angle, length, y, lift,
+                    0.075D, 7, RenderNaturalShaderHelper.MODE_ENTROPY, 5.2F + i * 0.10F,
+                    0x121217, 0x020204, 0xB9BCBB, flash * 0.72F, flash,
+                    1.08F, ticks * 0.050F, 617.0F + i * 47.0F, ticks, 617 + i * 47);
         }
-        RenderHelper.resetLineWidth();
     }
 }

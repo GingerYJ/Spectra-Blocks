@@ -45,44 +45,6 @@ public final class RenderHelper {
         tessellator.draw();
     }
 
-    public static void drawColorLine(double x0, double y0, double z0,
-                                     double x1, double y1, double z1,
-                                     double width, int color, float alphaStart, float alphaEnd) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-        addColorLine(buffer, x0, y0, z0, x1, y1, z1, width, color, alphaStart, alphaEnd);
-        tessellator.draw();
-    }
-
-    public static void drawColorCircle(double radius, int segments, double width,
-                                       int color, float alpha) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-        for (int i = 0; i < segments; i++) {
-            double u0 = i / (double) segments;
-            double u1 = (i + 1.0D) / segments;
-            double angle0 = Math.PI * 2.0D * u0;
-            double angle1 = Math.PI * 2.0D * u1;
-            double innerRadius = Math.max(0.001D, radius - width * 0.5D);
-            double outerRadius = radius + width * 0.5D;
-            addColorVertex(buffer, Math.cos(angle0) * innerRadius, 0.0D, Math.sin(angle0) * innerRadius,
-                    color, alpha);
-            addColorVertex(buffer, Math.cos(angle0) * outerRadius, 0.0D, Math.sin(angle0) * outerRadius,
-                    color, alpha);
-            addColorVertex(buffer, Math.cos(angle1) * outerRadius, 0.0D, Math.sin(angle1) * outerRadius,
-                    color, alpha);
-            addColorVertex(buffer, Math.cos(angle0) * innerRadius, 0.0D, Math.sin(angle0) * innerRadius,
-                    color, alpha);
-            addColorVertex(buffer, Math.cos(angle1) * outerRadius, 0.0D, Math.sin(angle1) * outerRadius,
-                    color, alpha);
-            addColorVertex(buffer, Math.cos(angle1) * innerRadius, 0.0D, Math.sin(angle1) * innerRadius,
-                    color, alpha);
-        }
-        tessellator.draw();
-    }
-
     public static void addTexturedLine(BufferBuilder buffer, double x0, double y0, double z0,
                                        double x1, double y1, double z1, double width) {
         double[] offset = lineOffset(x0, y0, z0, x1, y1, z1, width);
@@ -99,25 +61,6 @@ public final class RenderHelper {
         addTexturedVertex(buffer, x0 + px, y0 + py, z0 + pz, 0.0D, 1.0D, px, py, pz);
         addTexturedVertex(buffer, x1 - px, y1 - py, z1 - pz, 1.0D, 0.0D, -px, -py, -pz);
         addTexturedVertex(buffer, x1 + px, y1 + py, z1 + pz, 1.0D, 1.0D, px, py, pz);
-    }
-
-    public static void addColorLine(BufferBuilder buffer, double x0, double y0, double z0,
-                                    double x1, double y1, double z1, double width,
-                                    int color, float alphaStart, float alphaEnd) {
-        double[] offset = lineOffset(x0, y0, z0, x1, y1, z1, width);
-        if (offset == null) {
-            return;
-        }
-
-        double px = offset[0];
-        double py = offset[1];
-        double pz = offset[2];
-        addColorVertex(buffer, x0 + px, y0 + py, z0 + pz, color, alphaStart);
-        addColorVertex(buffer, x0 - px, y0 - py, z0 - pz, color, alphaStart);
-        addColorVertex(buffer, x1 - px, y1 - py, z1 - pz, color, alphaEnd);
-        addColorVertex(buffer, x0 + px, y0 + py, z0 + pz, color, alphaStart);
-        addColorVertex(buffer, x1 - px, y1 - py, z1 - pz, color, alphaEnd);
-        addColorVertex(buffer, x1 + px, y1 + py, z1 + pz, color, alphaEnd);
     }
 
     public static void addTexturedRingSegment(BufferBuilder buffer, double radius, double width,
@@ -197,9 +140,4 @@ public final class RenderHelper {
                 .endVertex();
     }
 
-    private static void addColorVertex(BufferBuilder buffer, double x, double y, double z,
-                                       int color, float alpha) {
-        float[] rgb = unpackRGB(color);
-        buffer.pos(x, y, z).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-    }
 }
