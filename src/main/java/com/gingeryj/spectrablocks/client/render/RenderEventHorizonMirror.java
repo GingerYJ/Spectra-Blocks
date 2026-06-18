@@ -31,32 +31,27 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram spaceShader = ShaderManager.getProgram("space_effect");
-        ShaderProgram basicShader = ShaderManager.getProgram("basic");
-        if (spaceShader == null && basicShader == null) {
+        if (spaceShader == null) {
             return;
         }
 
-        if (basicShader != null) {
-            drawDarkMirrorDisc(basicShader, ticks);
-        }
-        if (spaceShader != null) {
-            drawMirrorField(spaceShader, ticks);
-        }
-        if (basicShader != null) {
-            drawSilverBlueEdge(basicShader, ticks);
-            drawReflectionBands(basicShader, ticks);
-            drawCausticArcs(basicShader, ticks);
-        }
+        drawDarkMirrorDisc(spaceShader, ticks);
+        drawMirrorField(spaceShader, ticks);
+        drawSilverBlueEdge(spaceShader, ticks);
+        drawReflectionBands(spaceShader, ticks);
+        drawCausticArcs(spaceShader, ticks);
     }
 
     private void drawDarkMirrorDisc(ShaderProgram shader, float ticks) {
         float pulse = wave(ticks * 0.018D);
 
         useAlphaBlend();
-        drawRadialDisc(shader, MIRROR_RADIUS * 1.01D, 0.0D,
-                0x000102, 0.76F, 0x030A12, 0.58F + pulse * 0.035F, DISC_SEGMENTS);
-        drawRadialDisc(shader, MIRROR_RADIUS * 0.82D, 0.004D,
-                0x010305, 0.42F, 0x0D1720, 0.10F + pulse * 0.025F, DISC_SEGMENTS);
+        drawSpaceDisc(shader, ticks, MIRROR_RADIUS * 1.01D, 0.0D, 3.0F,
+                0.58F + pulse * 0.035F, 0.11F,
+                0x000102, 0x030A12, 0x1C4A5C, 0xDDF8FF, DISC_SEGMENTS);
+        drawSpaceDisc(shader, ticks, MIRROR_RADIUS * 0.82D, 0.004D, 3.0F,
+                0.20F + pulse * 0.025F, 0.29F,
+                0x010305, 0x0D1720, 0x315B70, 0xF7FFFF, DISC_SEGMENTS);
     }
 
     private void drawMirrorField(ShaderProgram shader, float ticks) {
@@ -91,12 +86,12 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
         useAdditiveBlend();
         GlStateManager.pushMatrix();
         GlStateManager.translate(0.0D, 0.012D, 0.0D);
-        RenderNaturalShaderHelper.drawBasicCircle(shader, MIRROR_RADIUS * 1.012D,
-                0xEAFBFF, 0.34F + pulse * 0.09F, DISC_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicCircle(shader, MIRROR_RADIUS * 1.035D,
-                0x78BBD6, 0.14F + pulse * 0.045F, DISC_SEGMENTS);
-        RenderNaturalShaderHelper.drawBasicFlatRing(shader, MIRROR_RADIUS * 0.987D, MIRROR_RADIUS * 1.030D,
-                0xBDEEFF, 0.035F + pulse * 0.018F, DISC_SEGMENTS);
+        drawSpaceCircle(shader, ticks, MIRROR_RADIUS * 1.012D,
+                0xEAFBFF, 0.34F + pulse * 0.09F, DISC_SEGMENTS, 0.018D, 0.41F);
+        drawSpaceCircle(shader, ticks, MIRROR_RADIUS * 1.035D,
+                0x78BBD6, 0.14F + pulse * 0.045F, DISC_SEGMENTS, 0.020D, 0.57F);
+        drawSpaceFlatRing(shader, ticks, MIRROR_RADIUS * 0.987D, MIRROR_RADIUS * 1.030D,
+                0xBDEEFF, 0.035F + pulse * 0.018F, DISC_SEGMENTS, 0.66F);
         GlStateManager.popMatrix();
 
         for (int i = 0; i < 3; i++) {
@@ -104,91 +99,90 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
             GlStateManager.rotate(54.0F + i * 23.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate((float) (ticks * (0.003D + i * 0.001D) + i * 61.0D),
                     0.0F, 1.0F, 0.0F);
-            RenderNaturalShaderHelper.drawBasicCircle(shader, FIELD_RADIUS * (0.96D + i * 0.025D),
-                    i == 1 ? 0xF7FFFF : 0x9FD7EA, 0.060F + pulse * 0.030F, 104);
+            drawSpaceCircle(shader, ticks, FIELD_RADIUS * (0.96D + i * 0.025D),
+                    i == 1 ? 0xF7FFFF : 0x9FD7EA, 0.060F + pulse * 0.030F,
+                    104, 0.018D, 0.84F + i * 0.18F);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();
     }
 
     private void drawReflectionBands(ShaderProgram shader, float ticks) {
-        if (!shader.begin()) {
-            return;
-        }
+        useAdditiveBlend();
+        for (int i = 0; i < REFLECTION_BANDS; i++) {
+            double baseAngle = i * TWO_PI / REFLECTION_BANDS
+                    + Math.sin(ticks * 0.005D + i * 0.77D) * 0.055D
+                    + ticks * (0.0011D + (i % 3) * 0.00025D);
+            double offset = -0.48D + i * 0.16D
+                    + Math.sin(ticks * 0.009D + i * 1.73D) * 0.034D;
+            double safeOffset = Math.min(MIRROR_RADIUS - 0.10D, Math.abs(offset) + 0.09D);
+            double halfLength = Math.sqrt(Math.max(0.0D, MIRROR_RADIUS * MIRROR_RADIUS
+                    - safeOffset * safeOffset)) * (0.82D + (i % 3) * 0.045D);
+            float baseAlpha = 0.030F + wave(ticks * 0.024D + i * 0.61D) * 0.055F;
+            int color = REFLECTION_COLORS[i % REFLECTION_COLORS.length];
+            double phase = ticks * (0.010D + i * 0.0009D) + i * 0.84D;
 
-        try {
-            setBasicUniforms(shader);
-            useAdditiveBlend();
-
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-            for (int i = 0; i < REFLECTION_BANDS; i++) {
-                double baseAngle = i * TWO_PI / REFLECTION_BANDS
-                        + Math.sin(ticks * 0.005D + i * 0.77D) * 0.055D
-                        + ticks * (0.0011D + (i % 3) * 0.00025D);
-                double offset = -0.48D + i * 0.16D
-                        + Math.sin(ticks * 0.009D + i * 1.73D) * 0.034D;
-                double safeOffset = Math.min(MIRROR_RADIUS - 0.10D, Math.abs(offset) + 0.09D);
-                double halfLength = Math.sqrt(Math.max(0.0D, MIRROR_RADIUS * MIRROR_RADIUS
-                        - safeOffset * safeOffset)) * (0.82D + (i % 3) * 0.045D);
-                float baseAlpha = 0.030F + wave(ticks * 0.024D + i * 0.61D) * 0.055F;
-                int color = REFLECTION_COLORS[i % REFLECTION_COLORS.length];
-                double phase = ticks * (0.010D + i * 0.0009D) + i * 0.84D;
-
+            if (!shader.begin()) {
+                continue;
+            }
+            try {
+                setSpaceUniforms(shader, ticks, EFFECT_GRAVITATIONAL_LENS, 2.0F,
+                        baseAlpha * 1.85F, 1.20F + i * 0.23F,
+                        0x020407, color, 0xBFEFFF, 0xFFFFFF);
+                Tessellator tessellator = Tessellator.getInstance();
+                BufferBuilder buffer = tessellator.getBuffer();
+                buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
                 for (int segment = 0; segment < BAND_SEGMENTS; segment++) {
                     ReflectionPoint p0 = reflectionPoint(segment / (double) BAND_SEGMENTS,
                             baseAngle, halfLength, offset, phase, baseAlpha);
                     ReflectionPoint p1 = reflectionPoint((segment + 1.0D) / BAND_SEGMENTS,
                             baseAngle, halfLength, offset, phase, baseAlpha);
-                    RenderHelper.addColorLine(buffer, p0.x, p0.y, p0.z, p1.x, p1.y, p1.z,
-                            0.014D, color, p0.alpha, p1.alpha);
+                    RenderHelper.addTexturedLine(buffer, p0.x, p0.y, p0.z, p1.x, p1.y, p1.z, 0.014D);
                 }
+                tessellator.draw();
+            } finally {
+                shader.end();
             }
-            tessellator.draw();
-        } finally {
-            shader.end();
-            useAlphaBlend();
         }
+        useAlphaBlend();
     }
 
     private void drawCausticArcs(ShaderProgram shader, float ticks) {
-        if (!shader.begin()) {
-            return;
-        }
+        useAdditiveBlend();
+        for (int i = 0; i < CAUSTIC_ARCS; i++) {
+            double start = i * GOLDEN_ANGLE + ticks * (0.0024D + i * 0.00045D);
+            double sweep = 0.34D + (i % 3) * 0.15D;
+            double radius = 0.36D + (i % 4) * 0.16D
+                    + Math.sin(ticks * 0.011D + i) * 0.018D;
+            double centerAngle = i * 1.37D + ticks * 0.001D;
+            double centerX = Math.cos(centerAngle) * 0.13D;
+            double centerZ = Math.sin(centerAngle) * 0.13D;
+            float alpha = 0.055F + wave(ticks * 0.030D + i * 0.91D) * 0.070F;
+            int color = REFLECTION_COLORS[(i + 2) % REFLECTION_COLORS.length];
 
-        try {
-            setBasicUniforms(shader);
-            useAdditiveBlend();
-
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-            for (int i = 0; i < CAUSTIC_ARCS; i++) {
-                double start = i * GOLDEN_ANGLE + ticks * (0.0024D + i * 0.00045D);
-                double sweep = 0.34D + (i % 3) * 0.15D;
-                double radius = 0.36D + (i % 4) * 0.16D
-                        + Math.sin(ticks * 0.011D + i) * 0.018D;
-                double centerAngle = i * 1.37D + ticks * 0.001D;
-                double centerX = Math.cos(centerAngle) * 0.13D;
-                double centerZ = Math.sin(centerAngle) * 0.13D;
-                float alpha = 0.055F + wave(ticks * 0.030D + i * 0.91D) * 0.070F;
-                int color = REFLECTION_COLORS[(i + 2) % REFLECTION_COLORS.length];
-
+            if (!shader.begin()) {
+                continue;
+            }
+            try {
+                setSpaceUniforms(shader, ticks, EFFECT_GRAVITATIONAL_LENS, 2.0F,
+                        alpha * 1.45F, 2.80F + i * 0.29F,
+                        0x020407, color, 0xBFEFFF, 0xFFFFFF);
+                Tessellator tessellator = Tessellator.getInstance();
+                BufferBuilder buffer = tessellator.getBuffer();
+                buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_TEX_NORMAL);
                 for (int segment = 0; segment < ARC_SEGMENTS; segment++) {
                     ReflectionPoint p0 = causticPoint(segment / (double) ARC_SEGMENTS,
                             start, sweep, radius, centerX, centerZ, ticks, i, alpha);
                     ReflectionPoint p1 = causticPoint((segment + 1.0D) / ARC_SEGMENTS,
                             start, sweep, radius, centerX, centerZ, ticks, i, alpha);
-                    RenderHelper.addColorLine(buffer, p0.x, p0.y, p0.z, p1.x, p1.y, p1.z,
-                            0.016D, color, p0.alpha, p1.alpha);
+                    RenderHelper.addTexturedLine(buffer, p0.x, p0.y, p0.z, p1.x, p1.y, p1.z, 0.016D);
                 }
+                tessellator.draw();
+            } finally {
+                shader.end();
             }
-            tessellator.draw();
-        } finally {
-            shader.end();
-            useAlphaBlend();
         }
+        useAlphaBlend();
     }
 
     private static ReflectionPoint reflectionPoint(double progress,
@@ -229,33 +223,90 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
         return new ReflectionPoint(x, 0.032D + fade * 0.010D, z, alpha);
     }
 
-    private static void drawRadialDisc(ShaderProgram shader, double radius, double y,
-                                       int centerColor, float centerAlpha,
-                                       int edgeColor, float edgeAlpha, int segments) {
+    private static void drawSpaceDisc(ShaderProgram shader, float ticks, double radius, double y,
+                                      float layer, float alpha, float seed,
+                                      int primaryColor, int secondaryColor,
+                                      int accentColor, int highlightColor, int segments) {
         if (shader == null || radius <= 0.0D || segments < 3 || !shader.begin()) {
             return;
         }
 
         try {
-            setBasicUniforms(shader);
-            float[] center = unpackRGB(centerColor);
-            float[] edge = unpackRGB(edgeColor);
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-            buffer.pos(0.0D, y, 0.0D)
-                    .color(center[0], center[1], center[2], centerAlpha)
-                    .endVertex();
-            for (int i = 0; i <= segments; i++) {
-                double angle = TWO_PI * i / segments;
-                buffer.pos(Math.cos(angle) * radius, y, Math.sin(angle) * radius)
-                        .color(edge[0], edge[1], edge[2], edgeAlpha)
-                        .endVertex();
-            }
-            tessellator.draw();
+            setSpaceUniforms(shader, ticks, EFFECT_GRAVITATIONAL_LENS, layer, alpha, seed,
+                    primaryColor, secondaryColor, accentColor, highlightColor);
+            drawDiscGeometry(radius, y, segments);
         } finally {
             shader.end();
         }
+    }
+
+    private static void drawSpaceCircle(ShaderProgram shader, float ticks, double radius, int color,
+                                        float alpha, int segments, double width, float seed) {
+        if (shader == null || alpha <= 0.005F || radius <= 0.0D || segments < 3 || !shader.begin()) {
+            return;
+        }
+
+        try {
+            setSpaceUniforms(shader, ticks, EFFECT_GRAVITATIONAL_LENS, 2.0F, alpha, seed,
+                    0x020407, color, 0xBFEFFF, 0xFFFFFF);
+            RenderHelper.drawTexturedCircle(radius, segments, width);
+        } finally {
+            shader.end();
+        }
+    }
+
+    private static void drawSpaceFlatRing(ShaderProgram shader, float ticks, double innerRadius, double outerRadius,
+                                          int color, float alpha, int segments, float seed) {
+        if (shader == null || alpha <= 0.005F || innerRadius <= 0.0D
+                || outerRadius <= innerRadius || segments < 3 || !shader.begin()) {
+            return;
+        }
+
+        try {
+            setSpaceUniforms(shader, ticks, EFFECT_GRAVITATIONAL_LENS, 2.0F, alpha, seed,
+                    0x020407, color, 0xBFEFFF, 0xFFFFFF);
+            drawRingGeometry(innerRadius, outerRadius, segments);
+        } finally {
+            shader.end();
+        }
+    }
+
+    private static void drawDiscGeometry(double radius, double y, int segments) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        buffer.pos(0.0D, y, 0.0D).tex(0.5D, 0.5D).normal(0.0F, 1.0F, 0.0F).endVertex();
+        for (int i = 0; i <= segments; i++) {
+            double angle = TWO_PI * i / segments;
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+            buffer.pos(x, y, z)
+                    .tex(0.5D + Math.cos(angle) * 0.5D, 0.5D + Math.sin(angle) * 0.5D)
+                    .normal(0.0F, 1.0F, 0.0F)
+                    .endVertex();
+        }
+        tessellator.draw();
+    }
+
+    private static void drawRingGeometry(double innerRadius, double outerRadius, int segments) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX_NORMAL);
+        for (int i = 0; i <= segments; i++) {
+            double progress = i / (double) segments;
+            double angle = TWO_PI * progress;
+            double cos = Math.cos(angle);
+            double sin = Math.sin(angle);
+            buffer.pos(cos * outerRadius, 0.0D, sin * outerRadius)
+                    .tex(progress, 1.0D)
+                    .normal(0.0F, 1.0F, 0.0F)
+                    .endVertex();
+            buffer.pos(cos * innerRadius, 0.0D, sin * innerRadius)
+                    .tex(progress, 0.0D)
+                    .normal(0.0F, 1.0F, 0.0F)
+                    .endVertex();
+        }
+        tessellator.draw();
     }
 
     private static void drawSpaceSphere(ShaderProgram shader, float ticks, double radius,
@@ -326,25 +377,6 @@ public class RenderEventHorizonMirror extends RenderCelestialEffectBase<TileScal
                 ((color >> 16) & 255) / 255.0F,
                 ((color >> 8) & 255) / 255.0F,
                 (color & 255) / 255.0F);
-    }
-
-    private static void setBasicUniforms(ShaderProgram shader) {
-        shader.setUniform1f("alpha", 1.0F);
-        shader.setUniform4f("tint", 1.0F, 1.0F, 1.0F, 1.0F);
-    }
-
-    private static void putColorVertex(BufferBuilder buffer, double x, double y, double z,
-                                       int color, float alpha) {
-        float[] rgb = unpackRGB(color);
-        buffer.pos(x, y, z).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
-    }
-
-    private static float[] unpackRGB(int color) {
-        return new float[]{
-                ((color >> 16) & 255) / 255.0F,
-                ((color >> 8) & 255) / 255.0F,
-                (color & 255) / 255.0F
-        };
     }
 
     private static final class ReflectionPoint {

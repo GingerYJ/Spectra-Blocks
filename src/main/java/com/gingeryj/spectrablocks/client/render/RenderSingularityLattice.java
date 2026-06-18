@@ -21,13 +21,12 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram techShader = ShaderManager.getProgram("tech_effect");
-        ShaderProgram basicShader = ShaderManager.getProgram("basic");
         if (techShader == null) {
             return;
         }
 
         try {
-            drawDimSingularity(techShader, basicShader, ticks);
+            drawDimSingularity(techShader, ticks);
             drawLatticeShell(techShader, ticks);
             drawPulseLinks(techShader, ticks);
             drawCollapsingDots(techShader, ticks);
@@ -36,28 +35,22 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
         }
     }
 
-    private void drawDimSingularity(ShaderProgram techShader, ShaderProgram basicShader, float ticks) {
+    private void drawDimSingularity(ShaderProgram techShader, float ticks) {
         float breath = smoothPulse(ticks * 0.050D);
         float flicker = wave(ticks * 0.113D);
-
-        useAlphaBlend();
-        if (basicShader != null && basicShader.begin()) {
-            try {
-                setBasicUniforms(basicShader, 1.0F, 0x010104);
-                drawColorSphere(CORE_RADIUS * (1.00D + breath * 0.035D), 20, 22,
-                        0.0F, 0.0F, 0.0F, 0.93F);
-            } finally {
-                basicShader.end();
-            }
-        }
 
         if (!techShader.begin()) {
             return;
         }
 
         try {
+            useAlphaBlend();
+            setTechUniforms(techShader, ticks, 6.0F, 0.0F, 0x010104, 0x050815, 0x1B1033,
+                    0.84F + breath * 0.08F, 0.58F, (float) CORE_RADIUS);
+            drawShaderSphere(CORE_RADIUS * (1.00D + breath * 0.035D), 20, 22);
+
             useAdditiveBlend();
-            setTechUniforms(techShader, ticks, 6.0F, 0.0F, 0x1B1033, 0x3D93FF, 0xDDFBFF,
+            setTechUniforms(techShader, ticks, 6.0F, 0.1F, 0x1B1033, 0x3D93FF, 0xDDFBFF,
                     0.090F + flicker * 0.035F, 0.82F, (float) CORE_RADIUS);
             drawShaderSphere(CORE_RADIUS * (1.72D + breath * 0.22D), 18, 20);
 
@@ -286,28 +279,6 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
         tessellator.draw();
     }
 
-    private static void drawColorSphere(double radius, int latSegs, int lonSegs,
-                                        float red, float green, float blue, float alpha) {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
-        for (int lat = 0; lat < latSegs; lat++) {
-            double theta0 = Math.PI * lat / latSegs;
-            double theta1 = Math.PI * (lat + 1) / latSegs;
-            for (int lon = 0; lon < lonSegs; lon++) {
-                double phi0 = TWO_PI * lon / lonSegs;
-                double phi1 = TWO_PI * (lon + 1) / lonSegs;
-                addColorSphereVertex(buffer, radius, theta0, phi0, red, green, blue, alpha);
-                addColorSphereVertex(buffer, radius, theta1, phi0, red, green, blue, alpha);
-                addColorSphereVertex(buffer, radius, theta1, phi1, red, green, blue, alpha);
-                addColorSphereVertex(buffer, radius, theta0, phi0, red, green, blue, alpha);
-                addColorSphereVertex(buffer, radius, theta1, phi1, red, green, blue, alpha);
-                addColorSphereVertex(buffer, radius, theta0, phi1, red, green, blue, alpha);
-            }
-        }
-        tessellator.draw();
-    }
-
     private static void addSphereVertex(BufferBuilder buffer, double radius, double theta, double phi, double u, double v) {
         float normalX = (float) (Math.sin(theta) * Math.cos(phi));
         float normalY = (float) Math.cos(theta);
@@ -315,15 +286,6 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
         buffer.pos(normalX * radius, normalY * radius, normalZ * radius)
                 .tex(u, v)
                 .normal(normalX, normalY, normalZ)
-                .endVertex();
-    }
-
-    private static void addColorSphereVertex(BufferBuilder buffer, double radius, double theta, double phi,
-                                             float red, float green, float blue, float alpha) {
-        buffer.pos(Math.sin(theta) * Math.cos(phi) * radius,
-                        Math.cos(theta) * radius,
-                        Math.sin(theta) * Math.sin(phi) * radius)
-                .color(red, green, blue, alpha)
                 .endVertex();
     }
 
@@ -362,12 +324,6 @@ public class RenderSingularityLattice extends RenderCelestialEffectBase<TileScal
         setUniformColor(shader, "uPrimaryColor", primary);
         setUniformColor(shader, "uSecondaryColor", secondary);
         setUniformColor(shader, "uTertiaryColor", tertiary);
-    }
-
-    private static void setBasicUniforms(ShaderProgram shader, float alpha, int tint) {
-        float[] rgb = RenderHelper.unpackRGB(tint);
-        shader.setUniform1f("alpha", alpha);
-        shader.setUniform4f("tint", rgb[0], rgb[1], rgb[2], 1.0F);
     }
 
     private static void setUniformColor(ShaderProgram shader, String name, int color) {

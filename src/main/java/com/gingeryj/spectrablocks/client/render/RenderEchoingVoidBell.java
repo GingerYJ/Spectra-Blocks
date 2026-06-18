@@ -24,15 +24,14 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
     @Override
     protected void renderCelestialEffect(TileScalableEffect te, float ticks) {
         ShaderProgram spaceShader = ShaderManager.getProgram("space_effect");
-        ShaderProgram basicShader = ShaderManager.getProgram("basic");
         if (spaceShader == null) {
             return;
         }
 
         drawVoidBellCore(spaceShader, ticks);
-        drawSwingingClapper(spaceShader, basicShader, ticks);
-        drawEchoRings(spaceShader, basicShader, ticks);
-        drawVerticalEchoLines(basicShader, ticks);
+        drawSwingingClapper(spaceShader, ticks);
+        drawEchoRings(spaceShader, ticks);
+        drawVerticalEchoLines(spaceShader, ticks);
     }
 
     private void drawVoidBellCore(ShaderProgram shader, float ticks) {
@@ -63,7 +62,7 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
         useAlphaBlend();
     }
 
-    private void drawSwingingClapper(ShaderProgram spaceShader, ShaderProgram basicShader, float ticks) {
+    private void drawSwingingClapper(ShaderProgram spaceShader, float ticks) {
         float pulse = wave(ticks * 0.090F);
         double swing = Math.sin(ticks * 0.065D) * 0.115D;
         double x = swing;
@@ -71,10 +70,8 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
         double z = Math.cos(ticks * 0.047D) * 0.032D;
 
         useAdditiveBlend();
-        if (basicShader != null) {
-            drawBasicLine(basicShader, 0.0D, 0.08D, 0.0D, x, y + 0.03D, z,
-                    0x7EF4FF, 0.20F + pulse * 0.10F);
-        }
+        drawSpaceLine(spaceShader, ticks, 0.0D, 0.08D, 0.0D, x, y + 0.03D, z,
+                0x7EF4FF, 0.20F + pulse * 0.10F, 0.018D, 0.93F);
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, y, z);
@@ -86,7 +83,7 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
         useAlphaBlend();
     }
 
-    private void drawEchoRings(ShaderProgram spaceShader, ShaderProgram basicShader, float ticks) {
+    private void drawEchoRings(ShaderProgram spaceShader, float ticks) {
         useAdditiveBlend();
         for (int i = 0; i < ECHO_RING_COUNT; i++) {
             double progress = fract(ticks * 0.010D + i / (double) ECHO_RING_COUNT);
@@ -104,10 +101,8 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
             drawSpaceRing(spaceShader, ticks, radius - thickness, radius + thickness,
                     2.0F, alpha * 0.44F, 0.20F + i * 0.13F,
                     0x05000B, color, 0xF5FCFF, 0xFFFFFF);
-            if (basicShader != null) {
-                drawBasicCircle(basicShader, radius + Math.sin(ticks * 0.075D + i) * 0.018D,
-                        color, alpha, RING_SEGMENTS);
-            }
+            drawSpaceCircle(spaceShader, ticks, radius + Math.sin(ticks * 0.075D + i) * 0.018D,
+                    color, alpha, RING_SEGMENTS, 0.026D, 1.40F + i * 0.23F);
             GlStateManager.popMatrix();
         }
         useAlphaBlend();
@@ -130,7 +125,8 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
 
             double x = Math.cos(angle) * radius;
             double z = Math.sin(angle) * radius;
-            drawBasicLine(shader, x, baseY, z, x, baseY + height, z, color, alpha);
+            drawSpaceLine(shader, ticks, x, baseY, z, x, baseY + height, z,
+                    color, alpha, 0.018D, 2.20F + i * 0.17F);
         }
         useAlphaBlend();
     }
@@ -168,30 +164,33 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
         }
     }
 
-    private static void drawBasicLine(ShaderProgram shader, double x1, double y1, double z1,
-                                      double x2, double y2, double z2, int color, float alpha) {
+    private static void drawSpaceLine(ShaderProgram shader, float ticks,
+                                      double x1, double y1, double z1,
+                                      double x2, double y2, double z2,
+                                      int color, float alpha, double width, float seed) {
         if (shader == null || alpha <= 0.005F || !shader.begin()) {
             return;
         }
 
         try {
-            setBasicUniforms(shader);
-            RenderHelper.drawColorLine(x1, y1, z1, x2, y2, z2, 0.018D, color,
-                    alpha * 0.35F, alpha);
+            setSpaceUniforms(shader, ticks, EFFECT_VOID_BELL, 3.0F, alpha, seed,
+                    0x05000B, color, 0xF5FCFF, 0xFFFFFF);
+            RenderHelper.drawTexturedLine(x1, y1, z1, x2, y2, z2, width);
         } finally {
             shader.end();
         }
     }
 
-    private static void drawBasicCircle(ShaderProgram shader, double radius, int color,
-                                        float alpha, int segments) {
+    private static void drawSpaceCircle(ShaderProgram shader, float ticks, double radius, int color,
+                                        float alpha, int segments, double width, float seed) {
         if (shader == null || alpha <= 0.005F || radius <= 0.0D || segments < 3 || !shader.begin()) {
             return;
         }
 
         try {
-            setBasicUniforms(shader);
-            RenderHelper.drawColorCircle(radius, segments, 0.026D, color, alpha);
+            setSpaceUniforms(shader, ticks, EFFECT_VOID_BELL, 3.0F, alpha, seed,
+                    0x05000B, color, 0xF5FCFF, 0xFFFFFF);
+            RenderHelper.drawTexturedCircle(radius, segments, width);
         } finally {
             shader.end();
         }
@@ -264,11 +263,6 @@ public class RenderEchoingVoidBell extends RenderCelestialEffectBase<TileScalabl
         setUniformColor(shader, "uSecondaryColor", secondaryColor);
         setUniformColor(shader, "uAccentColor", accentColor);
         setUniformColor(shader, "uHighlightColor", highlightColor);
-    }
-
-    private static void setBasicUniforms(ShaderProgram shader) {
-        shader.setUniform1f("alpha", 1.0F);
-        shader.setUniform4f("tint", 1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static void setUniformColor(ShaderProgram shader, String name, int color) {
