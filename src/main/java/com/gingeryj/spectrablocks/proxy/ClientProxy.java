@@ -29,9 +29,11 @@ import com.gingeryj.spectrablocks.client.render.RenderGravityWell;
 import com.gingeryj.spectrablocks.client.render.RenderHologramField;
 import com.gingeryj.spectrablocks.client.render.RenderImaginaryCube;
 import com.gingeryj.spectrablocks.client.render.RenderInkMirageBasin;
+import com.gingeryj.spectrablocks.client.render.RenderIonCascade;
 import com.gingeryj.spectrablocks.client.render.RenderLiquidStarlightPool;
 import com.gingeryj.spectrablocks.client.render.RenderLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.client.render.RenderMagneticFluxCage;
+import com.gingeryj.spectrablocks.client.render.RenderMemoryCrystalArray;
 import com.gingeryj.spectrablocks.client.render.RenderMicroSingularity;
 import com.gingeryj.spectrablocks.client.render.RenderMicroStellarSource;
 import com.gingeryj.spectrablocks.client.render.RenderMicroUniverse;
@@ -48,6 +50,7 @@ import com.gingeryj.spectrablocks.client.render.RenderPrismaticRainfall;
 import com.gingeryj.spectrablocks.client.render.RenderQuantumBubble;
 import com.gingeryj.spectrablocks.client.render.RenderRadiantSigilField;
 import com.gingeryj.spectrablocks.client.render.RenderRuneObelisk;
+import com.gingeryj.spectrablocks.client.render.RenderRiftAnchorSpire;
 import com.gingeryj.spectrablocks.client.render.RenderShadowFlameLantern;
 import com.gingeryj.spectrablocks.client.render.RenderSingularityLattice;
 import com.gingeryj.spectrablocks.client.render.RenderSolarCoronaBurst;
@@ -93,9 +96,11 @@ import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
 import com.gingeryj.spectrablocks.tile.TileInkMirageBasin;
+import com.gingeryj.spectrablocks.tile.TileIonCascade;
 import com.gingeryj.spectrablocks.tile.TileLiquidStarlightPool;
 import com.gingeryj.spectrablocks.tile.TileLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.tile.TileMagneticFluxCage;
+import com.gingeryj.spectrablocks.tile.TileMemoryCrystalArray;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
 import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
@@ -112,6 +117,7 @@ import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRadiantSigilField;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
+import com.gingeryj.spectrablocks.tile.TileRiftAnchorSpire;
 import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
 import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
@@ -216,6 +222,9 @@ public class ClientProxy extends CommonProxy {
         ClientRegistry.bindTileEntitySpecialRenderer(TilePhaseGearLoom.class, new RenderPhaseGearLoom());
         ClientRegistry.bindTileEntitySpecialRenderer(TileTectonicFaultCore.class, new RenderTectonicFaultCore());
         ClientRegistry.bindTileEntitySpecialRenderer(TileInkMirageBasin.class, new RenderInkMirageBasin());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileMemoryCrystalArray.class, new RenderMemoryCrystalArray());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileIonCascade.class, new RenderIonCascade());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileRiftAnchorSpire.class, new RenderRiftAnchorSpire());
     }
 
     @Override
@@ -288,6 +297,9 @@ public class ClientProxy extends CommonProxy {
         registerBlockItemModel(ModContent.PHASE_GEAR_LOOM);
         registerBlockItemModel(ModContent.TECTONIC_FAULT_CORE);
         registerBlockItemModel(ModContent.INK_MIRAGE_BASIN);
+        registerBlockItemModel(ModContent.MEMORY_CRYSTAL_ARRAY);
+        registerBlockItemModel(ModContent.ION_CASCADE);
+        registerBlockItemModel(ModContent.RIFT_ANCHOR_SPIRE);
         registerItemModel(ModContent.EFFECT_CONFIGURATOR);
     }
 

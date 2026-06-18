@@ -28,9 +28,11 @@ import com.gingeryj.spectrablocks.block.BlockGravityWell;
 import com.gingeryj.spectrablocks.block.BlockHologramField;
 import com.gingeryj.spectrablocks.block.BlockImaginaryCube;
 import com.gingeryj.spectrablocks.block.BlockInkMirageBasin;
+import com.gingeryj.spectrablocks.block.BlockIonCascade;
 import com.gingeryj.spectrablocks.block.BlockLiquidStarlightPool;
 import com.gingeryj.spectrablocks.block.BlockLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.block.BlockMagneticFluxCage;
+import com.gingeryj.spectrablocks.block.BlockMemoryCrystalArray;
 import com.gingeryj.spectrablocks.block.BlockMicroSingularity;
 import com.gingeryj.spectrablocks.block.BlockMicroStellarSource;
 import com.gingeryj.spectrablocks.block.BlockMicroUniverse;
@@ -47,6 +49,7 @@ import com.gingeryj.spectrablocks.block.BlockPrismaticRainfall;
 import com.gingeryj.spectrablocks.block.BlockQuantumBubble;
 import com.gingeryj.spectrablocks.block.BlockRadiantSigilField;
 import com.gingeryj.spectrablocks.block.BlockRuneObelisk;
+import com.gingeryj.spectrablocks.block.BlockRiftAnchorSpire;
 import com.gingeryj.spectrablocks.block.BlockShadowFlameLantern;
 import com.gingeryj.spectrablocks.block.BlockSingularityLattice;
 import com.gingeryj.spectrablocks.block.BlockSolarCoronaBurst;
@@ -92,9 +95,11 @@ import com.gingeryj.spectrablocks.tile.TileGravityWell;
 import com.gingeryj.spectrablocks.tile.TileHologramField;
 import com.gingeryj.spectrablocks.tile.TileImaginaryCube;
 import com.gingeryj.spectrablocks.tile.TileInkMirageBasin;
+import com.gingeryj.spectrablocks.tile.TileIonCascade;
 import com.gingeryj.spectrablocks.tile.TileLiquidStarlightPool;
 import com.gingeryj.spectrablocks.tile.TileLunarPhaseOrrery;
 import com.gingeryj.spectrablocks.tile.TileMagneticFluxCage;
+import com.gingeryj.spectrablocks.tile.TileMemoryCrystalArray;
 import com.gingeryj.spectrablocks.tile.TileMicroSingularity;
 import com.gingeryj.spectrablocks.tile.TileMicroStellarSource;
 import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
@@ -111,6 +116,7 @@ import com.gingeryj.spectrablocks.tile.TilePrismaticRainfall;
 import com.gingeryj.spectrablocks.tile.TileQuantumBubble;
 import com.gingeryj.spectrablocks.tile.TileRadiantSigilField;
 import com.gingeryj.spectrablocks.tile.TileRuneObelisk;
+import com.gingeryj.spectrablocks.tile.TileRiftAnchorSpire;
 import com.gingeryj.spectrablocks.tile.TileShadowFlameLantern;
 import com.gingeryj.spectrablocks.tile.TileSingularityLattice;
 import com.gingeryj.spectrablocks.tile.TileSolarCoronaBurst;
@@ -207,6 +213,9 @@ public final class ModContent {
     public static final BlockPhaseGearLoom PHASE_GEAR_LOOM = new BlockPhaseGearLoom();
     public static final BlockTectonicFaultCore TECTONIC_FAULT_CORE = new BlockTectonicFaultCore();
     public static final BlockInkMirageBasin INK_MIRAGE_BASIN = new BlockInkMirageBasin();
+    public static final BlockMemoryCrystalArray MEMORY_CRYSTAL_ARRAY = new BlockMemoryCrystalArray();
+    public static final BlockIonCascade ION_CASCADE = new BlockIonCascade();
+    public static final BlockRiftAnchorSpire RIFT_ANCHOR_SPIRE = new BlockRiftAnchorSpire();
     public static final ItemEffectConfigurator EFFECT_CONFIGURATOR = new ItemEffectConfigurator();
 
     private ModContent() {
@@ -277,7 +286,10 @@ public final class ModContent {
                 ALCHEMY_TRANSMUTATION_RING,
                 PHASE_GEAR_LOOM,
                 TECTONIC_FAULT_CORE,
-                INK_MIRAGE_BASIN
+                INK_MIRAGE_BASIN,
+                MEMORY_CRYSTAL_ARRAY,
+                ION_CASCADE,
+                RIFT_ANCHOR_SPIRE
         );
     }
 
@@ -347,6 +359,9 @@ public final class ModContent {
                 itemBlock(PHASE_GEAR_LOOM),
                 itemBlock(TECTONIC_FAULT_CORE),
                 itemBlock(INK_MIRAGE_BASIN),
+                itemBlock(MEMORY_CRYSTAL_ARRAY),
+                itemBlock(ION_CASCADE),
+                itemBlock(RIFT_ANCHOR_SPIRE),
                 EFFECT_CONFIGURATOR
         );
     }
@@ -415,6 +430,9 @@ public final class ModContent {
         registerTileEntity(TilePhaseGearLoom.class, "phase_gear_loom");
         registerTileEntity(TileTectonicFaultCore.class, "tectonic_fault_core");
         registerTileEntity(TileInkMirageBasin.class, "ink_mirage_basin");
+        registerTileEntity(TileMemoryCrystalArray.class, "memory_crystal_array");
+        registerTileEntity(TileIonCascade.class, "ion_cascade");
+        registerTileEntity(TileRiftAnchorSpire.class, "rift_anchor_spire");
     }
 
     private static ItemBlock itemBlock(Block block) {
