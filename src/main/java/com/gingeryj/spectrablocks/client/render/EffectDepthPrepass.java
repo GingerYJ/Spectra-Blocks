@@ -169,7 +169,7 @@ public final class EffectDepthPrepass {
             case "TileMicroUniverse":
                 return 5.55D;
             case "TileMicroStellarSource":
-                return 6.45D;
+                return 5.595D;
             case "TileMiniatureGalaxy":
                 return 4.15D;
             case "TileAbyssalCore":

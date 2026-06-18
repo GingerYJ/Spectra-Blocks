@@ -16,7 +16,8 @@ import org.lwjgl.opengl.GL11;
 public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicroStellarSource> {
 
     private static final double SHELL_RADIUS = 5.45D;
-    private static final double OUTER_HALO_RADIUS = 5.88D;
+    private static final double CORE_PULSE_RADIUS = 0.035D;
+    private static final double HALO_OFFSET = 0.10D;
     private static final int PARTICLE_COUNT = 220;
     private static final int FLARE_COUNT = 48;
     private static final int PROMINENCE_COUNT = 12;
@@ -95,6 +96,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
 
     private void drawOuterRadiance(float ticks) {
         float pulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.028F);
+        float shellPulse = 0.5F + 0.5F * (float) Math.sin(ticks * 0.05F);
         ShaderProgram shader = ShaderManager.getProgram("natural_effect");
         if (shader == null) {
             return;
@@ -106,15 +108,9 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
         );
         GlStateManager.enableCull();
         GlStateManager.cullFace(GlStateManager.CullFace.FRONT);
-        RenderNaturalShaderHelper.drawNaturalSphere(shader, SHELL_RADIUS * 1.018D + 0.030D * pulse,
-                RenderNaturalShaderHelper.MODE_SOLAR, 1.6F, 0xFFFFFF, 0xBFFFFF, 0xF7FFFF,
-                0.085F + 0.035F * pulse, pulse, 0.62F, ticks * 0.040F, 211.0F, 30, 30);
-        RenderNaturalShaderHelper.drawNaturalSphere(shader, OUTER_HALO_RADIUS + 0.120D * pulse,
-                RenderNaturalShaderHelper.MODE_SOLAR, 2.2F, 0xDDFEFF, 0x62EFFF, 0xFFFFFF,
-                0.145F + 0.055F * pulse, pulse, 0.78F, ticks * 0.036F, 227.0F, 34, 34);
-        RenderNaturalShaderHelper.drawNaturalSphere(shader, OUTER_HALO_RADIUS + 0.38D + 0.160D * pulse,
-                RenderNaturalShaderHelper.MODE_SOLAR, 2.8F, 0x62EFFF, 0x2DBDFF, 0xF7FFFF,
-                0.055F + 0.035F * pulse, pulse, 0.54F, ticks * 0.032F, 241.0F, 28, 28);
+        RenderNaturalShaderHelper.drawNaturalSphere(shader, SHELL_RADIUS + CORE_PULSE_RADIUS * shellPulse + HALO_OFFSET,
+                RenderNaturalShaderHelper.MODE_SOLAR, 1.6F, 0x4DE7FF, 0x009CFF, 0xD7FAFF,
+                0.16F + 0.055F * pulse, pulse, 0.92F, ticks * 0.040F, 211.0F, 30, 30);
         GlStateManager.cullFace(GlStateManager.CullFace.BACK);
         GlStateManager.disableCull();
 
@@ -158,7 +154,7 @@ public class RenderMicroStellarSource extends TileEntitySpecialRenderer<TileMicr
             program.setUniform1f("uRimIntensity", 1.35F);
             program.setUniform1f("uPulseAmount", 0.75F + pulse * 0.35F);
             program.setUniform1f("uNoiseSpeed", 0.62F);
-            drawShaderSphere(SHELL_RADIUS + 0.035D * pulse, SHADER_SPHERE_LAT_SEGS, SHADER_SPHERE_LON_SEGS);
+            drawShaderSphere(SHELL_RADIUS + CORE_PULSE_RADIUS * pulse, SHADER_SPHERE_LAT_SEGS, SHADER_SPHERE_LON_SEGS);
         } catch (RuntimeException ex) {
             ShaderManager.disableShaders("stellar_source render failed: " + ex.getMessage());
         } finally {
