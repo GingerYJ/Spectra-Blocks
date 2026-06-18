@@ -7,20 +7,19 @@ import java.io.File;
 public final class ModConfig {
 
     private static final String CATEGORY_RENDERING = "rendering";
+    private static final String DEPRECATED_ENABLE_SHADER_EFFECTS = "enableShaderEffects";
     private static final double DEFAULT_RENDER_SCALE = 1.0D;
     private static final double MIN_RENDER_SCALE = 0.01D;
     private static final double MAX_RENDER_SCALE = 50.0D;
     private static final int DEFAULT_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 32;
     private static final int MIN_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 1;
     private static final int MAX_VISUAL_TILE_ENTITY_RENDER_DISTANCE = 256;
-    private static final boolean DEFAULT_ENABLE_SHADER_EFFECTS = true;
 
     private static double microSingularityScale = DEFAULT_RENDER_SCALE;
     private static double microWhiteHoleScale = DEFAULT_RENDER_SCALE;
     private static double microUniverseScale = DEFAULT_RENDER_SCALE;
     private static double microStellarSourceScale = DEFAULT_RENDER_SCALE;
     private static int visualTileEntityRenderDistance = DEFAULT_VISUAL_TILE_ENTITY_RENDER_DISTANCE;
-    private static boolean enableShaderEffects = DEFAULT_ENABLE_SHADER_EFFECTS;
 
     private ModConfig() {
     }
@@ -47,16 +46,17 @@ public final class ModConfig {
                     "\u5fae\u7f29\u5b87\u5b99\u6e32\u67d3\u7f29\u653e\u3002 / Scale for Micro Universe rendering.");
             microStellarSourceScale = readScale(config, "microStellarSourceScale",
                     "\u5fae\u7f29\u6052\u661f\u6e90\u6e32\u67d3\u7f29\u653e\u3002 / Scale for Micro Stellar Source rendering.");
-            enableShaderEffects = config.getBoolean(
-                    "enableShaderEffects",
-                    CATEGORY_RENDERING,
-                    DEFAULT_ENABLE_SHADER_EFFECTS,
-                    "\u542f\u7528 shader \u89c6\u89c9\u7279\u6548\u6e32\u67d3\u3002\u9ed8\u8ba4\u5f00\u542f\uff1b\u5173\u95ed\u540e shader \u7279\u6548\u65b9\u5757\u5c06\u4e0d\u6e32\u67d3\uff0c\u4e0d\u518d\u4f7f\u7528\u56fa\u5b9a\u7ba1\u7ebf\u56de\u9000\u6e32\u67d3\u3002 / Enables shader visual effect rendering. Enabled by default; when disabled, shader effect blocks are not rendered and no fixed-pipeline fallback is used."
-            );
+            removeDeprecatedOptions(config);
         } finally {
             if (config.hasChanged()) {
                 config.save();
             }
+        }
+    }
+
+    private static void removeDeprecatedOptions(Configuration config) {
+        if (config.hasKey(CATEGORY_RENDERING, DEPRECATED_ENABLE_SHADER_EFFECTS)) {
+            config.getCategory(CATEGORY_RENDERING).remove(DEPRECATED_ENABLE_SHADER_EFFECTS);
         }
     }
 
@@ -89,10 +89,6 @@ public final class ModConfig {
 
     public static double visualTileEntityRenderDistanceSquared() {
         return visualTileEntityRenderDistance * visualTileEntityRenderDistance;
-    }
-
-    public static boolean enableShaderEffects() {
-        return enableShaderEffects;
     }
 
     public static double clampRenderScale(double scale) {

@@ -40,7 +40,6 @@ config/spectrablocks.cfg
 Important options:
 
 ```properties
-enableShaderEffects=true
 visualTileEntityRenderDistance=32
 microSingularityScale=1.0
 microWhiteHoleScale=1.0
@@ -50,7 +49,7 @@ microStellarSourceScale=1.0
 
 Notes:
 
-- `enableShaderEffects=false` disables shader rendering. It does not use fixed-pipeline fallback.
+- Visual effect rendering is shader-only and has no enable/disable config switch.
 - `visualTileEntityRenderDistance=32` renders visual TileEntities within 32 blocks.
 - Render scale values are clamped from `0.01` to `50.0`.
 - Block NBT `RenderScale` can override individual placed block scale.

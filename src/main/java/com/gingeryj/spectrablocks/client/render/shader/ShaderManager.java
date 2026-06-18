@@ -1,7 +1,6 @@
 package com.gingeryj.spectrablocks.client.render.shader;
 
 import com.gingeryj.spectrablocks.ExampleMod;
-import com.gingeryj.spectrablocks.config.ModConfig;
 import net.minecraft.client.renderer.OpenGlHelper;
 
 import java.util.HashMap;
@@ -17,13 +16,10 @@ public final class ShaderManager {
     }
 
     public static boolean areShaderEffectsUsable() {
-        return ModConfig.enableShaderEffects() && !globallyDisabled && OpenGlHelper.shadersSupported;
+        return !globallyDisabled && OpenGlHelper.shadersSupported;
     }
 
     public static String getDisabledReason() {
-        if (!ModConfig.enableShaderEffects()) {
-            return "shader effects are disabled in config";
-        }
         if (!OpenGlHelper.shadersSupported) {
             return "OpenGL shader support is unavailable";
         }
