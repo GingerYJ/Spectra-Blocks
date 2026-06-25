@@ -3,6 +3,7 @@ package com.gingeryj.spectrablocks.item;
 import com.gingeryj.spectrablocks.ExampleMod;
 import com.gingeryj.spectrablocks.Reference;
 import com.gingeryj.spectrablocks.creative.ModCreativeTabs;
+import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
 import com.gingeryj.spectrablocks.tile.TileScalableEffect;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
@@ -45,7 +46,12 @@ public class ItemEffectConfigurator extends Item {
         }
 
         if (world.isRemote) {
-            ExampleMod.proxy.openEffectConfigurator(pos, ((TileScalableEffect) tile).renderScale(1.0D));
+            int planetCount = -1;
+            if (tile instanceof TileMicroUniverse) {
+                planetCount = ((TileMicroUniverse) tile).getPlanetCount();
+            }
+            ExampleMod.proxy.openEffectConfigurator(pos,
+                    ((TileScalableEffect) tile).renderScale(1.0D), planetCount);
         }
         return EnumActionResult.SUCCESS;
     }

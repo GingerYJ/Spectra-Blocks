@@ -1,6 +1,0 @@
-﻿{
-    "textures":  {
-                     "all":  "spectrablocks:blocks/phantom_eye"
-                 },
-    "parent":  "block/cube_all"
-}

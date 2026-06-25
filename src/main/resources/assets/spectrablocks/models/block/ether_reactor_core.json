@@ -1,6 +1,0 @@
-﻿{
-    "textures":  {
-                     "all":  "spectrablocks:blocks/ether_reactor_core"
-                 },
-    "parent":  "block/cube_all"
-}

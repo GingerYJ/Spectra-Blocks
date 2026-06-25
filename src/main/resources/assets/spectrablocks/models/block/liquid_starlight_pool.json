@@ -1,6 +1,0 @@
-﻿{
-    "textures":  {
-                     "all":  "spectrablocks:blocks/liquid_starlight_pool"
-                 },
-    "parent":  "block/cube_all"
-}

@@ -1,6 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "spectrablocks:blocks/alchemy_transmutation_ring"
-  }
-}

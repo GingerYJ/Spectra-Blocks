@@ -1,6 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "spectrablocks:blocks/mirror_shard_field"
-  }
-}

@@ -25,6 +25,7 @@ public final class EffectDepthPrepass {
 
     private static final int SPHERE_LAT_SEGMENTS = 32;
     private static final int SPHERE_LON_SEGMENTS = 32;
+    private static final int MICRO_STELLAR_SOURCE_SPHERE_SEGMENTS = 72;
 
     private static boolean renderedThisFrame;
     private static boolean renderingPrepass;
@@ -86,7 +87,8 @@ public final class EffectDepthPrepass {
                 double relativeY = currentY + (pos.getY() - currentPos.getY());
                 double relativeZ = currentZ + (pos.getZ() - currentPos.getZ());
                 double radius = depthRadius(effect) * effect.renderScale(defaultScale(effect));
-                drawDepthShell(relativeX + 0.5D, relativeY + 0.5D, relativeZ + 0.5D, radius);
+                drawDepthShell(relativeX + 0.5D, relativeY + 0.5D, relativeZ + 0.5D, radius,
+                        depthLatSegments(effect), depthLonSegments(effect));
             }
         } finally {
             GL11.glColorMask(colorMask.get(0) != 0, colorMask.get(1) != 0,
@@ -160,7 +162,7 @@ public final class EffectDepthPrepass {
             case "TileMicroStellarSource":
                 return ModConfig.microStellarSourceScale();
             default:
-                return 1.0D;
+                throw new IllegalArgumentException("Unsupported effect tile: " + effect.getClass().getName());
         }
     }
 
@@ -170,30 +172,30 @@ public final class EffectDepthPrepass {
                 return 5.55D;
             case "TileMicroStellarSource":
                 return 5.595D;
-            case "TileMiniatureGalaxy":
-                return 4.15D;
-            case "TileAbyssalCore":
-                return 3.55D;
-            case "TileCollapsingStar":
-                return 3.75D;
-            case "TileCosmicBackgroundRadiationField":
-                return 3.35D;
             case "TileMicroSingularity":
             case "TileMicroWhiteHole":
                 return 3.15D;
-            case "TileDimensionalGate":
-            case "TileGravitationalLens":
-            case "TileSpatialRift":
-            case "TileTemporalRift":
-            case "TileWormhole":
-                return 2.05D;
             default:
-                return 3.05D;
+                throw new IllegalArgumentException("Unsupported effect tile: " + effect.getClass().getName());
         }
     }
 
-    private static void drawDepthShell(double x, double y, double z, double radius) {
-        if (radius <= 0.0D) {
+    private static int depthLatSegments(TileScalableEffect effect) {
+        if ("TileMicroStellarSource".equals(effect.getClass().getSimpleName())) {
+            return MICRO_STELLAR_SOURCE_SPHERE_SEGMENTS;
+        }
+        return SPHERE_LAT_SEGMENTS;
+    }
+
+    private static int depthLonSegments(TileScalableEffect effect) {
+        if ("TileMicroStellarSource".equals(effect.getClass().getSimpleName())) {
+            return MICRO_STELLAR_SOURCE_SPHERE_SEGMENTS;
+        }
+        return SPHERE_LON_SEGMENTS;
+    }
+
+    private static void drawDepthShell(double x, double y, double z, double radius, int latSegments, int lonSegments) {
+        if (radius <= 0.0D || latSegments < 3 || lonSegments < 3) {
             return;
         }
 
@@ -203,12 +205,12 @@ public final class EffectDepthPrepass {
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.getBuffer();
             buffer.begin(GL11.GL_TRIANGLES, DefaultVertexFormats.POSITION);
-            for (int lat = 0; lat < SPHERE_LAT_SEGMENTS; lat++) {
-                double theta0 = Math.PI * lat / SPHERE_LAT_SEGMENTS;
-                double theta1 = Math.PI * (lat + 1) / SPHERE_LAT_SEGMENTS;
-                for (int lon = 0; lon < SPHERE_LON_SEGMENTS; lon++) {
-                    double phi0 = Math.PI * 2.0D * lon / SPHERE_LON_SEGMENTS;
-                    double phi1 = Math.PI * 2.0D * (lon + 1) / SPHERE_LON_SEGMENTS;
+            for (int lat = 0; lat < latSegments; lat++) {
+                double theta0 = Math.PI * lat / latSegments;
+                double theta1 = Math.PI * (lat + 1) / latSegments;
+                for (int lon = 0; lon < lonSegments; lon++) {
+                    double phi0 = Math.PI * 2.0D * lon / lonSegments;
+                    double phi1 = Math.PI * 2.0D * (lon + 1) / lonSegments;
                     addSphereVertex(buffer, radius, theta0, phi0);
                     addSphereVertex(buffer, radius, theta1, phi1);
                     addSphereVertex(buffer, radius, theta1, phi0);

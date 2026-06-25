@@ -10,6 +10,6 @@ public interface IProxy {
     default void init() {
     }
 
-    default void openEffectConfigurator(BlockPos pos, double renderScale) {
+    default void openEffectConfigurator(BlockPos pos, double renderScale, int planetCount) {
     }
 }

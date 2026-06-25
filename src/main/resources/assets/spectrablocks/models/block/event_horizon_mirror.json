@@ -1,6 +1,0 @@
-﻿{
-    "textures":  {
-                     "all":  "spectrablocks:blocks/event_horizon_mirror"
-                 },
-    "parent":  "block/cube_all"
-}

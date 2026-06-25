@@ -1,6 +1,0 @@
-﻿{
-    "textures":  {
-                     "all":  "spectrablocks:blocks/radiant_sigil_field"
-                 },
-    "parent":  "block/cube_all"
-}

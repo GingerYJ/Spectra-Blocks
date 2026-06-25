@@ -76,5 +76,6 @@ public class BlockMicroUniverse extends Block {
                                 EntityLivingBase placer, ItemStack stack) {
         super.onBlockPlacedBy(world, pos, state, placer, stack);
         EffectBlockHelper.applyRenderScaleFromStack(world, pos, stack);
+        EffectBlockHelper.applyMicroUniversePlanetCountFromStack(world, pos, stack);
     }
 }

@@ -74,7 +74,7 @@ public abstract class TileScalableEffect extends TileEntity {
         readFromNBT(packet.getNbtCompound());
     }
 
-    private void syncToClient() {
+    protected final void syncToClient() {
         if (world == null || world.isRemote || pos == null) {
             return;
         }

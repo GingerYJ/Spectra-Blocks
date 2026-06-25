@@ -1,5 +1,6 @@
 package com.gingeryj.spectrablocks.network;
 
+import com.gingeryj.spectrablocks.tile.TileMicroUniverse;
 import com.gingeryj.spectrablocks.tile.TileScalableEffect;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -13,6 +14,7 @@ public class PacketSetRenderScale implements IMessage {
 
     private BlockPos pos;
     private double renderScale;
+    private int planetCount = -1;
 
     @SuppressWarnings("unused")
     public PacketSetRenderScale() {
@@ -21,18 +23,27 @@ public class PacketSetRenderScale implements IMessage {
     public PacketSetRenderScale(BlockPos pos, double renderScale) {
         this.pos = pos;
         this.renderScale = renderScale;
+        this.planetCount = -1;
+    }
+
+    public PacketSetRenderScale(BlockPos pos, double renderScale, int planetCount) {
+        this.pos = pos;
+        this.renderScale = renderScale;
+        this.planetCount = planetCount;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         pos = BlockPos.fromLong(buf.readLong());
         renderScale = buf.readDouble();
+        planetCount = buf.readInt();
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeLong(pos.toLong());
         buf.writeDouble(renderScale);
+        buf.writeInt(planetCount);
     }
 
     public static class Handler implements IMessageHandler<PacketSetRenderScale, IMessage> {
@@ -52,6 +63,10 @@ public class PacketSetRenderScale implements IMessage {
             TileEntity tile = player.world.getTileEntity(message.pos);
             if (tile instanceof TileScalableEffect) {
                 ((TileScalableEffect) tile).setCustomRenderScale(message.renderScale);
+            }
+
+            if (message.planetCount >= 0 && tile instanceof TileMicroUniverse) {
+                ((TileMicroUniverse) tile).setPlanetCount(message.planetCount);
             }
         }
     }

@@ -69,7 +69,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
             ShaderProgram bodyShader = ShaderManager.getProgram("micro_universe_body");
             ShaderProgram colorShader = ShaderManager.getProgram("basic");
             drawUniverseShell(ticks, shellShader, colorShader);
-            drawSolarSystem(ticks, bodyShader, colorShader);
+            drawSolarSystem(ticks, bodyShader, colorShader, te.getPlanetCount());
             drawMeteors(ticks, bodyShader, colorShader);
         } finally {
             if (cullWasEnabled) {
@@ -183,7 +183,7 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
                 .endVertex();
     }
 
-    private void drawSolarSystem(float ticks, ShaderProgram bodyShader, ShaderProgram colorShader) {
+    private void drawSolarSystem(float ticks, ShaderProgram bodyShader, ShaderProgram colorShader, int planetCount) {
         GlStateManager.pushMatrix();
         GlStateManager.rotate(10.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(-4.0F, 0.0F, 0.0F, 1.0F);
@@ -191,7 +191,9 @@ public class RenderMicroUniverse extends TileEntitySpecialRenderer<TileMicroUniv
 
         drawSun(ticks, bodyShader);
 
-        for (Planet planet : PLANETS) {
+        int visiblePlanets = TileMicroUniverse.clampPlanetCount(planetCount);
+        for (int i = 0; i < visiblePlanets; i++) {
+            Planet planet = PLANETS[i];
             drawGlowingOrbit(colorShader, planet, ticks);
             double angle = ticks * planet.speed + planet.phase;
             double planetX = Math.cos(angle) * planet.orbitRadius;
